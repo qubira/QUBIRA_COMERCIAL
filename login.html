@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QUBIRA Comercial | Verificando sesión</title>
+<link rel="icon" href="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" type="image/png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sidebar-bg: #111827; --primary: #0f766e; --primary-2: #14b8a6;
+    --bg: #f3f4f6; --card-bg: #ffffff; --border: #e5e7eb; --text: #111827; --text-muted: #6b7280;
+    --danger: #dc2626; --shadow-md: 0 10px 25px -5px rgba(0,0,0,.08), 0 4px 6px -4px rgba(0,0,0,.05);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; font-family: 'Inter', 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+  body { display: grid; place-items: center; min-height: 100dvh; padding: 20px; }
+  .card {
+    width: min(420px, 100%); background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px;
+    box-shadow: var(--shadow-md); padding: 40px 32px; text-align: center;
+  }
+  .logo { width: 52px; height: 52px; object-fit: contain; border-radius: 12px; background: var(--sidebar-bg); padding: 8px; margin-bottom: 18px; }
+  h1 { font-size: 17px; font-weight: 800; margin-bottom: 8px; }
+  p { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+  .spinner {
+    width: 30px; height: 30px; border-radius: 50%; border: 3px solid var(--border);
+    border-top-color: var(--primary); animation: spin .8s linear infinite; margin: 18px auto 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error { color: var(--danger); font-weight: 600; margin-top: 10px; }
+  a.btn {
+    display: inline-block; margin-top: 18px; padding: 11px 20px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #fff;
+    font-size: 13px; font-weight: 700; text-decoration: none;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <img class="logo" src="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" alt="QUBIRA">
+    <h1 id="title">Verificando tu sesión…</h1>
+    <p id="subtitle">Un momento por favor.</p>
+    <div class="spinner" id="spinner"></div>
+  </div>
+
+<script>
+'use strict';
+
+/* Esta página YA NO es un formulario de login — el único login de
+   credenciales del sistema vive en LOGIN/login.html (acceso central).
+   Esta página solo: (1) recibe un código de traspaso de un solo uso
+   cuando viene de login/modulo.html, o (2) si ya hay una sesión local
+   válida entra directo, o (3) si no hay ninguna de las dos, redirige
+   al login central. */
+
+const QC_API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? 'http://localhost:4000'
+  : 'https://api-qubira.onrender.com';
+
+const CENTRAL_LOGIN_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? 'http://localhost:5515/login.html'
+  : 'https://qubira-login.vercel.app/login.html';
+
+function goToPanel(next) { window.location.href = 'index.html' + (next ? ('?open=' + encodeURIComponent(next)) : ''); }
+function goToCentralLogin() { window.location.href = CENTRAL_LOGIN_URL; }
+function showError(msg) {
+  document.getElementById('title').textContent = 'No se pudo iniciar sesión';
+  document.getElementById('subtitle').innerHTML = msg + '<br><a class="btn" href="' + CENTRAL_LOGIN_URL + '">Ir al acceso central</a>';
+  document.getElementById('spinner').style.display = 'none';
+}
+
+const next = new URLSearchParams(location.search).get('next');
+
+async function exchangeHandoff(code) {
+  try {
+    const res = await fetch(`${QC_API_BASE}/api/auth/exchange`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { showError(data.error || 'El enlace de acceso venció o ya se usó.'); return; }
+
+    if (!(data.user.authorized_modules || []).includes('COMERCIAL')) {
+      showError('Tu cuenta no tiene autorización para Comercial.');
+      return;
+    }
+
+    localStorage.setItem('qc_token', data.token);
+    localStorage.setItem('qc_user', JSON.stringify(data.user));
+    history.replaceState(null, '', location.pathname);
+    goToPanel(next);
+  } catch (err) {
+    showError('No se pudo conectar con la API.');
+  }
+}
+
+async function checkExistingSession() {
+  const existingToken = localStorage.getItem('qc_token');
+  if (!existingToken) { goToCentralLogin(); return; }
+
+  try {
+    const res = await fetch(`${QC_API_BASE}/api/auth/me`, { headers: { Authorization: 'Bearer ' + existingToken } });
+    if (!res.ok) { localStorage.removeItem('qc_token'); localStorage.removeItem('qc_user'); goToCentralLogin(); return; }
+    const data = await res.json();
+    if (!(data.user.authorized_modules || []).includes('COMERCIAL')) {
+      localStorage.removeItem('qc_token'); localStorage.removeItem('qc_user');
+      showError('Tu cuenta no tiene autorización para Comercial.');
+      return;
+    }
+    localStorage.setItem('qc_user', JSON.stringify(data.user));
+    goToPanel(next);
+  } catch (err) {
+    showError('No se pudo conectar con la API.');
+  }
+}
+
+(function init() {
+  const code = new URLSearchParams(location.search).get('handoff');
+  if (code) { exchangeHandoff(code); return; }
+  checkExistingSession();
+})();
+</script>
+</body>
+</html>

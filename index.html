@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QUBIRA COMERCIAL</title>
+  <link rel="icon" href="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" type="image/png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #0f766e;
+      --primary-light: #ecfdf5;
+      --primary-dark: #0d5c55;
+      --accent: #0f766e;
+      --bg: #f3f4f6;
+      --bg-card: #ffffff;
+      --bg-card2: #f9fafb;
+      --text: #111827;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --success: #059669;
+      --warning: #b45309;
+      --danger: #dc2626;
+      --info: #3b82f6;
+      --purple: #8b5cf6;
+      --sidebar-w: 265px;
+      --sidebar-bg: #111827;
+      --sidebar-bg-hover: #1f2937;
+      --sidebar-text: #9ca3af;
+      --sidebar-text-active: #ffffff;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 10px 25px -5px rgba(0,0,0,.08), 0 4px 6px -4px rgba(0,0,0,.05);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      z-index: 100;
+      transition: transform .3s;
+    }
+    .sidebar-logo {
+      padding: 22px 20px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .sidebar-logo img { width: 46px; height: 46px; object-fit: contain; border-radius: 10px; }
+    .sidebar-logo .brand { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: 1.5px; }
+    .sidebar-logo .sub   { font-size: 10px; color: var(--sidebar-text); letter-spacing: .8px; margin-top: 2px; }
+    .sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+    .nav-section { padding: 14px 18px 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #4b5563; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 18px; margin: 0 10px 2px; border-radius: 8px;
+      cursor: pointer; color: var(--sidebar-text); font-size: 14px;
+      border-left: 3px solid transparent; transition: all .2s;
+    }
+    .nav-item:hover { background: var(--sidebar-bg-hover); color: var(--sidebar-text-active); }
+    .nav-item.active { background: var(--primary); color: #fff; border-left-color: var(--primary); }
+    .sidebar-footer { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,.08); font-size: 12px; color: var(--sidebar-text); }
+    .sidebar-footer-user { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .sidebar-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--primary-light); color: var(--primary-dark);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px; flex-shrink: 0;
+    }
+    .sf-user-name { font-size: 13px; font-weight: 600; color: #e5e7eb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sf-user-role { font-size: 11px; color: var(--sidebar-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-logout-btn {
+      flex: 1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+      color: #e5e7eb; border-radius: 8px; padding: 8px; font-size: 11px; cursor: pointer; transition: background .2s;
+    }
+    .sidebar-logout-btn:hover { background: rgba(255,255,255,.12); }
+    .btn-link { flex: none; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--primary); background: var(--primary); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .btn-link:hover { background: var(--primary-dark); }
+    .pulse-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--success);
+      display: inline-block; position: relative;
+    }
+    .pulse-dot::after {
+      content: ''; position: absolute; inset: 0; border-radius: 50%; background: var(--success);
+      animation: pulseAnim 1.6s ease-out infinite;
+    }
+    @keyframes pulseAnim { from{opacity:1;transform:scale(1)} to{opacity:0;transform:scale(2.2)} }
+    .mob-overlay { display: none; }
+
+    /* ── MAIN ── */
+    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 0 28px; height: 64px;
+      display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-left h1 { font-size: 18px; font-weight: 600; }
+    .topbar-left p  { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+    .hamburger { display: none; background: none; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; color: var(--text); cursor: pointer; font-size: 16px; }
+
+    /* ── CONTENT ── */
+    .content { padding: 28px; flex: 1; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── STATS GRID ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .stat-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px;
+      display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow); transition: transform .2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-icon { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .stat-info .num   { font-size: 28px; font-weight: 700; line-height: 1; }
+    .stat-info .label { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+    /* ── CARD ── */
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin-bottom: 20px; box-shadow: var(--shadow); }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .card-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+
+    /* ── BADGES ── */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .b-pending       { background:rgba(107,114,128,.14); color:#6b7280; }
+    .b-active        { background:rgba(16,185,129,.14);  color:var(--success); }
+    .b-paused        { background:rgba(245,158,11,.14);  color:var(--warning); }
+    .b-finished_by_ti{ background:rgba(59,130,246,.14);  color:var(--info); }
+    .b-completed     { background:rgba(15,118,110,.14);  color:var(--primary); }
+    .b-cancelled     { background:rgba(239,68,68,.14);   color:var(--danger); }
+    .b-web        { background:rgba(59,130,246,.14);  color:var(--info); }
+    .b-mobile     { background:rgba(139,92,246,.14);  color:var(--purple); }
+    .b-desktop    { background:rgba(16,185,129,.14);  color:var(--success); }
+    .b-family     { background:rgba(236,72,153,.14);  color:#db2777; }
+    .b-venta          { background:rgba(15,118,110,.14); color:var(--primary); }
+    .b-alquiler       { background:rgba(245,158,11,.14); color:var(--warning); }
+    .b-venta_alquiler { background:rgba(59,130,246,.14); color:var(--info); }
+
+    /* ── PRODUCT GRID ── */
+    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+    .product-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px; }
+    .product-head { display: flex; gap: 12px; align-items: center; }
+    .product-logo { width: 48px; height: 48px; border-radius: 10px; object-fit: contain; background: var(--bg-card2); border: 1px solid var(--border); flex-shrink: 0; }
+    .product-logo-ph { width: 48px; height: 48px; border-radius: 10px; background: var(--primary-light); color: var(--primary-dark); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .product-name { font-size: 15px; font-weight: 700; }
+    .product-code { font-size: 11px; color: var(--text-muted); font-family: monospace; }
+    .product-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; max-height: 60px; overflow: hidden; }
+    .product-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+    .progress-wrap { display: flex; align-items: center; gap: 10px; }
+    .progress-bar-bg { flex: 1; height: 8px; border-radius: 6px; background: var(--border); overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--primary), #14b8a6); }
+    .progress-pct { font-size: 12px; font-weight: 700; color: var(--primary); min-width: 34px; text-align: right; }
+    .product-offer { display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid var(--border); }
+    .product-price { font-size: 14px; font-weight: 700; color: var(--text); }
+    .product-notes { font-size: 12px; color: var(--text-muted); background: var(--bg-card2); border-radius: 8px; padding: 8px 10px; line-height: 1.4; }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .empty-state i { font-size: 36px; margin-bottom: 14px; opacity: .4; }
+
+    @media(max-width:768px) {
+      .sidebar { transform:translateX(-100%); }
+      .sidebar.open { transform:translateX(0); }
+      .main { margin-left:0; }
+      .hamburger { display:flex; }
+      .stats-grid { grid-template-columns:repeat(2,1fr); }
+      .product-grid { grid-template-columns: 1fr; }
+    }
+
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-track { background:var(--bg); }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+    ::-webkit-scrollbar-thumb:hover { background:var(--text-muted); }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <img src="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" alt="Qubira" onerror="this.style.display='none'">
+    <div>
+      <div class="brand">QUBIRA</div>
+      <div class="sub">COMERCIAL</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
+      <i class="fas fa-chart-line fa-fw"></i> Dashboard
+    </div>
+    <div class="nav-item" data-page="catalogo" onclick="navigate('catalogo')">
+      <i class="fas fa-boxes-stacked fa-fw"></i> Catálogo de Productos
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-footer-user">
+      <div class="sidebar-avatar" id="sf-avatar">–</div>
+      <div style="min-width:0">
+        <div class="sf-user-name" id="sf-name">—</div>
+        <div class="sf-user-role" id="sf-role">—</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="sidebar-logout-btn" id="sf-switch-btn" title="Cambiar de módulo">
+        <i class="fas fa-th-large"></i> Módulos
+      </button>
+      <button class="sidebar-logout-btn" id="sf-logout-btn" title="Cerrar sesión">
+        <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+      </button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+      <span class="pulse-dot"></span> Sistema activo
+    </div>
+    <div style="font-size:10px;opacity:.5;margin-top:2px">© 2026 Qubira S.A.C.</div>
+  </div>
+</aside>
+<div class="mob-overlay" id="mob-overlay" onclick="closeSidebar()"></div>
+
+<!-- MAIN -->
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-left" style="display:flex;align-items:center;gap:14px">
+      <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div>
+        <h1 id="page-title">Dashboard</h1>
+        <p id="page-sub">Resumen de los productos disponibles para venta o alquiler</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid" id="stats-grid"></div>
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fas fa-boxes-stacked" style="color:var(--accent)"></i> Productos destacados</h3>
+          <button class="btn-link" onclick="navigate('catalogo')">Ver catálogo completo</button>
+        </div>
+        <div id="dashboard-preview"></div>
+      </div>
+    </div>
+
+    <!-- ═══ CATÁLOGO ═══ -->
+    <div class="page" id="page-catalogo">
+      <div id="catalogo-content"></div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════════════
+// GATE DE SESIÓN — toda la app requiere login primero
+// ══════════════════════════════════════════════════════
+/* login.html ya validó el traspaso/token contra el backend y guardó
+   authorized_modules — acá solo se confirma que incluya COMERCIAL antes
+   de renderizar nada (defensa adicional; el backend igual rechaza con
+   403 cualquier llamada a /api/comercial/* si no corresponde). */
+(function requireSession() {
+  const token = localStorage.getItem('qc_token');
+  if (!token) { window.location.href = 'login.html'; return; }
+  try {
+    const storedUser = JSON.parse(localStorage.getItem('qc_user') || 'null');
+    if (!(storedUser?.authorized_modules || []).includes('COMERCIAL')) {
+      localStorage.removeItem('qc_token');
+      localStorage.removeItem('qc_user');
+      window.location.href = 'login.html';
+    }
+  } catch (_) {
+    localStorage.removeItem('qc_token');
+    localStorage.removeItem('qc_user');
+    window.location.href = 'login.html';
+  }
+})();
+
+// ══════════════════════════════════════════════════════
+// API — consume la API centralizada QUBIRA (carpeta API/)
+// ══════════════════════════════════════════════════════
+const QC_API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? 'http://localhost:4000'
+  : 'https://api-qubira.onrender.com';
+const QC_ALERT_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? 'http://localhost:5515/session-alert.html'
+  : 'https://qubira-login.vercel.app/session-alert.html';
+const CENTRAL_MODULO_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? 'http://localhost:5515/modulo.html'
+  : 'https://qubira-login.vercel.app/modulo.html';
+
+let qcToken = localStorage.getItem('qc_token') || null;
+let qcUser  = JSON.parse(localStorage.getItem('qc_user') || 'null');
+
+async function qcApiFetch(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (qcToken) headers.Authorization = 'Bearer ' + qcToken;
+
+  const res = await fetch(QC_API_BASE + path, { ...opts, headers });
+
+  if (res.status === 401) {
+    const data401 = await res.json().catch(() => ({}));
+    const cachedUsername = qcUser?.username;
+    qcClearSession();
+    if (data401?.code === 'SESSION_REPLACED') {
+      window.location.href = `${QC_ALERT_URL}?username=${encodeURIComponent(cachedUsername || '')}&ip=${encodeURIComponent(data401.ip || '')}`;
+    } else {
+      goToLogin();
+    }
+    throw new Error('SESSION_EXPIRED');
+  }
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || ('Error ' + res.status));
+  return data;
+}
+
+function qcClearSession() {
+  qcToken = null;
+  qcUser  = null;
+  localStorage.removeItem('qc_token');
+  localStorage.removeItem('qc_user');
+}
+
+function goToLogin(next) {
+  window.location.href = 'login.html' + (next ? ('?next=' + encodeURIComponent(next)) : '');
+}
+
+async function logout() {
+  try { await qcApiFetch('/api/auth/logout', { method: 'POST' }); } catch (err) { /* ya estaba vencido, igual cerramos local */ }
+  qcClearSession();
+  window.location.href = 'login.html';
+}
+
+function renderSidebarSession() {
+  const avatarEl = document.getElementById('sf-avatar');
+  const nameEl   = document.getElementById('sf-name');
+  const roleEl   = document.getElementById('sf-role');
+  if (!qcUser) { avatarEl.textContent = '–'; nameEl.textContent = '—'; roleEl.textContent = '—'; return; }
+  const nombre = `${qcUser.nombre || ''} ${qcUser.apellidos || ''}`.trim() || qcUser.username;
+  const iniciales = (qcUser.nombre?.[0] || qcUser.username?.[0] || '?').toUpperCase() + (qcUser.apellidos?.[0] || '').toUpperCase();
+  avatarEl.textContent = iniciales;
+  nameEl.textContent = nombre;
+  roleEl.textContent = `${qcUser.rol || 'Comercial'} · Qubira`;
+}
+
+// ══════════════════════════════════════════════════════
+// SIDEBAR MÓVIL / NAVEGACIÓN
+// ══════════════════════════════════════════════════════
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('mob-overlay').classList.toggle('show'); }
+function closeSidebar()  { document.getElementById('sidebar').classList.remove('open'); document.getElementById('mob-overlay').classList.remove('show'); }
+
+const PAGE_META = {
+  dashboard: { title:'Dashboard', sub:'Resumen de los productos disponibles para venta o alquiler' },
+  catalogo:  { title:'Catálogo de Productos', sub:'Productos que ADG habilitó para que Comercial los ofrezca' },
+};
+
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('page-title').textContent = PAGE_META[page]?.title || page;
+  document.getElementById('page-sub').textContent   = PAGE_META[page]?.sub   || '';
+  document.querySelectorAll('.nav-item[data-page]').forEach(el => el.classList.toggle('active', el.dataset.page === page));
+  if (page === 'dashboard') renderDashboard();
+  if (page === 'catalogo')  renderCatalogo();
+  closeSidebar();
+}
+
+// ══════════════════════════════════════════════════════
+// DATOS — catálogo de productos (ti.projects filtrados por ADG)
+// ══════════════════════════════════════════════════════
+const STATUS_LABEL = { pending:'Pendiente', active:'Activo', paused:'Pausado', finished_by_ti:'Finalizado (por revisar)', completed:'Completado', cancelled:'Cancelado' };
+const TYPE_LABEL = { web:'Web', mobile:'Aplicativo Móvil', desktop:'Aplicativo de Escritorio' };
+const OFFER_LABEL = { venta:'Venta', alquiler:'Alquiler', venta_alquiler:'Venta o alquiler' };
+
+let _products = [];
+let _loaded = false;
+
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function ensureProducts() {
+  if (_loaded) return _products;
+  try {
+    const data = await qcApiFetch('/api/comercial/products');
+    _products = data.products || [];
+    _loaded = true;
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') console.error(err);
+  }
+  return _products;
+}
+
+function productCardHtml(p) {
+  const logo = p.company_logo
+    ? `<img class="product-logo" src="${esc(p.company_logo)}" alt="">`
+    : `<div class="product-logo-ph"><i class="fas fa-box"></i></div>`;
+  const badges = [
+    `<span class="badge b-${esc(p.status)}">${esc(STATUS_LABEL[p.status] || p.status)}</span>`,
+    p.project_type ? `<span class="badge b-${esc(p.project_type)}">${esc(TYPE_LABEL[p.project_type] || p.project_type)}</span>` : '',
+    p.family ? `<span class="badge b-family"><i class="fas fa-layer-group"></i> ${esc(p.family)}</span>` : '',
+    p.commercial_offer_type ? `<span class="badge b-${esc(p.commercial_offer_type)}">${esc(OFFER_LABEL[p.commercial_offer_type] || p.commercial_offer_type)}</span>` : '',
+  ].filter(Boolean).join('');
+  const progress = Number(p.progress) || 0;
+  const price = p.commercial_price != null && p.commercial_price !== ''
+    ? `<span class="product-price">$${Number(p.commercial_price).toLocaleString()}</span>`
+    : `<span style="font-size:12px;color:var(--text-muted)">Precio a consultar</span>`;
+  return `
+    <div class="product-card">
+      <div class="product-head">
+        ${logo}
+        <div style="min-width:0">
+          <div class="product-name">${esc(p.name)}</div>
+          <div class="product-code">${esc(p.code)}</div>
+        </div>
+      </div>
+      ${p.description ? `<div class="product-desc">${esc(p.description)}</div>` : ''}
+      <div class="product-badges">${badges}</div>
+      <div class="progress-wrap">
+        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${progress}%"></div></div>
+        <span class="progress-pct">${progress}%</span>
+      </div>
+      <div class="product-offer">
+        <span style="font-size:11px;color:var(--text-muted)">Avance del desarrollo</span>
+        ${price}
+      </div>
+      ${p.commercial_notes ? `<div class="product-notes"><i class="fas fa-circle-info"></i> ${esc(p.commercial_notes)}</div>` : ''}
+    </div>`;
+}
+
+function emptyStateHtml(msg) {
+  return `<div class="empty-state"><i class="fas fa-box-open"></i><div>${esc(msg)}</div></div>`;
+}
+
+async function renderCatalogo() {
+  const el = document.getElementById('catalogo-content');
+  el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted)">Cargando…</div>`;
+  const products = await ensureProducts();
+  el.innerHTML = products.length
+    ? `<div class="product-grid">${products.map(productCardHtml).join('')}</div>`
+    : emptyStateHtml('ADG todavía no habilitó ningún producto para Comercial.');
+}
+
+async function renderDashboard() {
+  const statsEl = document.getElementById('stats-grid');
+  statsEl.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);grid-column:1/-1">Cargando…</div>`;
+  const products = await ensureProducts();
+
+  const total = products.length;
+  const enVenta = products.filter(p => p.commercial_offer_type === 'venta').length;
+  const enAlquiler = products.filter(p => p.commercial_offer_type === 'alquiler').length;
+  const ambos = products.filter(p => p.commercial_offer_type === 'venta_alquiler').length;
+  const avgProgress = total ? Math.round(products.reduce((s, p) => s + (Number(p.progress) || 0), 0) / total) : 0;
+
+  const stats = [
+    { icon:'fa-boxes-stacked', color:'var(--primary)', bg:'rgba(15,118,110,.12)', num:total, label:'Productos disponibles' },
+    { icon:'fa-tag', color:'var(--primary)', bg:'rgba(15,118,110,.12)', num:enVenta, label:'En venta' },
+    { icon:'fa-key', color:'var(--warning)', bg:'rgba(245,158,11,.12)', num:enAlquiler, label:'En alquiler' },
+    { icon:'fa-handshake', color:'var(--info)', bg:'rgba(59,130,246,.12)', num:ambos, label:'Venta o alquiler' },
+    { icon:'fa-chart-line', color:'var(--success)', bg:'rgba(5,150,105,.12)', num:avgProgress + '%', label:'Avance promedio' },
+  ];
+  statsEl.innerHTML = stats.map(s => `
+    <div class="stat-card">
+      <div class="stat-icon" style="background:${s.bg};color:${s.color}"><i class="fas ${s.icon}"></i></div>
+      <div class="stat-info"><div class="num">${s.num}</div><div class="label">${s.label}</div></div>
+    </div>`).join('');
+
+  const previewEl = document.getElementById('dashboard-preview');
+  const preview = products.slice(0, 3);
+  previewEl.innerHTML = preview.length
+    ? `<div class="product-grid">${preview.map(productCardHtml).join('')}</div>`
+    : emptyStateHtml('ADG todavía no habilitó ningún producto para Comercial.');
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+renderSidebarSession();
+renderDashboard();
+document.getElementById('sf-logout-btn')?.addEventListener('click', logout);
+document.getElementById('sf-switch-btn')?.addEventListener('click', () => { window.location.href = CENTRAL_MODULO_URL; });
+
+// ─── Cierre de sesión por inactividad + detección de sesión reemplazada ──────
+(function setupSessionGuard(onLogout) {
+  const WARN_AFTER_MS = 90 * 1000;
+  const LOGOUT_AFTER_MS = 120 * 1000;
+  const HEARTBEAT_MS = 20 * 1000;
+
+  let lastActivity = Date.now();
+  let overlay = null;
+  let countdownInterval = null;
+  let lastHeartbeatAt = 0;
+
+  function hideWarning() { if (overlay) { overlay.remove(); overlay = null; } clearInterval(countdownInterval); }
+
+  function showWarning() {
+    if (overlay) return;
+    let secondsLeft = Math.round((LOGOUT_AFTER_MS - WARN_AFTER_MS) / 1000);
+    overlay = document.createElement('div');
+    overlay.id = 'inactivity-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(17,24,39,.6);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:inherit';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:16px;padding:28px;max-width:340px;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,.25)">
+        <div style="width:48px;height:48px;border-radius:50%;background:#fef3c7;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:22px">⏱</div>
+        <h3 style="font-size:16px;font-weight:800;margin:0 0 8px;color:#111827">¿Sigues ahí?</h3>
+        <p style="font-size:13px;color:#6b7280;margin:0 0 18px;line-height:1.5">Tu sesión se cerrará por inactividad en <strong id="inactivity-countdown">${secondsLeft}</strong> segundos.</p>
+        <button id="inactivity-stay-btn" style="width:100%;padding:12px;border:none;border-radius:10px;background:#0f766e;color:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit">Seguir conectado</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    document.getElementById('inactivity-stay-btn').addEventListener('click', () => { lastActivity = Date.now(); hideWarning(); });
+    countdownInterval = setInterval(() => {
+      secondsLeft -= 1;
+      const el = document.getElementById('inactivity-countdown');
+      if (el) el.textContent = String(Math.max(secondsLeft, 0));
+      if (secondsLeft <= 0) clearInterval(countdownInterval);
+    }, 1000);
+  }
+
+  function handleActivity() { lastActivity = Date.now(); hideWarning(); }
+  ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click'].forEach(evt =>
+    document.addEventListener(evt, handleActivity, { passive: true }));
+
+  async function heartbeat() {
+    if (!localStorage.getItem('qc_token')) return;
+    try { await qcApiFetch('/api/auth/me'); } catch (_) { /* ya lo maneja qcApiFetch */ }
+  }
+
+  function tick() {
+    if (!localStorage.getItem('qc_token')) return;
+    const elapsed = Date.now() - lastActivity;
+    if (elapsed >= LOGOUT_AFTER_MS) { hideWarning(); onLogout(); return; }
+    if (elapsed >= WARN_AFTER_MS) showWarning();
+
+    const now = Date.now();
+    if (now - lastHeartbeatAt >= HEARTBEAT_MS) { lastHeartbeatAt = now; heartbeat(); }
+  }
+
+  setInterval(tick, 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+  tick();
+})(logout);
+</script>
+</body>
+</html>
