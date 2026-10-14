@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QUBIRA COMERCIAL</title>
   <link rel="icon" href="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" type="image/png">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: #0f766e;
@@ -33,13 +33,14 @@
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
       display: flex;
       min-height: 100vh;
       overflow-x: hidden;
     }
+    .icon { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; vertical-align: -3px; }
 
     /* ── SIDEBAR ── */
     .sidebar {
@@ -151,7 +152,8 @@
 
     /* ── PRODUCT GRID ── */
     .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
-    .product-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px; }
+    .product-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px; transition: transform .2s, box-shadow .2s; }
+    .product-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
     .product-head { display: flex; gap: 12px; align-items: center; }
     .product-logo { width: 48px; height: 48px; border-radius: 10px; object-fit: contain; background: var(--bg-card2); border: 1px solid var(--border); flex-shrink: 0; }
     .product-logo-ph { width: 48px; height: 48px; border-radius: 10px; background: var(--primary-light); color: var(--primary-dark); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
@@ -168,7 +170,27 @@
     .product-notes { font-size: 12px; color: var(--text-muted); background: var(--bg-card2); border-radius: 8px; padding: 8px 10px; line-height: 1.4; }
 
     .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
-    .empty-state i { font-size: 36px; margin-bottom: 14px; opacity: .4; }
+    .empty-state .icon { width: 36px; height: 36px; margin-bottom: 14px; opacity: .4; }
+
+    /* ── DASHBOARD GREETING ── */
+    .greeting h1 { font-size: 23px; font-weight: 800; letter-spacing: -.01em; }
+    .greeting p { color: var(--text-muted); font-size: 13px; margin-top: 3px; }
+
+    /* ── AGENDA WIDGET (dashboard) ── */
+    .agenda-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; transition: background .15s; }
+    .agenda-item:hover { background: var(--bg-card2); }
+    .agenda-item + .agenda-item { margin-top: 2px; }
+    .agenda-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+    .agenda-time { font-size: 11px; font-weight: 700; color: var(--primary); white-space: nowrap; }
+    .agenda-title { font-size: 13px; font-weight: 600; line-height: 1.3; }
+    .agenda-meta { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+
+    /* ── CATALOG FILTER BAR ── */
+    .cat-filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+    .cat-filters input, .cat-filters select { width: auto; min-width: 170px; }
+    .cat-search { position: relative; flex: 1; min-width: 220px; }
+    .cat-search .icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+    .cat-search input { padding-left: 38px; }
 
     /* ── BUTTONS ── */
     .btn {
@@ -262,6 +284,8 @@
       .hamburger { display:flex; }
       .stats-grid { grid-template-columns:repeat(2,1fr); }
       .product-grid { grid-template-columns: 1fr; }
+      .dash-cols { grid-template-columns: 1fr !important; }
+      .cat-filters { flex-direction: column; align-items: stretch; }
     }
 
     ::-webkit-scrollbar { width:5px; }
@@ -271,6 +295,37 @@
   </style>
 </head>
 <body>
+
+<!-- Sprite de íconos (Feather Icons, MIT License) -->
+<svg style="display:none">
+  <symbol id="icon-menu" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></symbol>
+  <symbol id="icon-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></symbol>
+  <symbol id="icon-log-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></symbol>
+  <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></symbol>
+  <symbol id="icon-trending-up" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></symbol>
+  <symbol id="icon-package" viewBox="0 0 24 24"><path d="M16.5 9.4 7.55 4.24"></path><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></symbol>
+  <symbol id="icon-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></symbol>
+  <symbol id="icon-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></symbol>
+  <symbol id="icon-check-circle" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></symbol>
+  <symbol id="icon-x-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></symbol>
+  <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></symbol>
+  <symbol id="icon-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></symbol>
+  <symbol id="icon-layers" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></symbol>
+  <symbol id="icon-inbox" viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></symbol>
+  <symbol id="icon-tag" viewBox="0 0 24 24"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></symbol>
+  <symbol id="icon-key" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m2-2L21 2m-5.5 5.5L19 4"></path></symbol>
+  <symbol id="icon-repeat" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></symbol>
+  <symbol id="icon-chevron-left" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></symbol>
+  <symbol id="icon-chevron-right" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></symbol>
+  <symbol id="icon-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></symbol>
+  <symbol id="icon-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></symbol>
+  <symbol id="icon-edit-2" viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></symbol>
+  <symbol id="icon-slash" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></symbol>
+  <symbol id="icon-trash-2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></symbol>
+  <symbol id="icon-alert-triangle" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></symbol>
+  <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></symbol>
+</svg>
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
@@ -284,13 +339,13 @@
   <nav class="sidebar-nav">
     <div class="nav-section">Principal</div>
     <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
-      <i class="fas fa-chart-line fa-fw"></i> Dashboard
+      <svg class="icon"><use href="#icon-trending-up"></use></svg> Dashboard
     </div>
     <div class="nav-item" data-page="calendario" onclick="navigate('calendario')">
-      <i class="fas fa-calendar-days fa-fw"></i> Calendario
+      <svg class="icon"><use href="#icon-calendar"></use></svg> Calendario
     </div>
     <div class="nav-item" data-page="catalogo" onclick="navigate('catalogo')">
-      <i class="fas fa-boxes-stacked fa-fw"></i> Catálogo de Productos
+      <svg class="icon"><use href="#icon-package"></use></svg> Catálogo de Productos
     </div>
   </nav>
   <div class="sidebar-footer">
@@ -303,10 +358,10 @@
     </div>
     <div style="display:flex;gap:8px">
       <button class="sidebar-logout-btn" id="sf-switch-btn" title="Cambiar de módulo">
-        <i class="fas fa-th-large"></i> Módulos
+        <svg class="icon" style="width:13px;height:13px"><use href="#icon-grid"></use></svg> Módulos
       </button>
       <button class="sidebar-logout-btn" id="sf-logout-btn" title="Cerrar sesión">
-        <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+        <svg class="icon" style="width:13px;height:13px"><use href="#icon-log-out"></use></svg> Cerrar sesión
       </button>
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
@@ -321,7 +376,7 @@
 <main class="main">
   <header class="topbar">
     <div class="topbar-left" style="display:flex;align-items:center;gap:14px">
-      <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <button class="hamburger" onclick="toggleSidebar()"><svg class="icon"><use href="#icon-menu"></use></svg></button>
       <div>
         <h1 id="page-title">Dashboard</h1>
         <p id="page-sub">Resumen de los productos disponibles para venta o alquiler</p>
@@ -333,13 +388,26 @@
 
     <!-- ═══ DASHBOARD ═══ -->
     <div class="page active" id="page-dashboard">
+      <div class="greeting" style="margin-bottom:22px">
+        <h1 id="greeting-title">Bienvenido 👋</h1>
+        <p id="greeting-date"></p>
+      </div>
       <div class="stats-grid" id="stats-grid"></div>
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title"><i class="fas fa-boxes-stacked" style="color:var(--accent)"></i> Productos destacados</h3>
-          <button class="btn-link" onclick="navigate('catalogo')">Ver catálogo completo</button>
+      <div class="dash-cols" style="display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start">
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header">
+            <h3 class="card-title"><svg class="icon" style="color:var(--accent)"><use href="#icon-package"></use></svg> Productos destacados</h3>
+            <button class="btn-link" onclick="navigate('catalogo')">Ver catálogo completo</button>
+          </div>
+          <div id="dashboard-preview"></div>
         </div>
-        <div id="dashboard-preview"></div>
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header">
+            <h3 class="card-title"><svg class="icon" style="color:var(--accent)"><use href="#icon-calendar"></use></svg> Próximas reuniones</h3>
+            <button class="btn-link" onclick="navigate('calendario')">Ver calendario</button>
+          </div>
+          <div id="dashboard-agenda"></div>
+        </div>
       </div>
     </div>
 
@@ -353,7 +421,7 @@
             <button type="button" class="cal-tab" id="cal-tab-week" onclick="calSetMode('week')">Vista semana</button>
             <button type="button" class="cal-tab" id="cal-tab-weekarea" onclick="calSetMode('weekArea')">Vista semana general</button>
           </div>
-          <button class="btn btn-primary" onclick="calOpenForm()"><i class="fas fa-plus"></i> Agregar reunión</button>
+          <button class="btn btn-primary" onclick="calOpenForm()"><svg class="icon" style="color:#fff"><use href="#icon-plus"></use></svg> Agregar reunión</button>
         </div>
         <div class="filters-bar" id="cal-filters" style="margin-top:16px">
           <select id="cal-f-area" onchange="calFilterChange('area', this.value)"></select>
@@ -370,6 +438,24 @@
 
     <!-- ═══ CATÁLOGO ═══ -->
     <div class="page" id="page-catalogo">
+      <div class="cat-filters">
+        <div class="cat-search">
+          <svg class="icon"><use href="#icon-search"></use></svg>
+          <input id="cat-f-search" placeholder="Buscar por nombre o código..." oninput="catFilterChange()">
+        </div>
+        <select id="cat-f-offer" onchange="catFilterChange()">
+          <option value="">Toda oferta</option>
+          <option value="venta">Venta</option>
+          <option value="alquiler">Alquiler</option>
+          <option value="venta_alquiler">Venta o alquiler</option>
+        </select>
+        <select id="cat-f-type" onchange="catFilterChange()">
+          <option value="">Todo tipo</option>
+          <option value="web">Web</option>
+          <option value="mobile">Aplicativo Móvil</option>
+          <option value="desktop">Aplicativo de Escritorio</option>
+        </select>
+      </div>
       <div id="catalogo-content"></div>
     </div>
 
@@ -384,12 +470,12 @@
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px" id="cal-modal-kicker">Nueva reunión</div>
         <div style="font-size:18px;font-weight:700">Reunión</div>
       </div>
-      <button class="close-btn" onclick="calCloseForm()"><i class="fas fa-times"></i></button>
+      <button class="close-btn" onclick="calCloseForm()"><svg class="icon"><use href="#icon-x"></use></svg></button>
     </div>
     <div class="modal-body" id="cal-modal-body"></div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="calCloseForm()">Cancelar</button>
-      <button class="btn btn-primary" id="cal-save-btn" onclick="calSubmitForm()"><i class="fas fa-save"></i> Guardar reunión</button>
+      <button class="btn btn-primary" id="cal-save-btn" onclick="calSubmitForm()"><svg class="icon" style="color:#fff"><use href="#icon-check"></use></svg> Guardar reunión</button>
     </div>
   </div>
 </div>
@@ -522,10 +608,10 @@ function toast(type, title, msg) {
   const w = document.getElementById('toast-wrap');
   const d = document.createElement('div');
   d.className = `toast t-${type}`;
-  const iMap = { success:'fa-check-circle', error:'fa-times-circle', info:'fa-info-circle' };
+  const iMap = { success:'check-circle', error:'x-circle', info:'info' };
   const cMap = { success:'var(--success)',  error:'var(--danger)',   info:'var(--info)'    };
   d.innerHTML = `
-    <i class="fas ${iMap[type]||'fa-bell'}" style="font-size:20px;color:${cMap[type]};flex-shrink:0"></i>
+    <svg class="icon" style="width:20px;height:20px;color:${cMap[type]||'var(--info)'}"><use href="#icon-${iMap[type]||'bell'}"></use></svg>
     <div><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div>`;
   w.appendChild(d);
   setTimeout(() => d.remove(), 4200);
@@ -558,11 +644,11 @@ async function ensureProducts() {
 function productCardHtml(p) {
   const logo = p.company_logo
     ? `<img class="product-logo" src="${esc(p.company_logo)}" alt="">`
-    : `<div class="product-logo-ph"><i class="fas fa-box"></i></div>`;
+    : `<div class="product-logo-ph"><svg class="icon"><use href="#icon-package"></use></svg></div>`;
   const badges = [
     `<span class="badge b-${esc(p.status)}">${esc(STATUS_LABEL[p.status] || p.status)}</span>`,
     p.project_type ? `<span class="badge b-${esc(p.project_type)}">${esc(TYPE_LABEL[p.project_type] || p.project_type)}</span>` : '',
-    p.family ? `<span class="badge b-family"><i class="fas fa-layer-group"></i> ${esc(p.family)}</span>` : '',
+    p.family ? `<span class="badge b-family"><svg class="icon" style="width:11px;height:11px"><use href="#icon-layers"></use></svg> ${esc(p.family)}</span>` : '',
     p.commercial_offer_type ? `<span class="badge b-${esc(p.commercial_offer_type)}">${esc(OFFER_LABEL[p.commercial_offer_type] || p.commercial_offer_type)}</span>` : '',
   ].filter(Boolean).join('');
   const progress = Number(p.progress) || 0;
@@ -588,24 +674,63 @@ function productCardHtml(p) {
         <span style="font-size:11px;color:var(--text-muted)">Avance del desarrollo</span>
         ${price}
       </div>
-      ${p.commercial_notes ? `<div class="product-notes"><i class="fas fa-circle-info"></i> ${esc(p.commercial_notes)}</div>` : ''}
+      ${p.commercial_notes ? `<div class="product-notes"><svg class="icon" style="width:13px;height:13px"><use href="#icon-info"></use></svg> ${esc(p.commercial_notes)}</div>` : ''}
     </div>`;
 }
 
 function emptyStateHtml(msg) {
-  return `<div class="empty-state"><i class="fas fa-box-open"></i><div>${esc(msg)}</div></div>`;
+  return `<div class="empty-state"><svg class="icon"><use href="#icon-inbox"></use></svg><div>${esc(msg)}</div></div>`;
+}
+
+let _catFilters = { search: '', offer: '', type: '' };
+
+function catFilterChange() {
+  _catFilters.search = document.getElementById('cat-f-search').value.trim().toLowerCase();
+  _catFilters.offer = document.getElementById('cat-f-offer').value;
+  _catFilters.type = document.getElementById('cat-f-type').value;
+  renderCatalogoList();
+}
+
+function applyCatFilters(products) {
+  return products.filter(p => {
+    if (_catFilters.search) {
+      const q = _catFilters.search;
+      if (!(p.name || '').toLowerCase().includes(q) && !(p.code || '').toLowerCase().includes(q)) return false;
+    }
+    if (_catFilters.offer && p.commercial_offer_type !== _catFilters.offer) return false;
+    if (_catFilters.type && p.project_type !== _catFilters.type) return false;
+    return true;
+  });
+}
+
+function renderCatalogoList() {
+  const el = document.getElementById('catalogo-content');
+  const filtered = applyCatFilters(_products);
+  el.innerHTML = filtered.length
+    ? `<div class="product-grid">${filtered.map(productCardHtml).join('')}</div>`
+    : emptyStateHtml(_products.length ? 'Ningún producto coincide con el filtro.' : 'ADG todavía no habilitó ningún producto para Comercial.');
 }
 
 async function renderCatalogo() {
   const el = document.getElementById('catalogo-content');
   el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted)">Cargando…</div>`;
-  const products = await ensureProducts();
-  el.innerHTML = products.length
-    ? `<div class="product-grid">${products.map(productCardHtml).join('')}</div>`
-    : emptyStateHtml('ADG todavía no habilitó ningún producto para Comercial.');
+  await ensureProducts();
+  renderCatalogoList();
+}
+
+const GREETING_DAY = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const GREETING_MONTH = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+function renderGreeting() {
+  const nombre = qcUser?.nombre || qcUser?.username || '';
+  document.getElementById('greeting-title').textContent = `Bienvenido${nombre ? ', ' + nombre : ''} 👋`;
+  const now = new Date();
+  const dayName = GREETING_DAY[now.getDay()];
+  document.getElementById('greeting-date').textContent = `${dayName[0].toUpperCase()}${dayName.slice(1)}, ${now.getDate()} de ${GREETING_MONTH[now.getMonth()]} de ${now.getFullYear()}`;
 }
 
 async function renderDashboard() {
+  renderGreeting();
   const statsEl = document.getElementById('stats-grid');
   statsEl.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);grid-column:1/-1">Cargando…</div>`;
   const products = await ensureProducts();
@@ -617,15 +742,15 @@ async function renderDashboard() {
   const avgProgress = total ? Math.round(products.reduce((s, p) => s + (Number(p.progress) || 0), 0) / total) : 0;
 
   const stats = [
-    { icon:'fa-boxes-stacked', color:'var(--primary)', bg:'rgba(15,118,110,.12)', num:total, label:'Productos disponibles' },
-    { icon:'fa-tag', color:'var(--primary)', bg:'rgba(15,118,110,.12)', num:enVenta, label:'En venta' },
-    { icon:'fa-key', color:'var(--warning)', bg:'rgba(245,158,11,.12)', num:enAlquiler, label:'En alquiler' },
-    { icon:'fa-handshake', color:'var(--info)', bg:'rgba(59,130,246,.12)', num:ambos, label:'Venta o alquiler' },
-    { icon:'fa-chart-line', color:'var(--success)', bg:'rgba(5,150,105,.12)', num:avgProgress + '%', label:'Avance promedio' },
+    { icon:'package', color:'var(--primary)', bg:'rgba(15,118,110,.12)', num:total, label:'Productos disponibles' },
+    { icon:'tag', color:'var(--primary)', bg:'rgba(15,118,110,.12)', num:enVenta, label:'En venta' },
+    { icon:'key', color:'var(--warning)', bg:'rgba(245,158,11,.12)', num:enAlquiler, label:'En alquiler' },
+    { icon:'repeat', color:'var(--info)', bg:'rgba(59,130,246,.12)', num:ambos, label:'Venta o alquiler' },
+    { icon:'trending-up', color:'var(--success)', bg:'rgba(5,150,105,.12)', num:avgProgress + '%', label:'Avance promedio' },
   ];
   statsEl.innerHTML = stats.map(s => `
     <div class="stat-card">
-      <div class="stat-icon" style="background:${s.bg};color:${s.color}"><i class="fas ${s.icon}"></i></div>
+      <div class="stat-icon" style="background:${s.bg};color:${s.color}"><svg class="icon"><use href="#icon-${s.icon}"></use></svg></div>
       <div class="stat-info"><div class="num">${s.num}</div><div class="label">${s.label}</div></div>
     </div>`).join('');
 
@@ -634,6 +759,38 @@ async function renderDashboard() {
   previewEl.innerHTML = preview.length
     ? `<div class="product-grid">${preview.map(productCardHtml).join('')}</div>`
     : emptyStateHtml('ADG todavía no habilitó ningún producto para Comercial.');
+
+  renderDashboardAgenda();
+}
+
+const AGENDA_DAY_COLORS = ['#10b981','#f59e0b','#0ea5e9','#8b5cf6','#f43f5e','#64748b'];
+
+async function renderDashboardAgenda() {
+  const el = document.getElementById('dashboard-agenda');
+  el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">Cargando…</div>`;
+  try {
+    const today = new Date();
+    const to = new Date(today); to.setDate(to.getDate() + 13);
+    const params = new URLSearchParams({ mine: 'true', date_from: calIsoDate(today), date_to: calIsoDate(to) });
+    const meetings = (await qcApiFetch('/api/calendar/meetings?' + params.toString()))
+      .filter(m => m.status !== 'cancelled')
+      .sort((a, b) => (a.meeting_date + a.start_time).localeCompare(b.meeting_date + b.start_time))
+      .slice(0, 6);
+    if (!meetings.length) {
+      el.innerHTML = `<div class="empty-state" style="padding:30px 20px"><svg class="icon"><use href="#icon-calendar"></use></svg><div style="font-size:13px">No tienes reuniones en los próximos días</div></div>`;
+      return;
+    }
+    el.innerHTML = meetings.map((m, i) => `
+      <div class="agenda-item" style="cursor:pointer" onclick="navigate('calendario')">
+        <div class="agenda-dot" style="background:${AGENDA_DAY_COLORS[i % AGENDA_DAY_COLORS.length]}"></div>
+        <div style="flex:1;min-width:0">
+          <div class="agenda-title">${esc(m.title)}</div>
+          <div class="agenda-meta">${calFmtDate(m.meeting_date)} · ${m.start_time.slice(0,5)}${m.meeting_type ? ' · ' + esc(m.meeting_type) : ''}</div>
+        </div>
+      </div>`).join('');
+  } catch (err) {
+    el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No se pudo cargar la agenda</div>`;
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -882,9 +1039,9 @@ function calRenderWeekView() {
     <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border);">
       <button type="button" class="btn btn-outline" style="padding:6px 12px;font-size:12.5px;" onclick="calWeekOffset=0;calLoad();">Hoy</button>
       <div style="display:flex;align-items:center;gap:8px;">
-        <button type="button" style="border:0;background:none;cursor:pointer;color:var(--text-muted);padding:4px;" onclick="calWeekOffset--;calLoad();"><i class="fas fa-chevron-left"></i></button>
+        <button type="button" style="border:0;background:none;cursor:pointer;color:var(--text-muted);padding:4px;" onclick="calWeekOffset--;calLoad();"><svg class="icon"><use href="#icon-chevron-left"></use></svg></button>
         <span style="font-size:13.5px;font-weight:600;">${rangeLabel}</span>
-        <button type="button" style="border:0;background:none;cursor:pointer;color:var(--text-muted);padding:4px;" onclick="calWeekOffset++;calLoad();"><i class="fas fa-chevron-right"></i></button>
+        <button type="button" style="border:0;background:none;cursor:pointer;color:var(--text-muted);padding:4px;" onclick="calWeekOffset++;calLoad();"><svg class="icon"><use href="#icon-chevron-right"></use></svg></button>
       </div>
       <div style="width:72px;"></div>
     </div>
@@ -903,7 +1060,7 @@ function calRenderWeekView() {
 function calRenderList() {
   const c = document.getElementById('cal-list');
   if (!calMeetings.length) {
-    c.innerHTML = `<div class="card" style="padding:36px;text-align:center;color:var(--text-muted)"><i class="fas fa-calendar" style="font-size:28px;opacity:.4"></i><p style="margin-top:10px">No hay reuniones en este rango</p></div>`;
+    c.innerHTML = `<div class="card" style="padding:36px;text-align:center;color:var(--text-muted)"><svg class="icon" style="width:28px;height:28px;opacity:.4"><use href="#icon-calendar"></use></svg><p style="margin-top:10px">No hay reuniones en este rango</p></div>`;
     return;
   }
   const groups = {};
@@ -935,7 +1092,7 @@ function calMeetingCard(m) {
           <strong>${calEsc(m.title)}</strong>
           <span class="badge" style="background:rgba(15,118,110,.12);color:var(--primary)">${calEsc(m.area)}</span>
           <span class="badge" style="background:rgba(5,150,105,.14);color:var(--success)">${statusTxt}</span>
-          ${isBusy ? '<span class="badge" style="background:rgba(107,114,128,.14);color:#9ca3af"><i class="fas fa-lock"></i> Privada</span>' : ''}
+          ${isBusy ? '<span class="badge" style="background:rgba(107,114,128,.14);color:#9ca3af"><svg class="icon" style="width:11px;height:11px"><use href="#icon-lock"></use></svg> Privada</span>' : ''}
         </div>
         <p style="font-size:12.5px;color:var(--text-muted);margin-top:4px">${m.start_time.slice(0,5)} — ${m.end_time.slice(0,5)}${m.meeting_type ? ' · ' + calEsc(m.meeting_type) : ''}</p>
         ${!isBusy && m.motivo ? `<p style="font-size:13.5px;margin-top:6px">${calEsc(m.motivo)}</p>` : ''}
@@ -944,10 +1101,10 @@ function calMeetingCard(m) {
       </div>
       ${!isBusy ? `
       <div style="display:flex;gap:4px;flex-shrink:0">
-        <button type="button" class="btn btn-outline btn-sm" onclick="calViewMeeting('${m.id}')" title="Ver detalle"><i class="fas fa-eye"></i></button>
-        <button type="button" class="btn btn-outline btn-sm" onclick="calOpenForm('${m.id}')" title="Editar"><i class="fas fa-edit"></i></button>
-        <button type="button" class="btn btn-outline btn-sm" onclick="calCancelMeeting('${m.id}')" title="Cancelar"><i class="fas fa-ban"></i></button>
-        <button type="button" class="btn btn-outline btn-sm" onclick="calDeleteMeeting('${m.id}')" title="Eliminar"><i class="fas fa-trash"></i></button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="calViewMeeting('${m.id}')" title="Ver detalle"><svg class="icon" style="width:14px;height:14px"><use href="#icon-eye"></use></svg></button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="calOpenForm('${m.id}')" title="Editar"><svg class="icon" style="width:14px;height:14px"><use href="#icon-edit-2"></use></svg></button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="calCancelMeeting('${m.id}')" title="Cancelar"><svg class="icon" style="width:14px;height:14px"><use href="#icon-slash"></use></svg></button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="calDeleteMeeting('${m.id}')" title="Eliminar"><svg class="icon" style="width:14px;height:14px"><use href="#icon-trash-2"></use></svg></button>
       </div>` : ''}
     </div>
   </div>`;
@@ -980,7 +1137,7 @@ function calFormBodyHtml(editing) {
       ${currentImage ? `
         <div style="position:relative;display:inline-block;margin-bottom:6px">
           <img src="${calEsc(currentImage)}" style="border-radius:8px;max-height:110px;border:1px solid var(--border);display:block">
-          <button type="button" onclick="calRemoveImage()" style="position:absolute;top:-6px;right:-6px;background:var(--bg-card);border-radius:50%;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.3);width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted)"><i class="fas fa-times" style="font-size:11px"></i></button>
+          <button type="button" onclick="calRemoveImage()" style="position:absolute;top:-6px;right:-6px;background:var(--bg-card);border-radius:50%;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.3);width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted)"><svg class="icon" style="width:11px;height:11px"><use href="#icon-x"></use></svg></button>
         </div>` : ''}
       <input type="file" id="cal-image-input" accept="image/*" onchange="calHandleImageUpload(this)" style="font-size:12.5px">
       <p id="cal-image-status" style="font-size:12px;color:var(--text-muted);margin-top:4px"></p>
@@ -998,7 +1155,7 @@ function calFormBodyHtml(editing) {
       <div style="display:flex;gap:8px">
         <input id="cal-ext-name" placeholder="Nombre" autocomplete="off" style="flex:1">
         <select id="cal-ext-kind" style="width:auto">${CAL_EXTERNAL_KINDS.map(([k,l]) => `<option value="${k}">${l}</option>`).join('')}</select>
-        <button type="button" class="btn btn-outline" onclick="calAddExternal()"><i class="fas fa-plus"></i></button>
+        <button type="button" class="btn btn-outline" onclick="calAddExternal()"><svg class="icon"><use href="#icon-plus"></use></svg></button>
       </div>
       <div id="cal-selected-externals" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${calSelectedExternalsHtml()}</div>
     </div>
@@ -1084,7 +1241,7 @@ function calSelectedParticipantsHtml() {
   return calSelectedParticipants.map(p => `
     <span class="badge" style="display:inline-flex;align-items:center;gap:5px;background:rgba(15,118,110,.12);color:var(--primary)">
       ${calEsc(calFullName(p))}${p.area ? ' — ' + calEsc(p.area) : ''}
-      <i class="fas fa-times" style="cursor:pointer" onclick="calRemoveParticipant(${p.user_id})"></i>
+      <svg class="icon" style="width:12px;height:12px;cursor:pointer" onclick="calRemoveParticipant(${p.user_id})"><use href="#icon-x"></use></svg>
     </span>`).join('');
 }
 function calSelectedExternalsHtml() {
@@ -1092,14 +1249,14 @@ function calSelectedExternalsHtml() {
   return calExternalParticipants.map((p, i) => `
     <span class="badge" style="display:inline-flex;align-items:center;gap:5px;background:rgba(245,158,11,.14);color:var(--warning)">
       ${calEsc(p.name)} (${(CAL_EXTERNAL_KINDS.find(k=>k[0]===p.kind)||[])[1] || p.kind})
-      <i class="fas fa-times" style="cursor:pointer" onclick="calRemoveExternal(${i})"></i>
+      <svg class="icon" style="width:12px;height:12px;cursor:pointer" onclick="calRemoveExternal(${i})"><use href="#icon-x"></use></svg>
     </span>`).join('');
 }
 function calConflictBannerHtml() {
   if (!calConflicts.length) return '';
   return `
   <div style="border-radius:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);padding:12px;font-size:13px;color:#dc2626;margin-top:4px">
-    <p style="font-weight:700;display:flex;align-items:center;gap:6px"><i class="fas fa-exclamation-triangle"></i> ${calConflicts.length > 1 ? 'Se encontraron ' + calConflicts.length + ' conflictos:' : 'Conflicto de horario'}</p>
+    <p style="font-weight:700;display:flex;align-items:center;gap:6px"><svg class="icon" style="width:15px;height:15px"><use href="#icon-alert-triangle"></use></svg> ${calConflicts.length > 1 ? 'Se encontraron ' + calConflicts.length + ' conflictos:' : 'Conflicto de horario'}</p>
     <ul style="margin:6px 0 0 18px;padding:0">
       ${calConflicts.map(c => `<li>${calEsc(c.user_name || 'Alguien')} (${calEsc(c.area || '—')}) ya tiene "${calEsc(c.meeting_name)}" de ${c.start_time.slice(0,5)} a ${c.end_time.slice(0,5)} (${c.date}).</li>`).join('')}
     </ul>
