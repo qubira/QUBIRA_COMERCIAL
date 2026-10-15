@@ -656,11 +656,27 @@ function productCardHtml(p) {
     p.commercial_offer_type ? `<span class="badge b-${esc(p.commercial_offer_type)}">${esc(OFFER_LABEL[p.commercial_offer_type] || p.commercial_offer_type)}</span>` : '',
   ].filter(Boolean).join('');
   const progress = Number(p.progress) || 0;
-  const price = p.commercial_price != null && p.commercial_price !== ''
-    ? `<span class="product-price">${CURRENCY_SYMBOL[p.commercial_price_currency] || 'S/'} ${Number(p.commercial_price).toLocaleString()}</span>`
-    : `<span style="font-size:12.5px;color:var(--text-muted)">Precio a consultar</span>`;
+  /* ADG habilita el producto para Comercial apenas lo marca visible —
+     no espera a que OPP fije el precio. Así que un producto puede
+     aparecer en el catálogo sin precio todavía: se marca en rojo para
+     que quede claro que es un estado transitorio (pendiente de OPP),
+     no un error ni un "a consultar" permanente. */
+  const hasVenta = p.commercial_price != null && p.commercial_price !== '';
+  const hasAlquiler = p.rental_price != null && p.rental_price !== '';
+  const hasPrice = hasVenta || hasAlquiler;
+  const sym = CURRENCY_SYMBOL[p.commercial_price_currency] || 'S/';
+  let price;
+  if (hasVenta && hasAlquiler) {
+    price = `<span class="product-price">${sym} ${Number(p.commercial_price).toLocaleString()}</span> <span style="font-size:12px;color:var(--text-muted)">o ${sym} ${Number(p.rental_price).toLocaleString()}/mes</span>`;
+  } else if (hasVenta) {
+    price = `<span class="product-price">${sym} ${Number(p.commercial_price).toLocaleString()}</span>`;
+  } else if (hasAlquiler) {
+    price = `<span class="product-price">${sym} ${Number(p.rental_price).toLocaleString()}<span style="font-size:12px;font-weight:600"> /mes</span></span>`;
+  } else {
+    price = `<span style="display:inline-flex;align-items:center;gap:5px;font-size:13.5px;font-weight:700;color:#dc2626"><svg class="icon" style="width:14px;height:14px"><use href="#icon-alert-triangle"></use></svg> Precio pendiente de OPP</span>`;
+  }
   return `
-    <div class="product-card">
+    <div class="product-card" style="${!hasPrice ? 'border-left:3px solid #dc2626' : ''}">
       <div class="product-head">
         ${logo}
         <div style="min-width:0">
