@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QUBIRA Comercial | Verificando sesión</title>
+<title>QUBIRA ODN | Verificando sesión</title>
 <link rel="icon" href="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" type="image/png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -80,8 +80,9 @@ async function exchangeHandoff(code) {
     const data = await res.json();
     if (!res.ok || !data.ok) { showError(data.error || 'El enlace de acceso venció o ya se usó.'); return; }
 
-    if (!(data.user.authorized_modules || []).includes('COMERCIAL')) {
-      showError('Tu cuenta no tiene autorización para Comercial.');
+    const mods = data.user.authorized_modules || [];
+    if (!mods.includes('COMERCIAL') && !mods.includes('ODN') && (data.user.nivel_acceso || 0) < 100) {
+      showError('Tu cuenta no tiene autorización para ODN (Oficina de Desarrollo de Negocios).');
       return;
     }
 
@@ -102,9 +103,10 @@ async function checkExistingSession() {
     const res = await fetch(`${QC_API_BASE}/api/auth/me`, { headers: { Authorization: 'Bearer ' + existingToken } });
     if (!res.ok) { localStorage.removeItem('qc_token'); localStorage.removeItem('qc_user'); goToCentralLogin(); return; }
     const data = await res.json();
-    if (!(data.user.authorized_modules || []).includes('COMERCIAL')) {
+    const mods = data.user.authorized_modules || [];
+    if (!mods.includes('COMERCIAL') && !mods.includes('ODN') && (data.user.nivel_acceso || 0) < 100) {
       localStorage.removeItem('qc_token'); localStorage.removeItem('qc_user');
-      showError('Tu cuenta no tiene autorización para Comercial.');
+      showError('Tu cuenta no tiene autorización para ODN (Oficina de Desarrollo de Negocios).');
       return;
     }
     localStorage.setItem('qc_user', JSON.stringify(data.user));

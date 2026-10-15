@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QUBIRA COMERCIAL</title>
+  <title>QUBIRA ODN | Oficina Desarrollo de Negocios</title>
   <link rel="icon" href="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -336,7 +336,7 @@
     <img src="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" alt="Qubira" onerror="this.style.display='none'">
     <div>
       <div class="brand">QUBIRA</div>
-      <div class="sub">COMERCIAL</div>
+      <div class="sub">ODN · DESARROLLO DE NEGOCIOS</div>
     </div>
   </div>
   <nav class="sidebar-nav">
@@ -419,7 +419,7 @@
       <div style="position:sticky;top:64px;z-index:20;background:var(--bg);padding-top:2px;padding-bottom:10px;margin:0 -2px;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:2px">
           <div class="cal-tabs">
-            <button type="button" class="cal-tab" id="cal-tab-area" onclick="calSetMode('area')">Calendario — Comercial</button>
+            <button type="button" class="cal-tab" id="cal-tab-area" onclick="calSetMode('area')">Calendario — ODN</button>
             <button type="button" class="cal-tab" id="cal-tab-mine" onclick="calSetMode('mine')">Mi agenda</button>
             <button type="button" class="cal-tab" id="cal-tab-week" onclick="calSetMode('week')">Vista semana</button>
             <button type="button" class="cal-tab" id="cal-tab-weekarea" onclick="calSetMode('weekArea')">Vista semana general</button>
@@ -500,7 +500,8 @@
   if (!token) { window.location.href = 'login.html'; return; }
   try {
     const storedUser = JSON.parse(localStorage.getItem('qc_user') || 'null');
-    if (!(storedUser?.authorized_modules || []).includes('COMERCIAL')) {
+    const mods = storedUser?.authorized_modules || [];
+    if (!mods.includes('COMERCIAL') && !mods.includes('ODN') && (storedUser?.nivel_acceso || 0) < 100) {
       localStorage.removeItem('qc_token');
       localStorage.removeItem('qc_user');
       window.location.href = 'login.html';
@@ -577,7 +578,7 @@ function renderSidebarSession() {
   const iniciales = (qcUser.nombre?.[0] || qcUser.username?.[0] || '?').toUpperCase() + (qcUser.apellidos?.[0] || '').toUpperCase();
   avatarEl.textContent = iniciales;
   nameEl.textContent = nombre;
-  roleEl.textContent = `${qcUser.rol || 'Comercial'} · Qubira`;
+  roleEl.textContent = `${qcUser.rol || 'ODN'} · Qubira`;
 }
 
 // ══════════════════════════════════════════════════════
@@ -588,8 +589,8 @@ function closeSidebar()  { document.getElementById('sidebar').classList.remove('
 
 const PAGE_META = {
   dashboard: { title:'Dashboard', sub:'Resumen de los productos disponibles para venta o alquiler' },
-  calendario: { title:'Calendario', sub:'Reuniones de Comercial e interconexión con otras áreas' },
-  catalogo:  { title:'Catálogo de Productos', sub:'Productos que ADG habilitó para que Comercial los ofrezca' },
+  calendario: { title:'Calendario', sub:'Reuniones de ODN e interconexión con otras áreas' },
+  catalogo:  { title:'Catálogo de Productos', sub:'Productos que ADG habilitó para que ODN los ofrezca' },
 };
 
 function navigate(page) {
