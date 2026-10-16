@@ -309,7 +309,7 @@
     .form-help { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
     .form-section-title { font-size: 13px; font-weight: 700; color: var(--primary); margin: 20px 0 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
 
-    /* ── BADGES FOR CONTRACTS & CLIENTS ── */
+    /* ── BADGES FOR CONTRACTS, PROFORMAS & CLIENTS ── */
     .b-borrador       { background: rgba(107,114,128,.14); color: #6b7280; }
     .b-pendiente_firma{ background: rgba(245,158,11,.14);  color: var(--warning); }
     .b-vigente        { background: rgba(16,185,129,.14);  color: var(--success); }
@@ -317,15 +317,20 @@
     .b-corporativo    { background: rgba(139,92,246,.14);  color: var(--purple); }
     .b-pyme           { background: rgba(59,130,246,.14);  color: var(--info); }
     .b-prospecto      { background: rgba(245,158,11,.14);  color: var(--warning); }
+    .b-enviada        { background: rgba(59,130,246,.14);  color: var(--info); }
+    .b-aprobada       { background: rgba(16,185,129,.14);  color: var(--success); }
+    .b-rechazada      { background: rgba(239,68,68,.14);  color: var(--danger); }
+    .b-vencida        { background: rgba(245,158,11,.14);  color: var(--warning); }
+    .b-convertida     { background: rgba(139,92,246,.14);  color: var(--purple); }
 
-    /* ── CONTRACT OFFICIAL PAPER ── */
-    .contract-paper {
+    /* ── CONTRACT & PROFORMA OFFICIAL PAPER ── */
+    .contract-paper, .proforma-paper {
       background: #ffffff; color: #111827; padding: 40px; border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0,0,0,.08); border: 1px solid var(--border);
       font-family: 'Inter', -apple-system, sans-serif; line-height: 1.6;
     }
-    .contract-paper h2 { font-size: 19px; font-weight: 800; text-align: center; color: #0f766e; margin-bottom: 4px; letter-spacing: -.01em; }
-    .contract-paper .contract-subtitle { text-align: center; font-size: 11px; color: #6b7280; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+    .contract-paper h2, .proforma-paper h2 { font-size: 19px; font-weight: 800; text-align: center; color: #0f766e; margin-bottom: 4px; letter-spacing: -.01em; }
+    .contract-paper .contract-subtitle, .proforma-paper .proforma-subtitle { text-align: center; font-size: 11px; color: #6b7280; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
     .contract-clause { margin-bottom: 18px; font-size: 13px; }
     .contract-clause strong { color: #111827; display: block; margin-bottom: 4px; font-size: 13.5px; font-weight: 700; }
     .contract-signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; padding-top: 24px; border-top: 1px dashed #cbd5e1; }
@@ -333,23 +338,44 @@
     .signature-box .sign-name { font-weight: 700; font-size: 13px; }
     .signature-box .sign-role { font-size: 11px; color: #6b7280; }
 
+    /* Proforma specific layout elements */
+    .proforma-meta-box {
+      display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px;
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 22px; font-size: 12.5px;
+    }
+    .proforma-meta-col strong { color: #0f766e; display: block; margin-bottom: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+    .proforma-table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 12.5px; }
+    .proforma-table th { background: #0f766e; color: #ffffff; padding: 10px 12px; border: 1px solid #0f766e; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: .5px; }
+    .proforma-table td { padding: 10px 12px; border: 1px solid #e2e8f0; vertical-align: middle; }
+    .proforma-table tbody tr:nth-child(even) { background: #f8fafc; }
+    .proforma-summary-wrap { display: flex; justify-content: flex-end; margin-top: 10px; }
+    .proforma-summary-table { width: 320px; border-collapse: collapse; font-size: 12.5px; }
+    .proforma-summary-table td { padding: 6px 12px; }
+    .proforma-summary-table tr.total-row td { font-size: 16px; font-weight: 800; color: #0f766e; border-top: 2px solid #0f766e; padding-top: 10px; }
+    .proforma-bank-info {
+      background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 18px; margin-top: 22px; font-size: 11.5px; color: #334155; line-height: 1.6;
+    }
+
     /* ── PRINT RULES ── */
     @media print {
       body * { visibility: hidden !important; }
-      #contract-view-modal, #contract-view-modal .modal, #contract-view-modal .modal-body, #contract-view-modal .contract-paper, #contract-view-modal .contract-paper * {
+      #contract-view-modal, #contract-view-modal .modal, #contract-view-modal .modal-body, #contract-view-modal .contract-paper, #contract-view-modal .contract-paper *,
+      #proforma-view-modal, #proforma-view-modal .modal, #proforma-view-modal .modal-body, #proforma-view-modal .proforma-paper, #proforma-view-modal .proforma-paper * {
         visibility: visible !important;
       }
-      #contract-view-modal {
+      #contract-view-modal, #proforma-view-modal {
         position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; padding: 0 !important;
         background: #fff !important; opacity: 1 !important; pointer-events: all !important; display: block !important;
       }
-      #contract-view-modal .modal {
+      #contract-view-modal .modal, #proforma-view-modal .modal {
         box-shadow: none !important; border: none !important; width: 100% !important; max-width: 100% !important; max-height: none !important; transform: none !important;
       }
-      #contract-view-modal .modal-header, #contract-view-modal .modal-footer, .sidebar, .topbar {
+      #contract-view-modal .modal-header, #contract-view-modal .modal-footer,
+      #proforma-view-modal .modal-header, #proforma-view-modal .modal-footer,
+      .sidebar, .topbar {
         display: none !important;
       }
-      .contract-paper {
+      .contract-paper, .proforma-paper {
         border: none !important; box-shadow: none !important; padding: 20px !important;
       }
     }
@@ -399,6 +425,8 @@
   <symbol id="icon-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></symbol>
   <symbol id="icon-printer" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></symbol>
   <symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></symbol>
+  <symbol id="icon-clipboard" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></symbol>
+  <symbol id="icon-send" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></symbol>
 </svg>
 
 <!-- SIDEBAR -->
@@ -428,6 +456,14 @@
     </div>
     <div class="nav-item" data-page="revisar-contrato" onclick="navigate('revisar-contrato')">
       <svg class="icon"><use href="#icon-file-text"></use></svg> Revisar Contrato
+    </div>
+
+    <div class="nav-section">Proformas</div>
+    <div class="nav-item" data-page="crear-proforma" onclick="navigate('crear-proforma')">
+      <svg class="icon"><use href="#icon-clipboard"></use></svg> Crear Proforma
+    </div>
+    <div class="nav-item" data-page="consultar-proforma" onclick="navigate('consultar-proforma')">
+      <svg class="icon"><use href="#icon-search"></use></svg> Consultar Proforma
     </div>
 
     <div class="nav-section">Clientes</div>
@@ -547,6 +583,8 @@
         </select>
       </div>
       <div id="catalogo-content"></div>
+    </div>
+
     <!-- ═══ CONTRATOS: CREAR CONTRATO ═══ -->
     <div class="page" id="page-crear-contrato">
       <div style="display:grid;grid-template-columns:1.8fr 1.2fr;gap:22px;align-items:start">
@@ -854,6 +892,403 @@
       </div>
     </div>
 
+    <!-- ═══ PROFORMAS: CREAR PROFORMA ═══ -->
+    <div class="page" id="page-crear-proforma">
+      <div style="display:grid;grid-template-columns:1.8fr 1.2fr;gap:22px;align-items:start">
+        
+        <!-- Formulario de Creación de Proforma -->
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg class="icon" style="color:var(--primary)"><use href="#icon-clipboard"></use></svg>
+              Generador de Proformas y Cotizaciones Oficiales
+            </h3>
+            <span class="badge b-borrador" id="prf-badge-state">Modo Edición</span>
+          </div>
+
+          <form id="form-crear-proforma" onsubmit="handleGuardarProforma(event)">
+            <!-- SECCIÓN 1: Identificación y Cliente Destinatario -->
+            <div class="form-section-title">
+              <svg class="icon" style="width:15px;height:15px"><use href="#icon-users"></use></svg>
+              1. Identificación y Destinatario
+            </div>
+            
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="prf-codigo">Código de Proforma</label>
+                <div style="display:flex;gap:6px">
+                  <input type="text" id="prf-codigo" readonly style="font-family:monospace;font-weight:700;background:var(--bg-card2)">
+                  <button type="button" class="btn-icon" title="Generar nuevo código" onclick="regenerateProformaCode()">
+                    <svg class="icon"><use href="#icon-repeat"></use></svg>
+                  </button>
+                </div>
+                <span class="form-help">Secuencia oficial correlativa ODN 2026</span>
+              </div>
+
+              <div class="form-group">
+                <label for="prf-cliente-sel">Cliente / Empresa Destinataria *</label>
+                <div style="display:flex;gap:6px">
+                  <select id="prf-cliente-sel" required onchange="onProformaClientSelected(this.value)">
+                    <!-- Populated dynamically -->
+                  </select>
+                  <button type="button" class="btn-icon" title="Crear cliente rápido" onclick="navigate('crear-clientes')">
+                    <svg class="icon"><use href="#icon-user-plus"></use></svg>
+                  </button>
+                </div>
+                <span class="form-help">Selecciona un cliente o regístralo si es nuevo</span>
+              </div>
+            </div>
+
+            <div class="form-grid-3" style="margin-top:14px">
+              <div class="form-group">
+                <label for="prf-contacto">Atención a (Contacto) *</label>
+                <input type="text" id="prf-contacto" placeholder="Representante / Contacto" required oninput="updateProformaPreview()">
+              </div>
+
+              <div class="form-group">
+                <label for="prf-email">Email de Contacto *</label>
+                <input type="email" id="prf-email" placeholder="cliente@empresa.pe" required oninput="updateProformaPreview()">
+              </div>
+
+              <div class="form-group">
+                <label for="prf-telefono">Teléfono / WhatsApp</label>
+                <input type="text" id="prf-telefono" placeholder="+51 999 999 999" oninput="updateProformaPreview()">
+              </div>
+            </div>
+
+            <div class="form-grid-3" style="margin-top:14px">
+              <div class="form-group">
+                <label for="prf-fecha-emision">Fecha de Emisión *</label>
+                <input type="date" id="prf-fecha-emision" required onchange="onProformaDateChange()">
+              </div>
+
+              <div class="form-group">
+                <label for="prf-validez-dias">Validez de la Oferta *</label>
+                <select id="prf-validez-dias" required onchange="onProformaDateChange()">
+                  <option value="15">15 días calendario</option>
+                  <option value="30" selected>30 días calendario</option>
+                  <option value="45">45 días calendario</option>
+                  <option value="60">60 días calendario</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="prf-fecha-vencimiento">Fecha de Caducidad</label>
+                <input type="date" id="prf-fecha-vencimiento" readonly style="background:var(--bg-card2)">
+              </div>
+            </div>
+
+            <!-- SECCIÓN 2: Solución y Desglose de Conceptos -->
+            <div class="form-section-title">
+              <svg class="icon" style="width:15px;height:15px"><use href="#icon-package"></use></svg>
+              2. Solución Tecnológica y Cotización Detallada
+            </div>
+
+            <div class="form-grid-3">
+              <div class="form-group">
+                <label for="prf-tipo">Modalidad Propuesta *</label>
+                <select id="prf-tipo" required onchange="updateProformaPreview()">
+                  <option value="Venta de Licencia">Venta de Software / Licencia Definitiva</option>
+                  <option value="Alquiler / SaaS">Alquiler / Suscripción SaaS Mensual</option>
+                  <option value="Desarrollo a Medida">Desarrollo de Software a Medida</option>
+                  <option value="Mantenimiento & SLA">Mantenimiento, Soporte Continuo & SLA</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="prf-producto-sel">Producto Base del Catálogo *</label>
+                <select id="prf-producto-sel" required onchange="onProformaProductChange(this.value)">
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="prf-moneda">Moneda *</label>
+                <select id="prf-moneda" required onchange="onProformaCurrencyChange()">
+                  <option value="USD">Dólares Americanos (USD $)</option>
+                  <option value="PEN">Soles Peruanos (PEN S/)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Tabla de Ítems / Conceptos cotizados -->
+            <div style="margin-top:16px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <label style="font-weight:700;color:var(--text);font-size:13px">Ítems, Licencias y Servicios Cotizados</label>
+                <button type="button" class="btn btn-outline btn-sm" onclick="addProformaItemRow()">
+                  <svg class="icon" style="width:13px;height:13px"><use href="#icon-plus"></use></svg> Agregar Ítem
+                </button>
+              </div>
+
+              <div class="table-responsive" style="margin-bottom:12px;border-radius:8px">
+                <table class="data-table" style="font-size:13px" id="tabla-proforma-items-input">
+                  <thead>
+                    <tr>
+                      <th style="width:40px">#</th>
+                      <th>Descripción del Concepto / Servicio</th>
+                      <th style="width:90px;text-align:center">Cant.</th>
+                      <th style="width:130px;text-align:right">P. Unitario</th>
+                      <th style="width:130px;text-align:right">Subtotal</th>
+                      <th style="width:45px;text-align:center"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="proforma-items-container">
+                    <!-- Filas generadas dinámicamente -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Resumen de Totales y Ajustes -->
+            <div style="background:var(--bg-card2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-top:12px">
+              <div class="form-grid-3" style="align-items:center">
+                <div class="form-group">
+                  <label for="prf-descuento-pct">Descuento Comercial (%)</label>
+                  <input type="number" id="prf-descuento-pct" min="0" max="50" step="1" value="0" oninput="calcProformaTotals()">
+                </div>
+
+                <div class="form-group">
+                  <label for="prf-impuesto-opcion">Tratamiento Tributario (IGV)</label>
+                  <select id="prf-impuesto-opcion" onchange="calcProformaTotals()">
+                    <option value="igv_18">Precios + 18% IGV</option>
+                    <option value="exonerado">Exonerado / No Sujeto a IGV</option>
+                  </select>
+                </div>
+
+                <div style="text-align:right">
+                  <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase">Monto Total a Cotizar</div>
+                  <div style="font-size:20px;font-weight:800;color:var(--primary)" id="prf-calc-total-display">$ 0.00</div>
+                  <div style="font-size:11px;color:var(--text-muted)" id="prf-calc-subtotal-display">Subtotal: $ 0.00</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECCIÓN 3: Condiciones Comerciales y Entregables -->
+            <div class="form-section-title">
+              <svg class="icon" style="width:15px;height:15px"><use href="#icon-file-text"></use></svg>
+              3. Condiciones Comerciales y Términos
+            </div>
+
+            <div class="form-grid-3">
+              <div class="form-group">
+                <label for="prf-modalidad-pago">Forma de Pago Propuesta *</label>
+                <select id="prf-modalidad-pago" required onchange="updateProformaPreview()">
+                  <option value="50% anticipo, 50% contra entrega">50% anticipo y 50% contra entrega</option>
+                  <option value="100% pago adelantado (con 5% desc. pronto pago)">100% pago adelantado</option>
+                  <option value="30% firma, 40% hitos, 30% conformidad">30% firma / 40% hitos / 30% fin</option>
+                  <option value="Mensual recurrente (primeros 5 días)">Mensual recurrente (primeros 5 días)</option>
+                  <option value="Factura a 30 días">Factura a 30 días</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="prf-tiempo-entrega">Plazo Estimado de Entrega *</label>
+                <input type="text" id="prf-tiempo-entrega" value="15 días hábiles tras confirmación" required oninput="updateProformaPreview()">
+              </div>
+
+              <div class="form-group">
+                <label for="prf-garantia">Garantía / SLA Incluido *</label>
+                <select id="prf-garantia" onchange="updateProformaPreview()">
+                  <option value="12 meses de soporte técnico y mantenimiento">12 Meses Soporte & Garantía</option>
+                  <option value="6 meses de soporte técnico y mantenimiento">6 Meses Soporte Estándar</option>
+                  <option value="3 meses de garantía técnica básica">3 Meses Garantía Básica</option>
+                  <option value="SLA 99.8% disponibilidad y soporte 24/7">SLA Crítico 24/7 (Alta Disp.)</option>
+                  <option value="Sin garantía extendida">Sin garantía extendida</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top:14px">
+              <label for="prf-alcance">Alcance y Entregables Técnicos Comprendidos *</label>
+              <textarea id="prf-alcance" rows="3" required oninput="updateProformaPreview()"></textarea>
+              <span class="form-help">Detalle de módulos, accesos, manuales o licencias que incluye la cotización.</span>
+            </div>
+
+            <div class="form-grid-2" style="margin-top:14px">
+              <div class="form-group">
+                <label for="prf-observaciones">Observaciones y Notas Comerciales</label>
+                <textarea id="prf-observaciones" rows="2" oninput="updateProformaPreview()"></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="prf-estado">Estado Inicial de la Proforma</label>
+                <select id="prf-estado" onchange="updateProformaPreview()">
+                  <option value="enviada" selected>Enviada al Cliente</option>
+                  <option value="borrador">Borrador (Interno ODN)</option>
+                  <option value="aprobada">Aprobada por el Cliente</option>
+                </select>
+                <div style="margin-top:8px">
+                  <label for="prf-responsable">Asesor Comercial Qubira</label>
+                  <input type="text" id="prf-responsable" readonly style="background:var(--bg-card2)">
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:12px;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+              <button type="submit" class="btn btn-primary" style="flex:1">
+                <svg class="icon" style="color:#fff"><use href="#icon-check"></use></svg>
+                Guardar y Registrar Proforma
+              </button>
+              <button type="button" class="btn btn-outline" onclick="resetCrearProformaForm()">
+                Limpiar
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Previsualización en Vivo de la Proforma -->
+        <div style="position:sticky;top:84px">
+          <div class="card" style="margin-bottom:16px;border-top:4px solid var(--accent)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <span style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">Resumen en Tiempo Real</span>
+              <span class="badge b-enviada" id="prev-prf-badge-status">Enviada</span>
+            </div>
+            
+            <div style="padding:14px;background:var(--bg-card2);border-radius:10px;border:1px solid var(--border);margin-bottom:14px">
+              <div style="font-size:11px;color:var(--text-muted)">PROFORMA OFICIAL ODN</div>
+              <div style="font-size:18px;font-weight:800;color:var(--primary);font-family:monospace" id="prev-prf-codigo">PRF-2026-0000</div>
+              
+              <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">EMPRESA / PROSPECTO</div>
+              <div style="font-size:14px;font-weight:700" id="prev-prf-cliente">—</div>
+              <div style="font-size:12px;color:var(--text-muted)" id="prev-prf-ruc">RUC: —</div>
+              <div style="font-size:11.5px;color:var(--text-muted)" id="prev-prf-contacto">Atenc: —</div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;margin-bottom:18px">
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
+                <span style="color:var(--text-muted)">Solución:</span>
+                <strong id="prev-prf-producto" style="max-width:180px;text-align:right">—</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
+                <span style="color:var(--text-muted)">Ítems Cotizados:</span>
+                <span id="prev-prf-items-count">1 ítem</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
+                <span style="color:var(--text-muted)">Subtotal:</span>
+                <span id="prev-prf-subtotal" style="font-weight:600">$ 0.00</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px" id="prev-prf-row-desc">
+                <span style="color:var(--text-muted)">Descuento:</span>
+                <span id="prev-prf-descuento" style="color:var(--danger)">- $ 0.00</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
+                <span style="color:var(--text-muted)">IGV (18%):</span>
+                <span id="prev-prf-igv" style="font-weight:600">$ 0.00</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
+                <span style="color:var(--text-muted);font-weight:600">Total Propuesta:</span>
+                <strong style="font-size:17px;color:var(--primary)" id="prev-prf-total">$ 0.00</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
+                <span style="color:var(--text-muted)">Condición de Pago:</span>
+                <span id="prev-prf-modalidad" style="font-size:12px;text-align:right;max-width:170px">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
+                <span style="color:var(--text-muted)">Plazo de Entrega:</span>
+                <span id="prev-prf-plazo" style="font-size:12px;text-align:right;max-width:170px">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between">
+                <span style="color:var(--text-muted)">Validez de Oferta:</span>
+                <span id="prev-prf-fechas" style="font-size:12px;color:var(--accent);font-weight:600">—</span>
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-outline" style="width:100%;justify-content:center" onclick="previewCurrentProformaDraft()">
+              <svg class="icon"><use href="#icon-eye"></use></svg>
+              Ver Proforma Oficial Completa
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ PROFORMAS: CONSULTAR PROFORMA ═══ -->
+    <div class="page" id="page-consultar-proforma">
+      <!-- Estadísticas de Proformas -->
+      <div class="stats-grid" id="prf-stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#ecfdf5;color:#0f766e"><svg class="icon"><use href="#icon-clipboard"></use></svg></div>
+          <div class="stat-info">
+            <div class="num" id="stat-prf-total">0</div>
+            <div class="label">Total Proformas</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#dcfce7;color:#15803d"><svg class="icon"><use href="#icon-check-circle"></use></svg></div>
+          <div class="stat-info">
+            <div class="num" id="stat-prf-aprobadas">0</div>
+            <div class="label">Aprobadas / Ganadas</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#eff6ff;color:#1d4ed8"><svg class="icon"><use href="#icon-send"></use></svg></div>
+          <div class="stat-info">
+            <div class="num" id="stat-prf-enviadas">0</div>
+            <div class="label">Enviadas / Negociando</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#fef3c7;color:#b45309"><svg class="icon"><use href="#icon-tag"></use></svg></div>
+          <div class="stat-info">
+            <div class="num" id="stat-prf-monto">$0</div>
+            <div class="label">Cartera Cotizada (USD)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra de Filtros y Búsqueda -->
+      <div class="card" style="padding:14px 18px;margin-bottom:18px">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;flex:1">
+            <div class="cat-search" style="min-width:260px">
+              <svg class="icon"><use href="#icon-search"></use></svg>
+              <input id="prf-filter-search" placeholder="Buscar por código, cliente, RUC o producto..." oninput="renderConsultarProformaTable()">
+            </div>
+            <select id="prf-filter-estado" style="width:auto;min-width:160px" onchange="renderConsultarProformaTable()">
+              <option value="">Todos los Estados</option>
+              <option value="enviada">Enviada al Cliente</option>
+              <option value="aprobada">Aprobada / Ganada</option>
+              <option value="borrador">Borrador</option>
+              <option value="convertida">Convertida a Contrato</option>
+              <option value="rechazada">Rechazada</option>
+              <option value="vencida">Vencida</option>
+            </select>
+            <select id="prf-filter-moneda" style="width:auto;min-width:130px" onchange="renderConsultarProformaTable()">
+              <option value="">Toda Moneda</option>
+              <option value="USD">Dólares (USD)</option>
+              <option value="PEN">Soles (PEN)</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="navigate('crear-proforma')">
+            <svg class="icon" style="color:#fff"><use href="#icon-plus"></use></svg>
+            Nueva Proforma
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabla de Proformas -->
+      <div class="table-responsive">
+        <table class="data-table" id="tabla-proformas">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Cliente / Razón Social</th>
+              <th>Solución Tecnológica</th>
+              <th>Total Cotizado</th>
+              <th>Forma de Pago</th>
+              <th>Emisión / Vigencia</th>
+              <th>Estado</th>
+              <th style="text-align:right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-proformas-body">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- ═══ CLIENTES: CREAR CLIENTES ═══ -->
     <div class="page" id="page-crear-clientes">
       <div class="card" style="max-width:880px;margin:0 auto">
@@ -1134,6 +1569,46 @@
   </div>
 </div>
 
+<!-- ═══ MODAL REVISAR / CONSULTAR PROFORMA (DOCUMENTO OFICIAL) ═══ -->
+<div class="modal-overlay" id="proforma-view-modal">
+  <div class="modal" style="max-width:880px">
+    <div class="modal-header">
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px" id="proforma-modal-code">PRF-2026-0000</div>
+        <div style="font-size:18px;font-weight:700" id="proforma-modal-title">Visualización Oficial de la Proforma</div>
+      </div>
+      <button class="close-btn" onclick="closeProformaModal()"><svg class="icon"><use href="#icon-x"></use></svg></button>
+    </div>
+    <div class="modal-body" id="proforma-modal-body" style="background:#f8fafc;padding:24px">
+      <!-- Populated dynamically with proforma-paper -->
+    </div>
+    <div class="modal-footer" style="justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:12.5px;color:var(--text-muted)">Estado:</span>
+        <select id="proforma-modal-status-select" style="width:auto;padding:6px 10px;font-size:12.5px" onchange="changeProformaStatusFromModal(this.value)">
+          <option value="borrador">Borrador</option>
+          <option value="enviada">Enviada al Cliente</option>
+          <option value="aprobada">Aprobada por el Cliente</option>
+          <option value="convertida">Convertida a Contrato</option>
+          <option value="rechazada">Rechazada</option>
+          <option value="vencida">Vencida</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" id="proforma-modal-convert-btn" onclick="convertActiveProformaToContract()">
+          <svg class="icon" style="color:var(--primary)"><use href="#icon-file-plus"></use></svg>
+          Convertir a Contrato
+        </button>
+        <button class="btn btn-primary" onclick="printProforma()">
+          <svg class="icon" style="color:#fff"><use href="#icon-printer"></use></svg>
+          Imprimir / Exportar PDF
+        </button>
+        <button class="btn btn-outline" onclick="closeProformaModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ MODAL EDITAR CLIENTE ═══ -->
 <div class="modal-overlay" id="client-edit-modal">
   <div class="modal" style="max-width:720px">
@@ -1267,6 +1742,8 @@ const PAGE_META = {
   catalogo:  { title:'Catálogo de Productos', sub:'Productos que ADG habilitó para que ODN los ofrezca' },
   'crear-contrato': { title:'Crear Contrato', sub:'Generación y redacción de contratos comerciales oficiales' },
   'revisar-contrato': { title:'Revisar Contratos', sub:'Control de cartera, estado de firmas e impresión de contratos' },
+  'crear-proforma': { title:'Crear Proforma', sub:'Emisión de cotizaciones, propuestas económicas y presupuestos oficiales' },
+  'consultar-proforma': { title:'Consultar Proformas', sub:'Historial, seguimiento de cotizaciones emitidas y conversión a contrato' },
   'crear-clientes': { title:'Crear Clientes', sub:'Alta de nuevos clientes corporativos, PYMEs y prospectos' },
   'editar-clientes': { title:'Directorio de Clientes', sub:'Edición de cartera, contactos y vinculación de contratos' },
 };
@@ -1283,6 +1760,8 @@ function navigate(page) {
   if (page === 'catalogo')  renderCatalogo();
   if (page === 'crear-contrato') renderCrearContrato();
   if (page === 'revisar-contrato') renderRevisarContrato();
+  if (page === 'crear-proforma') renderCrearProforma();
+  if (page === 'consultar-proforma') renderConsultarProforma();
   if (page === 'crear-clientes') renderCrearClientes();
   if (page === 'editar-clientes') renderEditarClientes();
   closeSidebar();
@@ -2380,8 +2859,197 @@ function setStoredContratos(list) {
   localStorage.setItem('qc_contratos', JSON.stringify(list));
 }
 
+// ══════════════════════════════════════════════════════
+// DATA SEEDING & STORAGE: PROFORMAS (ODN)
+// ══════════════════════════════════════════════════════
+const DEFAULT_PROFORMAS = [
+  {
+    id: 'PRF-2026-001',
+    cliente_id: 'CLI-001',
+    cliente_nombre: 'Inversiones Ferreteras del Norte S.A.C.',
+    cliente_ruc: '20601849201',
+    cliente_contacto: 'Ing. Roberto Mendoza',
+    cliente_cargo: 'Gerente de Operaciones',
+    cliente_email: 'gerencia@ferreterasdelnorte.pe',
+    cliente_telefono: '+51 984 123 456',
+    cliente_direccion: 'Av. Argentina 2840, Cercado de Lima',
+    tipo: 'Venta de Licencia',
+    producto_nombre: 'Sistema Web Ferretería & Facturación Electrónica',
+    moneda: 'USD',
+    items: [
+      { descripcion: 'Licencia Perpetua Sistema Web Integral Ferretería (Multi-almacén, Ventas y Compras)', cantidad: 1, precio: 2800.00, subtotal: 2800.00 },
+      { descripcion: 'Módulo de Facturación Electrónica SUNAT (Facturas, Boletas, Guías de Remisión y Notas)', cantidad: 1, precio: 450.00, subtotal: 450.00 },
+      { descripcion: 'Servicio de Despliegue en Servidor Cloud y Capacitación al Personal (12 horas)', cantidad: 1, precio: 250.00, subtotal: 250.00 }
+    ],
+    subtotal: 3500.00,
+    descuento_pct: 0,
+    descuento_monto: 0.00,
+    subtotal_neto: 3500.00,
+    igv_tipo: 'igv_18',
+    igv_monto: 630.00,
+    total: 4130.00,
+    modalidad_pago: '50% anticipo, 50% contra entrega',
+    tiempo_entrega: '15 días hábiles tras confirmación',
+    garantia: '12 meses de soporte técnico y mantenimiento',
+    alcance: 'Puesta en marcha de software de gestión comercial para 5 locales con sincronización centralizada, catálogo SUNAT y migración inicial de productos desde Excel.',
+    observaciones: 'Precios no incluyen hardware. La infraestructura de hosting se entrega configurada en ambiente cloud por el primer año.',
+    fecha_emision: '2026-01-20',
+    validez_dias: 15,
+    fecha_vencimiento: '2026-02-04',
+    estado: 'convertida',
+    responsable: 'Equipo Comercial ODN',
+    created_at: '2026-01-20'
+  },
+  {
+    id: 'PRF-2026-002',
+    cliente_id: 'CLI-002',
+    cliente_nombre: 'Corporación Ortecho & Asociados E.I.R.L.',
+    cliente_ruc: '20554912034',
+    cliente_contacto: 'Lic. Carmen Ortecho',
+    cliente_cargo: 'Directora Ejecutiva',
+    cliente_email: 'carmen.ortecho@ortechoasoc.com',
+    cliente_telefono: '+51 945 889 120',
+    cliente_direccion: 'Calle Las Begonias 441, Of. 802, San Isidro',
+    tipo: 'Alquiler / SaaS',
+    producto_nombre: 'Plataforma de Pagos y Notificaciones Ortecho',
+    moneda: 'PEN',
+    items: [
+      { descripcion: 'Suscripción Mensual SaaS Plataforma de Cobros Digitales y Conciliación Bancaria', cantidad: 1, precio: 1200.00, subtotal: 1200.00 },
+      { descripcion: 'Bolsa de 5,000 Notificaciones Transaccionales SMS & WhatsApp Business API', cantidad: 1, precio: 250.00, subtotal: 250.00 }
+    ],
+    subtotal: 1450.00,
+    descuento_pct: 0,
+    descuento_monto: 0.00,
+    subtotal_neto: 1450.00,
+    igv_tipo: 'igv_18',
+    igv_monto: 261.00,
+    total: 1711.00,
+    modalidad_pago: 'Mensual recurrente (primeros 5 días)',
+    tiempo_entrega: 'Inmediato (48 horas tras suscripción)',
+    garantia: 'SLA 99.8% disponibilidad y soporte 24/7',
+    alcance: 'Acceso corporativo ilimitado a pasarela multi-banco, panel analítico en tiempo real y webhooks seguros.',
+    observaciones: 'Renovación automática sujeta a contrato anual con facturación mensual electrónica.',
+    fecha_emision: '2026-01-08',
+    validez_dias: 30,
+    fecha_vencimiento: '2026-02-07',
+    estado: 'aprobada',
+    responsable: 'Equipo Comercial ODN',
+    created_at: '2026-01-08'
+  },
+  {
+    id: 'PRF-2026-003',
+    cliente_id: 'CLI-003',
+    cliente_nombre: 'Distribuidora Alimentos Andinos S.A.',
+    cliente_ruc: '20491823901',
+    cliente_contacto: 'Marco Aurelio Paucar',
+    cliente_cargo: 'Jefe de Logística y TI',
+    cliente_email: 'mpaucar@alimentosandinos.pe',
+    cliente_telefono: '+51 971 334 009',
+    cliente_direccion: 'Carretera Central Km 18, Ate',
+    tipo: 'Desarrollo a Medida',
+    producto_nombre: 'App Móvil de Preventa & Rutas GPS',
+    moneda: 'USD',
+    items: [
+      { descripcion: 'Desarrollo de Aplicativo Móvil Android para Preventistas (Arquitectura Offline-First)', cantidad: 1, precio: 3600.00, subtotal: 3600.00 },
+      { descripcion: 'Panel Web Administrativo de Monitoreo de Flotas y Trazabilidad de Pedidos', cantidad: 1, precio: 1200.00, subtotal: 1200.00 }
+    ],
+    subtotal: 4800.00,
+    descuento_pct: 0,
+    descuento_monto: 0.00,
+    subtotal_neto: 4800.00,
+    igv_tipo: 'igv_18',
+    igv_monto: 864.00,
+    total: 5664.00,
+    modalidad_pago: '30% firma, 40% entregables, 30% conformidad',
+    tiempo_entrega: '45 días calendario según hitos técnicos',
+    garantia: '6 meses de soporte técnico y mantenimiento',
+    alcance: 'Sincronización bidireccional automática, cálculo de comisiones por vendedor y exportación directa a ERP de almacén.',
+    observaciones: 'Se entregará código fuente compilado y manual de instalación en servidor dedicado.',
+    fecha_emision: '2026-02-15',
+    validez_dias: 30,
+    fecha_vencimiento: '2026-03-17',
+    estado: 'enviada',
+    responsable: 'Equipo Comercial ODN',
+    created_at: '2026-02-15'
+  },
+  {
+    id: 'PRF-2026-004',
+    cliente_id: 'CLI-004',
+    cliente_nombre: 'Consultora Minera Santa Rosa S.A.C.',
+    cliente_ruc: '20603418721',
+    cliente_contacto: 'Dra. Patricia Valdivia',
+    cliente_cargo: 'Gerente General',
+    cliente_email: 'pvaldivia@minerasantarosa.com',
+    cliente_telefono: '+51 998 776 543',
+    cliente_direccion: 'Av. Javier Prado Este 2240, San Borja',
+    tipo: 'Venta de Licencia',
+    producto_nombre: 'Dashboard de Control Ambiental y Telemetría',
+    moneda: 'USD',
+    items: [
+      { descripcion: 'Plataforma Analítica Central IoT para Monitoreo de Parámetros Ambientales en Campo', cantidad: 1, precio: 5200.00, subtotal: 5200.00 },
+      { descripcion: 'Módulo de Generación Automatizada de Reportes de Cumplimiento Regulatorio OEFA', cantidad: 1, precio: 1000.00, subtotal: 1000.00 }
+    ],
+    subtotal: 6200.00,
+    descuento_pct: 5,
+    descuento_monto: 310.00,
+    subtotal_neto: 5890.00,
+    igv_tipo: 'igv_18',
+    igv_monto: 1060.20,
+    total: 6950.20,
+    modalidad_pago: '50% anticipo, 50% contra entrega',
+    tiempo_entrega: '30 días hábiles',
+    garantia: '12 meses de soporte técnico y mantenimiento',
+    alcance: 'Ingesta de datos mediante protocolo MQTT/HTTPS, generación de alertas por SMS ante desvíos y tablero ejecutivo interactivo.',
+    observaciones: 'Propuesta sujeta a disponibilidad de conexión satelital en campamento minero.',
+    fecha_emision: '2026-03-02',
+    validez_dias: 30,
+    fecha_vencimiento: '2026-04-01',
+    estado: 'borrador',
+    responsable: 'Equipo Comercial ODN',
+    created_at: '2026-03-02'
+  }
+];
+
+function getStoredProformas() {
+  try {
+    const raw = localStorage.getItem('qc_proformas');
+    if (raw) return JSON.parse(raw);
+  } catch (_) {}
+  localStorage.setItem('qc_proformas', JSON.stringify(DEFAULT_PROFORMAS));
+  return DEFAULT_PROFORMAS;
+}
+
+function setStoredProformas(list) {
+  localStorage.setItem('qc_proformas', JSON.stringify(list));
+}
+
+function getNextProformaCode() {
+  const prfs = getStoredProformas();
+  const year = new Date().getFullYear();
+  let maxNum = 0;
+  prfs.forEach(p => {
+    const match = String(p.id).match(/PRF-(\d+)-(\d+)/);
+    if (match) {
+      const n = parseInt(match[2], 10);
+      if (n > maxNum) maxNum = n;
+    }
+  });
+  const nextNum = String(maxNum + 1).padStart(3, '0');
+  return `PRF-${year}-${nextNum}`;
+}
+
+function regenerateProformaCode() {
+  const code = getNextProformaCode();
+  const el = document.getElementById('prf-codigo');
+  if (el) el.value = code;
+  updateProformaPreview();
+}
+
 let _preselectedClientId = null;
+let _preselectedProformaClientId = null;
 let _activeViewingContractId = null;
+let _activeViewingProformaId = null;
+let _proformaToConvert = null;
 
 // Helpers
 function formatCurrency(monto, moneda) {
@@ -2478,6 +3146,34 @@ async function renderCrearContrato() {
   const entEl = document.getElementById('ctr-entregables');
   if (entEl && !entEl.value) {
     entEl.value = '1. Despliegue en ambiente cloud del cliente.\n2. Manual de usuario y guías operativas.\n3. Capacitación remota al equipo designado.\n4. Soporte técnico durante el periodo de garantía.';
+  }
+
+  // Si proviene de la conversión de una Proforma
+  if (_proformaToConvert) {
+    const p = _proformaToConvert;
+    if (selectCli) selectCli.value = p.cliente_id;
+    const tipoEl = document.getElementById('ctr-tipo');
+    if (tipoEl && p.tipo) tipoEl.value = p.tipo;
+    if (selectProd && p.producto_nombre) {
+      if (![...selectProd.options].some(o => o.value === p.producto_nombre)) {
+        selectProd.add(new Option(p.producto_nombre, p.producto_nombre));
+      }
+      selectProd.value = p.producto_nombre;
+    }
+    const monEl = document.getElementById('ctr-moneda');
+    if (monEl && p.moneda) monEl.value = p.moneda;
+    const montoEl = document.getElementById('ctr-monto');
+    if (montoEl && p.total) montoEl.value = Number(p.total).toFixed(2);
+    const modEl = document.getElementById('ctr-modalidad');
+    if (modEl && p.modalidad_pago) modEl.value = p.modalidad_pago;
+    const garEl = document.getElementById('ctr-garantia');
+    if (garEl && p.garantia) garEl.value = p.garantia;
+    if (objEl && p.alcance) objEl.value = p.alcance;
+    if (entEl && p.items && p.items.length) {
+      entEl.value = p.items.map((it, idx) => `${idx + 1}. ${it.descripcion} (Cant: ${it.cantidad})`).join('\n');
+    }
+    toast('info', 'Proforma Importada', `Datos de la proforma ${p.id} cargados exitosamente en el contrato.`);
+    _proformaToConvert = null;
   }
 
   updateContractPreview();
@@ -2887,6 +3583,859 @@ function deleteContract(id) {
 }
 
 // ══════════════════════════════════════════════════════
+// MÓDULO PROFORMAS: CREAR PROFORMA
+// ══════════════════════════════════════════════════════
+let _currentProformaItems = [];
+
+async function renderCrearProforma() {
+  const clientes = getStoredClientes();
+  const selectCli = document.getElementById('prf-cliente-sel');
+  if (!selectCli) return;
+
+  // Poblar select clientes
+  selectCli.innerHTML = '<option value="">-- Seleccionar Cliente Registrado --</option>' +
+    clientes.map(c => `<option value="${esc(c.id)}">${esc(c.razon_social)} (${esc(c.ruc)})</option>`).join('');
+
+  if (_preselectedProformaClientId) {
+    selectCli.value = _preselectedProformaClientId;
+    _preselectedProformaClientId = null;
+  } else if (clientes.length > 0 && !selectCli.value) {
+    selectCli.value = clientes[0].id;
+  }
+
+  // Poblar select productos (catálogo ODN + servicios personalizados)
+  const selectProd = document.getElementById('prf-producto-sel');
+  let products = await ensureProducts();
+  let prodOptions = '';
+  if (products && products.length > 0) {
+    prodOptions = products.map(p => `<option value="${esc(p.name)}">${esc(p.name)} (${esc(p.code || 'PROD')})</option>`).join('');
+  } else {
+    prodOptions = `
+      <option value="Sistema Web Ferretería & Facturación Electrónica">Sistema Web Ferretería & Facturación Electrónica</option>
+      <option value="Plataforma de Pagos y Notificaciones Ortecho">Plataforma de Pagos y Notificaciones Ortecho</option>
+      <option value="App Móvil de Preventa & Rutas GPS">App Móvil de Preventa & Rutas GPS</option>
+      <option value="Dashboard de Control Ambiental y Telemetría">Dashboard de Control Ambiental y Telemetría</option>
+      <option value="Módulo de Gestión de Inventarios y Almacenes">Módulo de Gestión de Inventarios y Almacenes</option>
+    `;
+  }
+  prodOptions += '<option value="Desarrollo de Software a Medida / Consultoría ODN">Desarrollo de Software a Medida / Consultoría ODN</option>';
+  selectProd.innerHTML = prodOptions;
+
+  // Fechas por defecto
+  const today = new Date();
+  const emisionEl = document.getElementById('prf-fecha-emision');
+  if (emisionEl && !emisionEl.value) emisionEl.value = today.toISOString().split('T')[0];
+
+  onProformaDateChange();
+
+  // Código correlativo
+  const codeEl = document.getElementById('prf-codigo');
+  if (codeEl && !codeEl.value) codeEl.value = getNextProformaCode();
+
+  // Responsable Comercial
+  const respEl = document.getElementById('prf-responsable');
+  if (respEl) {
+    const userName = qcUser ? `${qcUser.nombre || ''} ${qcUser.apellidos || ''}`.trim() || qcUser.username : 'Equipo Comercial ODN';
+    respEl.value = `${userName} (ODN Qubira)`;
+  }
+
+  // Llenar datos de contacto del cliente seleccionado
+  if (selectCli.value) {
+    onProformaClientSelected(selectCli.value);
+  }
+
+  // Inicializar ítems de la proforma
+  if (!_currentProformaItems || _currentProformaItems.length === 0) {
+    _currentProformaItems = [
+      { descripcion: 'Licenciamiento del Software Corporativo y Configuración Inicial', cantidad: 1, precio: 3500.00 },
+      { descripcion: 'Servicio de Despliegue en Servidor Cloud y Capacitación al Personal', cantidad: 1, precio: 500.00 }
+    ];
+  }
+
+  // Textos por defecto
+  const alcEl = document.getElementById('prf-alcance');
+  if (alcEl && !alcEl.value) {
+    alcEl.value = 'Configuración, personalización y puesta en marcha de la solución tecnológica según los estándares de ingeniería de software de Qubira S.A.C., incluyendo manuales y soporte continuo.';
+  }
+
+  const obsEl = document.getElementById('prf-observaciones');
+  if (obsEl && !obsEl.value) {
+    obsEl.value = 'Precios cotizados en condición neta según régimen tributario. Los entregables se iniciarán una vez abonado el anticipo pactado y validado por la Oficina de Desarrollo de Negocios (ODN).';
+  }
+
+  renderProformaItemsTable();
+  calcProformaTotals();
+}
+
+function onProformaClientSelected(cliId) {
+  const clientes = getStoredClientes();
+  const c = clientes.find(x => x.id === cliId);
+  if (c) {
+    const contactEl = document.getElementById('prf-contacto');
+    const emailEl   = document.getElementById('prf-email');
+    const telEl     = document.getElementById('prf-telefono');
+    if (contactEl) contactEl.value = c.contacto_nombre || c.razon_social;
+    if (emailEl) emailEl.value = c.email || '';
+    if (telEl) telEl.value = c.telefono || '';
+  }
+  updateProformaPreview();
+}
+
+function onProformaProductChange(prodName) {
+  const alcEl = document.getElementById('prf-alcance');
+  if (alcEl) {
+    alcEl.value = `Implementación de la solución "${prodName}" para optimizar las operaciones de la empresa contraparte, con arquitectura escalable, pruebas de estrés y garantía de código.`;
+  }
+  if (_currentProformaItems.length > 0 && !_currentProformaItems[0].descripcion.includes(prodName)) {
+    _currentProformaItems[0].descripcion = `Licenciamiento y despliegue del sistema: ${prodName}`;
+    renderProformaItemsTable();
+  }
+  updateProformaPreview();
+}
+
+function onProformaCurrencyChange() {
+  calcProformaTotals();
+}
+
+function onProformaDateChange() {
+  const emisionVal = document.getElementById('prf-fecha-emision')?.value;
+  const dias = parseInt(document.getElementById('prf-validez-dias')?.value || '30', 10);
+  const vencEl = document.getElementById('prf-fecha-vencimiento');
+  if (!emisionVal || !vencEl) return;
+
+  const d = new Date(emisionVal + 'T00:00:00');
+  d.setDate(d.getDate() + dias);
+  vencEl.value = d.toISOString().split('T')[0];
+  updateProformaPreview();
+}
+
+function renderProformaItemsTable() {
+  const tbody = document.getElementById('proforma-items-container');
+  if (!tbody) return;
+
+  const moneda = document.getElementById('prf-moneda')?.value || 'USD';
+  const sym = moneda === 'PEN' ? 'S/' : '$';
+
+  tbody.innerHTML = _currentProformaItems.map((item, idx) => `
+    <tr>
+      <td style="color:var(--text-muted);font-weight:700;text-align:center">${idx + 1}</td>
+      <td>
+        <input type="text" value="${esc(item.descripcion)}" placeholder="Descripción del concepto o servicio..." 
+          style="padding:6px 10px;font-size:12.5px" oninput="updateProformaItem(${idx}, 'descripcion', this.value)">
+      </td>
+      <td>
+        <input type="number" min="1" step="1" value="${item.cantidad || 1}" 
+          style="padding:6px 8px;font-size:12.5px;text-align:center" oninput="updateProformaItem(${idx}, 'cantidad', this.value)">
+      </td>
+      <td>
+        <div style="display:flex;align-items:center;gap:4px">
+          <span style="font-size:12px;color:var(--text-muted)">${sym}</span>
+          <input type="number" min="0" step="0.01" value="${Number(item.precio || 0).toFixed(2)}" 
+            style="padding:6px 8px;font-size:12.5px;text-align:right" oninput="updateProformaItem(${idx}, 'precio', this.value)">
+        </div>
+      </td>
+      <td style="text-align:right;font-weight:700;color:var(--primary)">
+        ${sym} ${((Number(item.cantidad) || 0) * (Number(item.precio) || 0)).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+      </td>
+      <td style="text-align:center">
+        <button type="button" class="btn-icon danger" style="width:26px;height:26px;border-radius:6px" title="Eliminar fila" onclick="removeProformaItemRow(${idx})">
+          <svg class="icon" style="width:13px;height:13px"><use href="#icon-trash-2"></use></svg>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function addProformaItemRow() {
+  _currentProformaItems.push({
+    descripcion: '',
+    cantidad: 1,
+    precio: 500.00
+  });
+  renderProformaItemsTable();
+  calcProformaTotals();
+}
+
+function removeProformaItemRow(idx) {
+  _currentProformaItems.splice(idx, 1);
+  if (_currentProformaItems.length === 0) {
+    _currentProformaItems.push({ descripcion: '', cantidad: 1, precio: 0 });
+  }
+  renderProformaItemsTable();
+  calcProformaTotals();
+}
+
+function updateProformaItem(idx, field, value) {
+  if (!_currentProformaItems[idx]) return;
+  if (field === 'cantidad') {
+    _currentProformaItems[idx].cantidad = Math.max(1, parseInt(value, 10) || 1);
+  } else if (field === 'precio') {
+    _currentProformaItems[idx].precio = Math.max(0, parseFloat(value) || 0);
+  } else {
+    _currentProformaItems[idx].descripcion = value;
+  }
+  calcProformaTotals();
+}
+
+function calcProformaTotals() {
+  const moneda = document.getElementById('prf-moneda')?.value || 'USD';
+  const descPct = Math.min(50, Math.max(0, parseFloat(document.getElementById('prf-descuento-pct')?.value) || 0));
+  const impOpcion = document.getElementById('prf-impuesto-opcion')?.value || 'igv_18';
+
+  let subtotal = 0;
+  _currentProformaItems.forEach(it => {
+    subtotal += (Number(it.cantidad) || 0) * (Number(it.precio) || 0);
+  });
+
+  const descuentoMonto = subtotal * (descPct / 100);
+  const subtotalNeto = Math.max(0, subtotal - descuentoMonto);
+  const igvMonto = impOpcion === 'igv_18' ? subtotalNeto * 0.18 : 0;
+  const total = subtotalNeto + igvMonto;
+
+  const totalDisplay = document.getElementById('prf-calc-total-display');
+  if (totalDisplay) totalDisplay.textContent = formatCurrency(total, moneda);
+
+  const subDisplay = document.getElementById('prf-calc-subtotal-display');
+  if (subDisplay) subDisplay.textContent = `Subtotal: ${formatCurrency(subtotal, moneda)}${descPct > 0 ? ` · Desc: -${formatCurrency(descuentoMonto, moneda)}` : ''}`;
+
+  updateProformaPreview(subtotal, descuentoMonto, igvMonto, total);
+}
+
+function updateProformaPreview(subVal, descVal, igvVal, totalVal) {
+  const clientes = getStoredClientes();
+  const cliId = document.getElementById('prf-cliente-sel')?.value;
+  const cliente = clientes.find(c => c.id === cliId) || (clientes[0] || {});
+
+  const codigo = document.getElementById('prf-codigo')?.value || 'PRF-2026-0000';
+  const prod = document.getElementById('prf-producto-sel')?.value || 'Solución Tecnológica Qubira';
+  const moneda = document.getElementById('prf-moneda')?.value || 'USD';
+  const modalidad = document.getElementById('prf-modalidad-pago')?.value || '50% anticipo, 50% contra entrega';
+  const plazo = document.getElementById('prf-tiempo-entrega')?.value || '15 días hábiles';
+  const contacto = document.getElementById('prf-contacto')?.value || cliente.contacto_nombre || 'Representante Legal';
+  const fVenc = document.getElementById('prf-fecha-vencimiento')?.value || '—';
+  const validezDias = document.getElementById('prf-validez-dias')?.value || '30';
+  const estado = document.getElementById('prf-estado')?.value || 'enviada';
+
+  // Cálculos si no vinieron en parámetros
+  if (subVal === undefined) {
+    let s = 0;
+    _currentProformaItems.forEach(it => { s += (Number(it.cantidad) || 0) * (Number(it.precio) || 0); });
+    const dPct = parseFloat(document.getElementById('prf-descuento-pct')?.value) || 0;
+    const imp = document.getElementById('prf-impuesto-opcion')?.value || 'igv_18';
+    descVal = s * (dPct / 100);
+    const sn = Math.max(0, s - descVal);
+    igvVal = imp === 'igv_18' ? sn * 0.18 : 0;
+    totalVal = sn + igvVal;
+    subVal = s;
+  }
+
+  // Previews
+  const prevCod = document.getElementById('prev-prf-codigo');
+  if (prevCod) prevCod.textContent = codigo;
+
+  const prevCli = document.getElementById('prev-prf-cliente');
+  if (prevCli) prevCli.textContent = cliente.razon_social || 'Cliente no seleccionado';
+
+  const prevRuc = document.getElementById('prev-prf-ruc');
+  if (prevRuc) prevRuc.textContent = `RUC: ${cliente.ruc || '—'}`;
+
+  const prevContacto = document.getElementById('prev-prf-contacto');
+  if (prevContacto) prevContacto.textContent = `Atenc: ${contacto}`;
+
+  const prevProd = document.getElementById('prev-prf-producto');
+  if (prevProd) prevProd.textContent = prod;
+
+  const prevItemsCount = document.getElementById('prev-prf-items-count');
+  if (prevItemsCount) prevItemsCount.textContent = `${_currentProformaItems.length} ítem${_currentProformaItems.length === 1 ? '' : 's'}`;
+
+  const prevSub = document.getElementById('prev-prf-subtotal');
+  if (prevSub) prevSub.textContent = formatCurrency(subVal, moneda);
+
+  const prevDesc = document.getElementById('prev-prf-descuento');
+  const prevRowDesc = document.getElementById('prev-prf-row-desc');
+  if (prevDesc && prevRowDesc) {
+    if (descVal > 0) {
+      prevRowDesc.style.display = 'flex';
+      prevDesc.textContent = `- ${formatCurrency(descVal, moneda)}`;
+    } else {
+      prevRowDesc.style.display = 'none';
+    }
+  }
+
+  const prevIgv = document.getElementById('prev-prf-igv');
+  if (prevIgv) prevIgv.textContent = formatCurrency(igvVal, moneda);
+
+  const prevTot = document.getElementById('prev-prf-total');
+  if (prevTot) prevTot.textContent = formatCurrency(totalVal, moneda);
+
+  const prevMod = document.getElementById('prev-prf-modalidad');
+  if (prevMod) prevMod.textContent = modalidad;
+
+  const prevPlazo = document.getElementById('prev-prf-plazo');
+  if (prevPlazo) prevPlazo.textContent = plazo;
+
+  const prevFechas = document.getElementById('prev-prf-fechas');
+  if (prevFechas) prevFechas.textContent = `${validezDias} días (vence ${fVenc})`;
+
+  const prevBadge = document.getElementById('prev-prf-badge-status');
+  if (prevBadge) {
+    prevBadge.className = `badge b-${estado}`;
+    const labels = { borrador: 'Borrador', enviada: 'Enviada', aprobada: 'Aprobada', rechazada: 'Rechazada', vencida: 'Vencida', convertida: 'Convertida' };
+    prevBadge.textContent = labels[estado] || estado;
+  }
+}
+
+function handleGuardarProforma(e) {
+  e.preventDefault();
+
+  const clientes = getStoredClientes();
+  const cliId = document.getElementById('prf-cliente-sel')?.value;
+  const cliente = clientes.find(c => c.id === cliId);
+
+  if (!cliente) {
+    toast('error', 'Error', 'Por favor selecciona un cliente válido.');
+    return;
+  }
+
+  if (!_currentProformaItems || _currentProformaItems.length === 0) {
+    toast('error', 'Error', 'Debes incluir al menos un ítem o concepto en la cotización.');
+    return;
+  }
+
+  const codigo = document.getElementById('prf-codigo')?.value || getNextProformaCode();
+  const tipo = document.getElementById('prf-tipo')?.value;
+  const prod = document.getElementById('prf-producto-sel')?.value;
+  const moneda = document.getElementById('prf-moneda')?.value;
+  const contacto = document.getElementById('prf-contacto')?.value.trim();
+  const email = document.getElementById('prf-email')?.value.trim();
+  const tel = document.getElementById('prf-telefono')?.value.trim();
+  const fEmision = document.getElementById('prf-fecha-emision')?.value;
+  const validezDias = parseInt(document.getElementById('prf-validez-dias')?.value || '30', 10);
+  const fVenc = document.getElementById('prf-fecha-vencimiento')?.value;
+  const descPct = parseFloat(document.getElementById('prf-descuento-pct')?.value) || 0;
+  const impOpcion = document.getElementById('prf-impuesto-opcion')?.value || 'igv_18';
+  const modPago = document.getElementById('prf-modalidad-pago')?.value;
+  const tEntrega = document.getElementById('prf-tiempo-entrega')?.value.trim();
+  const garantia = document.getElementById('prf-garantia')?.value;
+  const alcance = document.getElementById('prf-alcance')?.value.trim();
+  const observaciones = document.getElementById('prf-observaciones')?.value.trim();
+  const estado = document.getElementById('prf-estado')?.value || 'enviada';
+  const responsable = document.getElementById('prf-responsable')?.value;
+
+  let subtotal = 0;
+  const itemsClean = _currentProformaItems.map(it => {
+    const cant = Number(it.cantidad) || 1;
+    const prec = Number(it.precio) || 0;
+    const subt = cant * prec;
+    subtotal += subt;
+    return {
+      descripcion: it.descripcion || 'Servicio de desarrollo / software',
+      cantidad: cant,
+      precio: prec,
+      subtotal: subt
+    };
+  });
+
+  const descMonto = subtotal * (descPct / 100);
+  const subtotalNeto = Math.max(0, subtotal - descMonto);
+  const igvMonto = impOpcion === 'igv_18' ? subtotalNeto * 0.18 : 0;
+  const total = subtotalNeto + igvMonto;
+
+  const newProforma = {
+    id: codigo,
+    cliente_id: cliente.id,
+    cliente_nombre: cliente.razon_social,
+    cliente_ruc: cliente.ruc,
+    cliente_contacto: contacto || cliente.contacto_nombre,
+    cliente_cargo: cliente.contacto_cargo || 'Representante',
+    cliente_email: email || cliente.email,
+    cliente_telefono: tel || cliente.telefono,
+    cliente_direccion: cliente.direccion || 'Lima, Perú',
+    tipo,
+    producto_nombre: prod,
+    moneda,
+    items: itemsClean,
+    subtotal,
+    descuento_pct: descPct,
+    descuento_monto: descMonto,
+    subtotal_neto: subtotalNeto,
+    igv_tipo: impOpcion,
+    igv_monto: igvMonto,
+    total,
+    modalidad_pago: modPago,
+    tiempo_entrega: tEntrega,
+    garantia,
+    alcance,
+    observaciones,
+    fecha_emision: fEmision,
+    validez_dias: validezDias,
+    fecha_vencimiento: fVenc,
+    estado,
+    responsable,
+    created_at: new Date().toISOString().split('T')[0]
+  };
+
+  const proformas = getStoredProformas();
+  const existingIdx = proformas.findIndex(p => p.id === codigo);
+  if (existingIdx >= 0) {
+    proformas[existingIdx] = newProforma;
+  } else {
+    proformas.unshift(newProforma);
+  }
+
+  setStoredProformas(proformas);
+  toast('success', 'Proforma Registrada', `La proforma ${codigo} para ${cliente.razon_social} ha sido guardada exitosamente.`);
+  navigate('consultar-proforma');
+}
+
+function resetCrearProformaForm() {
+  document.getElementById('form-crear-proforma')?.reset();
+  _currentProformaItems = [];
+  renderCrearProforma();
+}
+
+function previewCurrentProformaDraft() {
+  const clientes = getStoredClientes();
+  const cliId = document.getElementById('prf-cliente-sel')?.value;
+  const cliente = clientes.find(c => c.id === cliId) || { razon_social: 'Cliente Destinatario', ruc: '20000000001', direccion: 'Dirección Comercial Lima' };
+
+  let subtotal = 0;
+  const items = _currentProformaItems.map(it => {
+    const cant = Number(it.cantidad) || 1;
+    const prec = Number(it.precio) || 0;
+    const subt = cant * prec;
+    subtotal += subt;
+    return {
+      descripcion: it.descripcion || 'Servicio Tecnológico Qubira',
+      cantidad: cant,
+      precio: prec,
+      subtotal: subt
+    };
+  });
+
+  const descPct = parseFloat(document.getElementById('prf-descuento-pct')?.value) || 0;
+  const impOpcion = document.getElementById('prf-impuesto-opcion')?.value || 'igv_18';
+  const descMonto = subtotal * (descPct / 100);
+  const subNeto = Math.max(0, subtotal - descMonto);
+  const igvMonto = impOpcion === 'igv_18' ? subNeto * 0.18 : 0;
+  const total = subNeto + igvMonto;
+
+  const draft = {
+    id: document.getElementById('prf-codigo')?.value || 'PRF-2026-BORRADOR',
+    cliente_id: cliente.id || 'CLI-000',
+    cliente_nombre: cliente.razon_social,
+    cliente_ruc: cliente.ruc,
+    cliente_contacto: document.getElementById('prf-contacto')?.value || cliente.contacto_nombre || 'Representante Legal',
+    cliente_cargo: cliente.contacto_cargo || 'Gerente',
+    cliente_email: document.getElementById('prf-email')?.value || cliente.email || 'contacto@empresa.pe',
+    cliente_telefono: document.getElementById('prf-telefono')?.value || cliente.telefono || '+51 999 000 111',
+    cliente_direccion: cliente.direccion || 'Lima, Perú',
+    tipo: document.getElementById('prf-tipo')?.value || 'Venta de Licencia',
+    producto_nombre: document.getElementById('prf-producto-sel')?.value || 'Solución Tecnológica Qubira',
+    moneda: document.getElementById('prf-moneda')?.value || 'USD',
+    items,
+    subtotal,
+    descuento_pct: descPct,
+    descuento_monto: descMonto,
+    subtotal_neto: subNeto,
+    igv_tipo: impOpcion,
+    igv_monto: igvMonto,
+    total,
+    modalidad_pago: document.getElementById('prf-modalidad-pago')?.value || '50% anticipo, 50% entrega',
+    tiempo_entrega: document.getElementById('prf-tiempo-entrega')?.value || '15 días hábiles',
+    garantia: document.getElementById('prf-garantia')?.value || '12 meses',
+    alcance: document.getElementById('prf-alcance')?.value || 'Alcance especificado en la propuesta técnica.',
+    observaciones: document.getElementById('prf-observaciones')?.value || 'Condiciones comerciales estándar ODN.',
+    fecha_emision: document.getElementById('prf-fecha-emision')?.value || new Date().toISOString().split('T')[0],
+    validez_dias: parseInt(document.getElementById('prf-validez-dias')?.value || '30', 10),
+    fecha_vencimiento: document.getElementById('prf-fecha-vencimiento')?.value || '2026-12-31',
+    estado: document.getElementById('prf-estado')?.value || 'enviada',
+    responsable: document.getElementById('prf-responsable')?.value || 'ODN Qubira'
+  };
+
+  renderProformaOfficialModal(draft);
+}
+
+// ══════════════════════════════════════════════════════
+// MÓDULO PROFORMAS: CONSULTAR PROFORMA
+// ══════════════════════════════════════════════════════
+function renderConsultarProforma() {
+  const proformas = getStoredProformas();
+
+  // Métricas
+  const total = proformas.length;
+  const aprobadas = proformas.filter(p => p.estado === 'aprobada' || p.estado === 'convertida').length;
+  const enviadas = proformas.filter(p => p.estado === 'enviada').length;
+
+  let totalUSD = 0;
+  proformas.forEach(p => {
+    const val = Number(p.total) || 0;
+    totalUSD += p.moneda === 'PEN' ? val / 3.75 : val;
+  });
+
+  const statTotal = document.getElementById('stat-prf-total');
+  const statApr   = document.getElementById('stat-prf-aprobadas');
+  const statEnv   = document.getElementById('stat-prf-enviadas');
+  const statMonto = document.getElementById('stat-prf-monto');
+
+  if (statTotal) statTotal.textContent = String(total);
+  if (statApr) statApr.textContent = String(aprobadas);
+  if (statEnv) statEnv.textContent = String(enviadas);
+  if (statMonto) statMonto.textContent = `$ ${Math.round(totalUSD).toLocaleString('es-PE')}`;
+
+  renderConsultarProformaTable();
+}
+
+function renderConsultarProformaTable() {
+  const proformas = getStoredProformas();
+  const q = (document.getElementById('prf-filter-search')?.value || '').toLowerCase().trim();
+  const fEstado = document.getElementById('prf-filter-estado')?.value;
+  const fMoneda = document.getElementById('prf-filter-moneda')?.value;
+
+  const filtered = proformas.filter(p => {
+    if (fEstado && p.estado !== fEstado) return false;
+    if (fMoneda && p.moneda !== fMoneda) return false;
+    if (q) {
+      const match = (p.id + ' ' + p.cliente_nombre + ' ' + (p.cliente_ruc||'') + ' ' + p.producto_nombre + ' ' + (p.tipo||'')).toLowerCase();
+      if (!match.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const tbody = document.getElementById('tabla-proformas-body');
+  if (!tbody) return;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)">
+      <svg class="icon" style="width:32px;height:32px;margin-bottom:8px;opacity:.4"><use href="#icon-clipboard"></use></svg>
+      <div>No se encontraron proformas con los filtros seleccionados.</div>
+    </td></tr>`;
+    return;
+  }
+
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  tbody.innerHTML = filtered.map(p => {
+    // Cálculo de vigencia
+    let vigenciaHtml = '';
+    if (p.fecha_vencimiento) {
+      if (p.estado === 'convertida') {
+        vigenciaHtml = '<span style="color:var(--purple);font-size:11px;font-weight:600">✓ Contrato firmado</span>';
+      } else if (p.fecha_vencimiento < todayStr) {
+        vigenciaHtml = '<span style="color:var(--danger);font-size:11px;font-weight:600">⚠ Oferta vencida</span>';
+      } else {
+        const diffDays = Math.ceil((new Date(p.fecha_vencimiento) - new Date(todayStr)) / (1000 * 60 * 60 * 24));
+        vigenciaHtml = `<span style="color:var(--success);font-size:11px;font-weight:600">Vigente (${diffDays}d)</span>`;
+      }
+    }
+
+    return `
+      <tr>
+        <td>
+          <strong style="font-family:monospace;color:var(--primary);cursor:pointer" onclick="viewProforma('${esc(p.id)}')">${esc(p.id)}</strong>
+          <div style="font-size:11px;color:var(--text-muted)">${esc(p.tipo || 'Proforma')}</div>
+        </td>
+        <td>
+          <strong>${esc(p.cliente_nombre)}</strong>
+          <div style="font-size:11.5px;color:var(--text-muted)">RUC: ${esc(p.cliente_ruc || '—')} · ${esc(p.cliente_contacto || '')}</div>
+        </td>
+        <td>
+          <span style="font-weight:600">${esc(p.producto_nombre)}</span>
+          <div style="font-size:11px;color:var(--text-muted)">${(p.items || []).length} concepto${(p.items||[]).length===1?'':'s'} cotizado${(p.items||[]).length===1?'':'s'}</div>
+        </td>
+        <td>
+          <strong style="color:var(--primary);font-size:14.5px">${formatCurrency(p.total, p.moneda)}</strong>
+          <div style="font-size:10.5px;color:var(--text-muted)">Subt: ${formatCurrency(p.subtotal_neto || p.subtotal, p.moneda)}</div>
+        </td>
+        <td>
+          <span style="font-size:12px;color:var(--text-muted)">${esc(p.modalidad_pago || '—')}</span>
+          <div style="font-size:11px;color:var(--text-muted)">Entrega: ${esc(p.tiempo_entrega || '—')}</div>
+        </td>
+        <td>
+          <div style="font-size:12px">${esc(p.fecha_emision || '—')}</div>
+          <div style="font-size:11px">${vigenciaHtml}</div>
+        </td>
+        <td>
+          <select class="badge b-${esc(p.estado)}" style="border:none;cursor:pointer;font-family:inherit" onchange="quickUpdateProformaStatus('${esc(p.id)}', this.value)">
+            <option value="borrador" ${p.estado==='borrador'?'selected':''}>Borrador</option>
+            <option value="enviada" ${p.estado==='enviada'?'selected':''}>Enviada</option>
+            <option value="aprobada" ${p.estado==='aprobada'?'selected':''}>Aprobada</option>
+            <option value="convertida" ${p.estado==='convertida'?'selected':''}>Convertida</option>
+            <option value="rechazada" ${p.estado==='rechazada'?'selected':''}>Rechazada</option>
+            <option value="vencida" ${p.estado==='vencida'?'selected':''}>Vencida</option>
+          </select>
+        </td>
+        <td style="text-align:right">
+          <div class="table-actions" style="justify-content:flex-end">
+            <button class="btn-icon" title="Ver documento formal" onclick="viewProforma('${esc(p.id)}')">
+              <svg class="icon"><use href="#icon-eye"></use></svg>
+            </button>
+            <button class="btn-icon" title="Imprimir proforma" onclick="quickPrintProforma('${esc(p.id)}')">
+              <svg class="icon"><use href="#icon-printer"></use></svg>
+            </button>
+            <button class="btn-icon" style="color:var(--primary)" title="Generar Contrato desde esta Proforma" onclick="convertProformaToContract('${esc(p.id)}')">
+              <svg class="icon"><use href="#icon-file-plus"></use></svg>
+            </button>
+            <button class="btn-icon danger" title="Eliminar proforma" onclick="deleteProforma('${esc(p.id)}')">
+              <svg class="icon"><use href="#icon-trash-2"></use></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function quickUpdateProformaStatus(id, newStatus) {
+  const proformas = getStoredProformas();
+  const prf = proformas.find(p => p.id === id);
+  if (!prf) return;
+  prf.estado = newStatus;
+  setStoredProformas(proformas);
+  toast('success', 'Estado Actualizado', `Proforma ${id} marcada como ${newStatus}.`);
+  renderConsultarProforma();
+}
+
+function viewProforma(id) {
+  const proformas = getStoredProformas();
+  const prf = proformas.find(p => p.id === id);
+  if (!prf) return;
+  _activeViewingProformaId = id;
+  renderProformaOfficialModal(prf);
+}
+
+function renderProformaOfficialModal(p) {
+  const codeEl = document.getElementById('proforma-modal-code');
+  if (codeEl) codeEl.textContent = `${p.id} · Qubira ODN Cotización`;
+
+  const titleEl = document.getElementById('proforma-modal-title');
+  if (titleEl) titleEl.textContent = `Proforma Comercial: ${p.cliente_nombre}`;
+
+  const statusSel = document.getElementById('proforma-modal-status-select');
+  if (statusSel) statusSel.value = p.estado || 'enviada';
+
+  const convertBtn = document.getElementById('proforma-modal-convert-btn');
+  if (convertBtn) {
+    convertBtn.style.display = p.estado === 'convertida' ? 'none' : 'inline-flex';
+  }
+
+  const body = document.getElementById('proforma-modal-body');
+  if (!body) return;
+
+  const hoyFormato = new Date().toLocaleDateString('es-PE', { year: 'numeric', month: 'long', day: 'numeric' });
+  const sym = p.moneda === 'PEN' ? 'S/' : '$';
+
+  const itemsRows = (p.items || []).map((it, idx) => `
+    <tr>
+      <td style="text-align:center;color:#64748b">${idx + 1}</td>
+      <td>
+        <strong style="color:#0f172a;display:block">${esc(it.descripcion)}</strong>
+      </td>
+      <td style="text-align:center;font-weight:600">${it.cantidad}</td>
+      <td style="text-align:right">${sym} ${Number(it.precio || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+      <td style="text-align:right;font-weight:700;color:#0f766e">
+        ${sym} ${(Number(it.cantidad || 0) * Number(it.precio || 0)).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+      </td>
+    </tr>
+  `).join('');
+
+  body.innerHTML = `
+    <div class="proforma-paper" id="official-proforma-sheet">
+      <!-- Membrete Corporativo -->
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #0f766e;padding-bottom:16px;margin-bottom:20px">
+        <div style="display:flex;align-items:center;gap:14px">
+          <img src="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" alt="Qubira Logo" style="width:52px;height:52px;border-radius:10px;object-fit:contain">
+          <div>
+            <div style="font-size:17px;font-weight:800;letter-spacing:1px;color:#0f766e">QUBIRA S.A.C.</div>
+            <div style="font-size:11px;color:#6b7280">RUC: 20608932145 · Tecnologías de la Información & Software</div>
+            <div style="font-size:11px;color:#6b7280">contacto@qubira.com · www.qubira.pe · Lima, Perú</div>
+          </div>
+        </div>
+        <div style="text-align:right;background:#f8fafc;padding:10px 16px;border-radius:8px;border:1px solid #e2e8f0">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#0f766e;font-weight:700">PROFORMA COMERCIAL</div>
+          <div style="font-size:16px;font-weight:800;font-family:monospace;color:#0f172a">${esc(p.id)}</div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">Emisión: ${esc(p.fecha_emision || hoyFormato)}</div>
+        </div>
+      </div>
+
+      <h2>COTIZACIÓN Y PROPUESTA ECONÓMICA OFICIAL</h2>
+      <div class="proforma-subtitle">OFICINA DE DESARROLLO DE NEGOCIOS (ODN) · DOCUMENTO FORMAL DE OFERTA</div>
+
+      <!-- Cuadro de Información Contraparte / Emisión -->
+      <div class="proforma-meta-box">
+        <div class="proforma-meta-col">
+          <strong>DATOS DEL CLIENTE / DESTINATARIO:</strong>
+          <div style="font-size:14px;font-weight:700;color:#0f172a">${esc(p.cliente_nombre)}</div>
+          <div style="color:#475569">RUC / DNI: <strong>${esc(p.cliente_ruc || '—')}</strong></div>
+          <div style="color:#475569">Atención: <strong>${esc(p.cliente_contacto || 'Representante Legal')}</strong> ${p.cliente_cargo ? `(${esc(p.cliente_cargo)})` : ''}</div>
+          <div style="color:#475569">Email: ${esc(p.cliente_email || '—')} · Tel: ${esc(p.cliente_telefono || '—')}</div>
+          <div style="color:#475569">Dirección: ${esc(p.cliente_direccion || 'Lima, Perú')}</div>
+        </div>
+        <div class="proforma-meta-col">
+          <strong>CONDICIONES GENERALES DE LA OFERTA:</strong>
+          <div>Solución: <strong style="color:#0f766e">${esc(p.producto_nombre)}</strong></div>
+          <div>Modalidad: <strong>${esc(p.tipo || 'Venta de Licencia')}</strong></div>
+          <div>Moneda: <strong>${p.moneda === 'PEN' ? 'Soles Peruanos (PEN)' : 'Dólares Americanos (USD)'}</strong></div>
+          <div>Validez de Oferta: <strong>${p.validez_dias || 30} días calendario</strong></div>
+          <div>Vencimiento: <strong style="color:#dc2626">${esc(p.fecha_vencimiento || '—')}</strong></div>
+          <div>Asesor Comercial: <strong>${esc(p.responsable || 'ODN Qubira')}</strong></div>
+        </div>
+      </div>
+
+      <!-- Tabla de Ítems Cotizados -->
+      <table class="proforma-table">
+        <thead>
+          <tr>
+            <th style="width:40px;text-align:center">N°</th>
+            <th>Descripción del Producto / Servicio Especializado</th>
+            <th style="width:70px;text-align:center">Cant.</th>
+            <th style="width:130px;text-align:right">P. Unitario</th>
+            <th style="width:130px;text-align:right">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsRows}
+        </tbody>
+      </table>
+
+      <!-- Resumen de Totales -->
+      <div class="proforma-summary-wrap">
+        <table class="proforma-summary-table">
+          <tr>
+            <td style="color:#64748b">Subtotal Bruto:</td>
+            <td style="text-align:right;font-weight:600">${formatCurrency(p.subtotal, p.moneda)}</td>
+          </tr>
+          ${(p.descuento_monto > 0) ? `
+          <tr>
+            <td style="color:#dc2626">Descuento Comercial (${p.descuento_pct}%):</td>
+            <td style="text-align:right;color:#dc2626;font-weight:600">- ${formatCurrency(p.descuento_monto, p.moneda)}</td>
+          </tr>
+          <tr>
+            <td style="color:#64748b">Subtotal Neto:</td>
+            <td style="text-align:right;font-weight:600">${formatCurrency(p.subtotal_neto, p.moneda)}</td>
+          </tr>
+          ` : ''}
+          <tr>
+            <td style="color:#64748b">${p.igv_tipo === 'exonerado' ? 'IGV (Exonerado):' : 'Impuesto General (18% IGV):'}</td>
+            <td style="text-align:right;font-weight:600">${formatCurrency(p.igv_monto, p.moneda)}</td>
+          </tr>
+          <tr class="total-row">
+            <td>TOTAL COTIZADO:</td>
+            <td style="text-align:right">${formatCurrency(p.total, p.moneda)}</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Términos y Condiciones Comerciales -->
+      <div style="margin-top:22px;border-top:1px solid #e2e8f0;padding-top:14px;font-size:12px;color:#334155;line-height:1.6">
+        <div style="font-weight:700;color:#0f766e;text-transform:uppercase;margin-bottom:6px">Términos y Condiciones Comerciales:</div>
+        <div>• <strong>Forma de Pago:</strong> ${esc(p.modalidad_pago || '50% anticipo, 50% contra entrega final')}.</div>
+        <div>• <strong>Tiempo de Entrega / Despliegue:</strong> ${esc(p.tiempo_entrega || '15 días hábiles')}.</div>
+        <div>• <strong>Garantía y Nivel de Servicio (SLA):</strong> ${esc(p.garantia || '12 meses de soporte técnico y estabilidad')}.</div>
+        <div>• <strong>Alcance Técnico:</strong> ${esc(p.alcance || 'Según especificaciones detalladas.')}</div>
+        ${p.observaciones ? `<div>• <strong>Observaciones:</strong> ${esc(p.observaciones)}</div>` : ''}
+      </div>
+
+      <!-- Información Bancaria para Pagos -->
+      <div class="proforma-bank-info">
+        <strong style="color:#0f766e;display:block;margin-bottom:4px">CUENTAS BANCARIAS OFICIALES RECAUDADORAS — QUBIRA S.A.C.</strong>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <strong>Banco de Crédito del Perú (BCP):</strong><br>
+            Cta. Cte. Soles: 191-98765432-0-45 (CCI: 00219100987654320045)<br>
+            Cta. Cte. Dólares: 191-87654321-1-56 (CCI: 00219100876543211056)
+          </div>
+          <div>
+            <strong>BBVA Perú:</strong><br>
+            Cta. Cte. Soles: 0011-0345-0100098765 (CCI: 01134500010009876512)<br>
+            <em>Titular: QUBIRA S.A.C. · RUC: 20608932145</em>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloque de Firmas -->
+      <div class="contract-signatures">
+        <div class="signature-box">
+          <div style="height:35px;display:flex;align-items:center;justify-content:center;color:#0f766e;font-size:11px;font-weight:700">
+            [Firma y Sello Digital Qubira S.A.C.]
+          </div>
+          <div class="sign-name">QUBIRA S.A.C.</div>
+          <div class="sign-role">RUC: 20608932145 · Oficina de Desarrollo de Negocios</div>
+        </div>
+
+        <div class="signature-box">
+          <div style="height:35px;display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:11px">
+            [Aceptación y Conformidad del Cliente]
+          </div>
+          <div class="sign-name">${esc(p.cliente_contacto || p.cliente_nombre)}</div>
+          <div class="sign-role">${esc(p.cliente_cargo || 'Representante Autorizado')} · ${esc(p.cliente_nombre)}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('proforma-view-modal').classList.add('open');
+}
+
+function closeProformaModal() {
+  document.getElementById('proforma-view-modal').classList.remove('open');
+  _activeViewingProformaId = null;
+}
+
+function changeProformaStatusFromModal(newStatus) {
+  if (!_activeViewingProformaId) return;
+  quickUpdateProformaStatus(_activeViewingProformaId, newStatus);
+}
+
+function quickPrintProforma(id) {
+  viewProforma(id);
+  setTimeout(() => printProforma(), 300);
+}
+
+function printProforma() {
+  window.print();
+}
+
+function convertActiveProformaToContract() {
+  if (!_activeViewingProformaId) return;
+  closeProformaModal();
+  convertProformaToContract(_activeViewingProformaId);
+}
+
+function convertProformaToContract(proformaId) {
+  const proformas = getStoredProformas();
+  const prf = proformas.find(p => p.id === proformaId);
+  if (!prf) {
+    toast('error', 'Error', 'No se encontró la proforma para convertir.');
+    return;
+  }
+
+  // Marcar estado como convertida
+  prf.estado = 'convertida';
+  setStoredProformas(proformas);
+
+  // Precargar los datos en el flujo de Crear Contrato
+  _preselectedClientId = prf.cliente_id;
+  _proformaToConvert = prf;
+
+  toast('success', 'Convirtiendo a Contrato', `Preparando borrador de contrato para ${prf.cliente_nombre}...`);
+  navigate('crear-contrato');
+}
+
+function deleteProforma(id) {
+  if (!confirm(`¿Estás seguro de eliminar la proforma ${id}? Esta acción no se puede deshacer.`)) return;
+  const proformas = getStoredProformas().filter(p => p.id !== id);
+  setStoredProformas(proformas);
+  toast('success', 'Proforma Eliminada', `La proforma ${id} ha sido borrada.`);
+  renderConsultarProforma();
+}
+
+function startProformaForClient(cliId) {
+  _preselectedProformaClientId = cliId;
+  navigate('crear-proforma');
+}
+
+// ══════════════════════════════════════════════════════
 // MÓDULO 3: CREAR CLIENTES
 // ══════════════════════════════════════════════════════
 function renderCrearClientes() {
@@ -2980,6 +4529,7 @@ function renderEditarClientes() {
 function renderEditarClientesTable() {
   const clientes = getStoredClientes();
   const contratos = getStoredContratos();
+  const proformas = getStoredProformas();
   const q = (document.getElementById('cli-filter-search')?.value || '').toLowerCase().trim();
   const fTipo = document.getElementById('cli-filter-tipo')?.value;
   const fEstado = document.getElementById('cli-filter-estado')?.value;
@@ -3007,6 +4557,7 @@ function renderEditarClientesTable() {
 
   tbody.innerHTML = filtered.map(c => {
     const ctrCount = contratos.filter(ctr => ctr.cliente_id === c.id || ctr.cliente_ruc === c.ruc).length;
+    const prfCount = proformas.filter(prf => prf.cliente_id === c.id || prf.cliente_ruc === c.ruc).length;
     return `
       <tr>
         <td>
@@ -3028,10 +4579,16 @@ function renderEditarClientesTable() {
           <span class="badge b-${esc(c.tipo)}">${esc(c.tipo.toUpperCase())}</span>
         </td>
         <td>
-          <span class="badge b-${ctrCount > 0 ? 'vigente' : 'borrador'}">
-            <svg class="icon" style="width:11px;height:11px"><use href="#icon-file-text"></use></svg>
-            ${ctrCount} contrato${ctrCount===1?'':'s'}
-          </span>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <span class="badge b-${ctrCount > 0 ? 'vigente' : 'borrador'}" style="width:fit-content">
+              <svg class="icon" style="width:11px;height:11px"><use href="#icon-file-text"></use></svg>
+              ${ctrCount} contrato${ctrCount===1?'':'s'}
+            </span>
+            <span class="badge b-${prfCount > 0 ? 'enviada' : 'borrador'}" style="width:fit-content">
+              <svg class="icon" style="width:11px;height:11px"><use href="#icon-clipboard"></use></svg>
+              ${prfCount} proforma${prfCount===1?'':'s'}
+            </span>
+          </div>
         </td>
         <td>
           <button type="button" class="badge b-${c.estado==='activo'?'active':'paused'}" style="border:none;cursor:pointer" onclick="toggleClientStatus('${esc(c.id)}')">
@@ -3042,6 +4599,9 @@ function renderEditarClientesTable() {
           <div class="table-actions" style="justify-content:flex-end">
             <button class="btn-icon" title="Editar ficha de cliente" onclick="openEditClientModal('${esc(c.id)}')">
               <svg class="icon"><use href="#icon-edit-2"></use></svg>
+            </button>
+            <button class="btn-icon" title="Crear proforma para este cliente" onclick="startProformaForClient('${esc(c.id)}')">
+              <svg class="icon" style="color:var(--accent)"><use href="#icon-clipboard"></use></svg>
             </button>
             <button class="btn-icon" title="Crear contrato para este cliente" onclick="startContractForClient('${esc(c.id)}')">
               <svg class="icon" style="color:var(--primary)"><use href="#icon-file-plus"></use></svg>
