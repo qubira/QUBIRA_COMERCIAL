@@ -289,6 +289,71 @@
       .cat-filters { flex-direction: column; align-items: stretch; }
     }
 
+    /* ── TABLES & LISTS ── */
+    .table-responsive { width: 100%; overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); box-shadow: var(--shadow); }
+    .data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13.5px; }
+    .data-table th { background: var(--bg-card2); color: var(--text-muted); font-weight: 600; padding: 13px 16px; border-bottom: 1px solid var(--border); font-size: 11.5px; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+    .data-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover { background: rgba(15,118,110,.03); }
+    .table-actions { display: flex; align-items: center; gap: 6px; }
+
+    /* ── ACTION BUTTONS ── */
+    .btn-icon { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all .2s; }
+    .btn-icon:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+    .btn-icon.danger:hover { border-color: var(--danger); color: var(--danger); background: rgba(220,38,38,.1); }
+
+    /* ── FORM GRID & SECTIONS ── */
+    .form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .form-help { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+    .form-section-title { font-size: 13px; font-weight: 700; color: var(--primary); margin: 20px 0 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+
+    /* ── BADGES FOR CONTRACTS & CLIENTS ── */
+    .b-borrador       { background: rgba(107,114,128,.14); color: #6b7280; }
+    .b-pendiente_firma{ background: rgba(245,158,11,.14);  color: var(--warning); }
+    .b-vigente        { background: rgba(16,185,129,.14);  color: var(--success); }
+    .b-finalizado     { background: rgba(59,130,246,.14);  color: var(--info); }
+    .b-corporativo    { background: rgba(139,92,246,.14);  color: var(--purple); }
+    .b-pyme           { background: rgba(59,130,246,.14);  color: var(--info); }
+    .b-prospecto      { background: rgba(245,158,11,.14);  color: var(--warning); }
+
+    /* ── CONTRACT OFFICIAL PAPER ── */
+    .contract-paper {
+      background: #ffffff; color: #111827; padding: 40px; border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.08); border: 1px solid var(--border);
+      font-family: 'Inter', -apple-system, sans-serif; line-height: 1.6;
+    }
+    .contract-paper h2 { font-size: 19px; font-weight: 800; text-align: center; color: #0f766e; margin-bottom: 4px; letter-spacing: -.01em; }
+    .contract-paper .contract-subtitle { text-align: center; font-size: 11px; color: #6b7280; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+    .contract-clause { margin-bottom: 18px; font-size: 13px; }
+    .contract-clause strong { color: #111827; display: block; margin-bottom: 4px; font-size: 13.5px; font-weight: 700; }
+    .contract-signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; padding-top: 24px; border-top: 1px dashed #cbd5e1; }
+    .signature-box { text-align: center; border-top: 1px solid #111827; padding-top: 10px; margin-top: 50px; }
+    .signature-box .sign-name { font-weight: 700; font-size: 13px; }
+    .signature-box .sign-role { font-size: 11px; color: #6b7280; }
+
+    /* ── PRINT RULES ── */
+    @media print {
+      body * { visibility: hidden !important; }
+      #contract-view-modal, #contract-view-modal .modal, #contract-view-modal .modal-body, #contract-view-modal .contract-paper, #contract-view-modal .contract-paper * {
+        visibility: visible !important;
+      }
+      #contract-view-modal {
+        position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; padding: 0 !important;
+        background: #fff !important; opacity: 1 !important; pointer-events: all !important; display: block !important;
+      }
+      #contract-view-modal .modal {
+        box-shadow: none !important; border: none !important; width: 100% !important; max-width: 100% !important; max-height: none !important; transform: none !important;
+      }
+      #contract-view-modal .modal-header, #contract-view-modal .modal-footer, .sidebar, .topbar {
+        display: none !important;
+      }
+      .contract-paper {
+        border: none !important; box-shadow: none !important; padding: 20px !important;
+      }
+    }
+
     ::-webkit-scrollbar { width:5px; }
     ::-webkit-scrollbar-track { background:var(--bg); }
     ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
@@ -328,6 +393,12 @@
   <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></symbol>
   <symbol id="icon-map-pin" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></symbol>
   <symbol id="icon-video" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></symbol>
+  <symbol id="icon-file-plus" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></symbol>
+  <symbol id="icon-file-text" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></symbol>
+  <symbol id="icon-user-plus" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></symbol>
+  <symbol id="icon-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></symbol>
+  <symbol id="icon-printer" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></symbol>
+  <symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></symbol>
 </svg>
 
 <!-- SIDEBAR -->
@@ -349,6 +420,22 @@
     </div>
     <div class="nav-item" data-page="catalogo" onclick="navigate('catalogo')">
       <svg class="icon"><use href="#icon-package"></use></svg> Catálogo de Productos
+    </div>
+
+    <div class="nav-section">Contratos</div>
+    <div class="nav-item" data-page="crear-contrato" onclick="navigate('crear-contrato')">
+      <svg class="icon"><use href="#icon-file-plus"></use></svg> Crear Contrato
+    </div>
+    <div class="nav-item" data-page="revisar-contrato" onclick="navigate('revisar-contrato')">
+      <svg class="icon"><use href="#icon-file-text"></use></svg> Revisar Contrato
+    </div>
+
+    <div class="nav-section">Clientes</div>
+    <div class="nav-item" data-page="crear-clientes" onclick="navigate('crear-clientes')">
+      <svg class="icon"><use href="#icon-user-plus"></use></svg> Crear Clientes
+    </div>
+    <div class="nav-item" data-page="editar-clientes" onclick="navigate('editar-clientes')">
+      <svg class="icon"><use href="#icon-users"></use></svg> Editar Clientes
     </div>
   </nav>
   <div class="sidebar-footer">
@@ -460,6 +547,535 @@
         </select>
       </div>
       <div id="catalogo-content"></div>
+    <!-- ═══ CONTRATOS: CREAR CONTRATO ═══ -->
+    <div class="page" id="page-crear-contrato">
+      <div style="display:grid;grid-template-columns:1.8fr 1.2fr;gap:22px;align-items:start">
+        
+        <!-- Formulario -->
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg class="icon" style="color:var(--primary)"><use href="#icon-file-plus"></use></svg>
+              Generador de Contratos Comerciales
+            </h3>
+            <span class="badge b-borrador" id="ctr-badge-state">Modo Edición</span>
+          </div>
+
+          <form id="form-crear-contrato" onsubmit="handleGuardarContrato(event)">
+            <!-- SECCIÓN 1: Identificación y Cliente -->
+            <div class="form-section-title">
+              <svg class="icon" style="width:15px;height:15px"><use href="#icon-users"></use></svg>
+              1. Identificación y Contraparte
+            </div>
+            
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="ctr-codigo">Código de Contrato</label>
+                <div style="display:flex;gap:6px">
+                  <input type="text" id="ctr-codigo" readonly style="font-family:monospace;font-weight:700;background:var(--bg-card2)">
+                  <button type="button" class="btn-icon" title="Generar nuevo código" onclick="regenerateContractCode()">
+                    <svg class="icon"><use href="#icon-repeat"></use></svg>
+                  </button>
+                </div>
+                <span class="form-help">Secuencia oficial correlativa ODN 2026</span>
+              </div>
+
+              <div class="form-group">
+                <label for="ctr-cliente-sel">Cliente / Empresa *</label>
+                <div style="display:flex;gap:6px">
+                  <select id="ctr-cliente-sel" required onchange="onContractClientSelected(this.value)">
+                    <!-- Populated dynamically -->
+                  </select>
+                  <button type="button" class="btn-icon" title="Crear cliente rápido" onclick="navigate('crear-clientes')">
+                    <svg class="icon"><use href="#icon-user-plus"></use></svg>
+                  </button>
+                </div>
+                <span class="form-help">Selecciona un cliente o regístralo si es nuevo</span>
+              </div>
+            </div>
+
+            <div class="form-grid-2" style="margin-top:14px">
+              <div class="form-group">
+                <label for="ctr-tipo">Tipo de Contrato / Naturaleza *</label>
+                <select id="ctr-tipo" required onchange="updateContractPreview()">
+                  <option value="Venta de Licencia">Venta de Software / Licencia Definitiva</option>
+                  <option value="Alquiler / SaaS">Alquiler / Suscripción SaaS Mensual</option>
+                  <option value="Desarrollo a Medida">Desarrollo de Software a Medida</option>
+                  <option value="Mantenimiento & SLA">Mantenimiento, Soporte Continuo & SLA</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="ctr-producto-sel">Producto / Solución Tecnológica *</label>
+                <select id="ctr-producto-sel" required onchange="onContractProductChange(this.value)">
+                  <!-- Populated dynamically with ODN catalog + custom -->
+                </select>
+              </div>
+            </div>
+
+            <!-- SECCIÓN 2: Términos Económicos y Plazos -->
+            <div class="form-section-title">
+              <svg class="icon" style="width:15px;height:15px"><use href="#icon-tag"></use></svg>
+              2. Términos Económicos y Cronograma
+            </div>
+
+            <div class="form-grid-3">
+              <div class="form-group">
+                <label for="ctr-moneda">Moneda *</label>
+                <select id="ctr-moneda" required onchange="updateContractPreview()">
+                  <option value="USD">Dólares Americanos (USD $)</option>
+                  <option value="PEN">Soles Peruanos (PEN S/)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="ctr-monto">Monto Total Pactado *</label>
+                <input type="number" id="ctr-monto" min="1" step="0.01" value="3500.00" required oninput="updateContractPreview()">
+                <span class="form-help">No incluye IGV (salvo indicación)</span>
+              </div>
+
+              <div class="form-group">
+                <label for="ctr-modalidad">Forma de Pago *</label>
+                <select id="ctr-modalidad" required onchange="updateContractPreview()">
+                  <option value="50% anticipo, 50% contra entrega">50% anticipo y 50% entrega final</option>
+                  <option value="100% pago adelantado">100% pago único adelantado</option>
+                  <option value="30% firma, 40% entregables, 30% conformidad">30% firma / 40% hitos / 30% fin</option>
+                  <option value="Mensual recurrente (primeros 5 días)">Mensual recurrente (primeros 5 días)</option>
+                  <option value="Por horas / Bolsa de soporte">Bolsa de horas pre-pagadas</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-grid-3" style="margin-top:14px">
+              <div class="form-group">
+                <label for="ctr-fecha-inicio">Fecha de Inicio *</label>
+                <input type="date" id="ctr-fecha-inicio" required onchange="updateContractPreview()">
+              </div>
+
+              <div class="form-group">
+                <label for="ctr-fecha-fin">Fecha de Culminación / Entrega *</label>
+                <input type="date" id="ctr-fecha-fin" required onchange="updateContractPreview()">
+              </div>
+
+              <div class="form-group">
+                <label for="ctr-garantia">Garantía / SLA Post-Lanzamiento</label>
+                <select id="ctr-garantia" onchange="updateContractPreview()">
+                  <option value="12 meses de soporte técnico y mantenimiento">12 Meses Soporte & Corrección</option>
+                  <option value="6 meses de soporte técnico y mantenimiento">6 Meses Soporte Estándar</option>
+                  <option value="3 meses de garantía técnica">3 Meses Garantía Básica</option>
+                  <option value="SLA 99.8% disponibilidad y soporte 24/7">SLA Crítico 24/7 (Alta Disp.)</option>
+                  <option value="Sin garantía extendida">Sin garantía extendida</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- SECCIÓN 3: Alcance y Cláusulas -->
+            <div class="form-section-title">
+              <svg class="icon" style="width:15px;height:15px"><use href="#icon-file-text"></use></svg>
+              3. Alcance y Cláusulas Especiales
+            </div>
+
+            <div class="form-group">
+              <label for="ctr-objeto">Objeto del Contrato (Alcance Principal) *</label>
+              <textarea id="ctr-objeto" rows="3" required oninput="updateContractPreview()"></textarea>
+              <span class="form-help">Describe con precisión la solución contratada por el cliente.</span>
+            </div>
+
+            <div class="form-group" style="margin-top:12px">
+              <label for="ctr-entregables">Entregables y Compromisos Clave</label>
+              <textarea id="ctr-entregables" rows="3" oninput="updateContractPreview()"></textarea>
+              <span class="form-help">Ej: Licencias de software, acceso a repositorio/servidor, capacitaciones o soporte.</span>
+            </div>
+
+            <div class="form-grid-2" style="margin-top:12px">
+              <div class="form-group">
+                <label for="ctr-estado">Estado Inicial del Contrato</label>
+                <select id="ctr-estado" onchange="updateContractPreview()">
+                  <option value="borrador">Borrador (Interno ODN)</option>
+                  <option value="pendiente_firma">Pendiente de Firma del Cliente</option>
+                  <option value="vigente">Vigente (Aprobado y Firmado)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="ctr-responsable">Responsable Comercial Qubira</label>
+                <input type="text" id="ctr-responsable" readonly style="background:var(--bg-card2)">
+              </div>
+            </div>
+
+            <div style="display:flex;gap:12px;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+              <button type="submit" class="btn btn-primary" style="flex:1">
+                <svg class="icon" style="color:#fff"><use href="#icon-check"></use></svg>
+                Guardar y Registrar Contrato
+              </button>
+              <button type="button" class="btn btn-outline" onclick="resetCrearContratoForm()">
+                Limpiar
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Previsualización en Vivo -->
+        <div style="position:sticky;top:84px">
+          <div class="card" style="margin-bottom:16px;border-top:4px solid var(--primary)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <span style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">Resumen en Tiempo Real</span>
+              <span class="badge b-borrador" id="prev-badge-status">Borrador</span>
+            </div>
+            
+            <div style="padding:14px;background:var(--bg-card2);border-radius:10px;border:1px solid var(--border);margin-bottom:14px">
+              <div style="font-size:11px;color:var(--text-muted)">CÓDIGO OFICIAL</div>
+              <div style="font-size:18px;font-weight:800;color:var(--primary);font-family:monospace" id="prev-codigo">CTR-2026-0000</div>
+              
+              <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">CLIENTE / CONTRAPARTE</div>
+              <div style="font-size:14px;font-weight:700" id="prev-cliente">—</div>
+              <div style="font-size:12px;color:var(--text-muted)" id="prev-ruc">RUC: —</div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;margin-bottom:18px">
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
+                <span style="color:var(--text-muted)">Producto:</span>
+                <strong id="prev-producto" style="max-width:180px;text-align:right">—</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
+                <span style="color:var(--text-muted)">Modalidad:</span>
+                <span id="prev-tipo">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
+                <span style="color:var(--text-muted)">Importe:</span>
+                <strong style="font-size:16px;color:var(--primary)" id="prev-monto">$ 0.00</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
+                <span style="color:var(--text-muted)">Condición de Pago:</span>
+                <span id="prev-modalidad" style="font-size:12px;text-align:right;max-width:170px">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
+                <span style="color:var(--text-muted)">Periodo:</span>
+                <span id="prev-fechas" style="font-size:12px">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between">
+                <span style="color:var(--text-muted)">SLA / Garantía:</span>
+                <span id="prev-garantia" style="font-size:12px;text-align:right;max-width:170px">—</span>
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-outline" style="width:100%;justify-content:center" onclick="previewCurrentDraft()">
+              <svg class="icon"><use href="#icon-eye"></use></svg>
+              Ver Documento Completo
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ CONTRATOS: REVISAR CONTRATO ═══ -->
+    <div class="page" id="page-revisar-contrato">
+      <!-- Estadísticas de Contratos -->
+      <div class="stats-grid" id="ctr-stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#ecfdf5;color:#0f766e"><svg class="icon"><use href="#icon-file-text"></use></svg></div>
+          <div class="stat-info">
+            <div class="num" id="stat-ctr-total">0</div>
+            <div class="label">Total Contratos</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#dcfce7;color:#15803d"><svg class="icon"><use href="#icon-check-circle"></use></svg></div>
+          <div class="stat-info">
+            <div class="num" id="stat-ctr-vigentes">0</div>
+            <div class="label">Contratos Vigentes</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#fef3c7;color:#b45309"><svg class="icon"><use href="#icon-alert-triangle"></use></svg></div>
+          <div class="stat-info">
+            <div class="num" id="stat-ctr-pendientes">0</div>
+            <div class="label">Pendientes de Firma</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#eff6ff;color:#1d4ed8"><svg class="icon"><use href="#icon-tag"></use></svg></div>
+          <div class="stat-info">
+            <div class="num" id="stat-ctr-monto">$0</div>
+            <div class="label">Cartera Activa (USD)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra de Filtros y Búsqueda -->
+      <div class="card" style="padding:14px 18px;margin-bottom:18px">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;flex:1">
+            <div class="cat-search" style="min-width:260px">
+              <svg class="icon"><use href="#icon-search"></use></svg>
+              <input id="ctr-filter-search" placeholder="Buscar por código, cliente o producto..." oninput="renderRevisarContratoTable()">
+            </div>
+            <select id="ctr-filter-estado" style="width:auto;min-width:160px" onchange="renderRevisarContratoTable()">
+              <option value="">Todos los Estados</option>
+              <option value="vigente">Vigente / Activo</option>
+              <option value="pendiente_firma">Pendiente de Firma</option>
+              <option value="borrador">Borrador</option>
+              <option value="finalizado">Finalizado</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+            <select id="ctr-filter-moneda" style="width:auto;min-width:130px" onchange="renderRevisarContratoTable()">
+              <option value="">Toda Moneda</option>
+              <option value="USD">Dólares (USD)</option>
+              <option value="PEN">Soles (PEN)</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="navigate('crear-contrato')">
+            <svg class="icon" style="color:#fff"><use href="#icon-plus"></use></svg>
+            Nuevo Contrato
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabla de Contratos -->
+      <div class="table-responsive">
+        <table class="data-table" id="tabla-contratos">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Cliente / Razón Social</th>
+              <th>Solución Tecnológica</th>
+              <th>Importe / Moneda</th>
+              <th>Modalidad de Pago</th>
+              <th>Periodo</th>
+              <th>Estado</th>
+              <th style="text-align:right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-contratos-body">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══ CLIENTES: CREAR CLIENTES ═══ -->
+    <div class="page" id="page-crear-clientes">
+      <div class="card" style="max-width:880px;margin:0 auto">
+        <div class="card-header">
+          <h3 class="card-title">
+            <svg class="icon" style="color:var(--primary)"><use href="#icon-user-plus"></use></svg>
+            Registro de Nuevo Cliente Comercial
+          </h3>
+          <button class="btn-link" onclick="navigate('editar-clientes')">Ver Cartera de Clientes →</button>
+        </div>
+
+        <form id="form-crear-cliente" onsubmit="handleGuardarCliente(event)">
+          <!-- Datos Empresariales -->
+          <div class="form-section-title">
+            <svg class="icon" style="width:15px;height:15px"><use href="#icon-users"></use></svg>
+            1. Datos de la Empresa o Persona Natural
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="cli-razon">Razón Social / Nombre Comercial *</label>
+              <input type="text" id="cli-razon" placeholder="Ej: Inversiones Globales S.A.C." required>
+            </div>
+
+            <div class="form-group">
+              <label for="cli-ruc">RUC o DNI *</label>
+              <input type="text" id="cli-ruc" placeholder="Ej: 20601234567 (11 u 8 dígitos)" maxlength="11" required>
+              <span class="form-help">Validación fiscal ante SUNAT / RENIEC</span>
+            </div>
+          </div>
+
+          <div class="form-grid-3" style="margin-top:14px">
+            <div class="form-group">
+              <label for="cli-sector">Rubro o Sector Industrial *</label>
+              <select id="cli-sector" required>
+                <option value="Comercio & Retail">Comercio & Retail</option>
+                <option value="Ferretería & Construcción">Ferretería & Construcción</option>
+                <option value="Servicios Financieros & FinTech">Servicios Financieros & FinTech</option>
+                <option value="Logística & Distribución">Logística & Distribución</option>
+                <option value="Minería & Energía">Minería & Energía</option>
+                <option value="Salud & Farmacia">Salud & Farmacia</option>
+                <option value="Educación & Capacitación">Educación & Capacitación</option>
+                <option value="Tecnología & Telecom">Tecnología & Telecom</option>
+                <option value="Otro">Otro Rubro</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="cli-direccion">Dirección Fiscal / Sede</label>
+              <input type="text" id="cli-direccion" placeholder="Ej: Av. Rivera Navarrete 501, San Isidro">
+            </div>
+
+            <div class="form-group">
+              <label for="cli-ciudad">Ciudad / Región</label>
+              <input type="text" id="cli-ciudad" value="Lima, Perú">
+            </div>
+          </div>
+
+          <!-- Contacto Principal -->
+          <div class="form-section-title">
+            <svg class="icon" style="width:15px;height:15px"><use href="#icon-user-plus"></use></svg>
+            2. Contacto Principal / Decisor
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="cli-contacto">Nombre y Apellidos del Contacto *</label>
+              <input type="text" id="cli-contacto" placeholder="Ej: Ing. Juan Carlos Paredes" required>
+            </div>
+
+            <div class="form-group">
+              <label for="cli-cargo">Cargo en la Empresa *</label>
+              <input type="text" id="cli-cargo" placeholder="Ej: Gerente General / Director TI" required>
+            </div>
+          </div>
+
+          <div class="form-grid-2" style="margin-top:14px">
+            <div class="form-group">
+              <label for="cli-telefono">Teléfono / WhatsApp *</label>
+              <input type="tel" id="cli-telefono" placeholder="Ej: +51 987 654 321" required>
+            </div>
+
+            <div class="form-group">
+              <label for="cli-email">Correo Electrónico Corporativo *</label>
+              <input type="email" id="cli-email" placeholder="Ej: contacto@empresa.com" required>
+            </div>
+          </div>
+
+          <!-- Segmentación Comercial -->
+          <div class="form-section-title">
+            <svg class="icon" style="width:15px;height:15px"><use href="#icon-tag"></use></svg>
+            3. Clasificación y Perfil Comercial
+          </div>
+
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label for="cli-tipo">Clasificación de Cuenta</label>
+              <select id="cli-tipo">
+                <option value="corporativo">Corporativo (Gran Empresa)</option>
+                <option value="pyme" selected>PYME / Mediana Empresa</option>
+                <option value="prospecto">Prospecto / Lead Calificado</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="cli-estado">Estado de la Cuenta</label>
+              <select id="cli-estado">
+                <option value="activo" selected>Activo</option>
+                <option value="inactivo">Inactivo / En Pausa</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="cli-origen">Canal de Adquisición</label>
+              <select id="cli-origen">
+                <option value="Prospección Directa">Prospección Directa ODN</option>
+                <option value="Referido">Referido Comercial</option>
+                <option value="Web Qubira">Portal Web Qubira</option>
+                <option value="Evento / Networking">Evento / Networking</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top:14px">
+            <label for="cli-notas">Observaciones y Requerimientos Comerciales</label>
+            <textarea id="cli-notas" rows="3" placeholder="Intereses de software, presupuesto aproximado, urgencia de implementación..."></textarea>
+          </div>
+
+          <div style="display:flex;gap:12px;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+            <button type="submit" class="btn btn-primary" style="flex:1">
+              <svg class="icon" style="color:#fff"><use href="#icon-check"></use></svg>
+              Registrar Cliente en Cartera
+            </button>
+            <button type="button" class="btn btn-outline" onclick="navigate('editar-clientes')">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ═══ CLIENTES: EDITAR CLIENTES / DIRECTORIO ═══ -->
+    <div class="page" id="page-editar-clientes">
+      <!-- Estadísticas de Clientes -->
+      <div class="stats-grid" id="cli-stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#ecfdf5;color:#0f766e"><svg class="icon"><use href="#icon-users"></use></svg></div>
+          <div class="stat-info">
+            <div class="num" id="stat-cli-total">0</div>
+            <div class="label">Total Clientes</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#dcfce7;color:#15803d"><svg class="icon"><use href="#icon-check-circle"></use></svg></div>
+          <div class="stat-info">
+            <div class="num" id="stat-cli-activos">0</div>
+            <div class="label">Clientes Activos</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#f3e8ff;color:#7e22ce"><svg class="icon"><use href="#icon-layers"></use></svg></div>
+          <div class="stat-info">
+            <div class="num" id="stat-cli-corporativos">0</div>
+            <div class="label">Cuentas Corporativas</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#fef3c7;color:#b45309"><svg class="icon"><use href="#icon-trending-up"></use></svg></div>
+          <div class="stat-info">
+            <div class="num" id="stat-cli-prospectos">0</div>
+            <div class="label">Prospectos Calificados</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtros y Búsqueda -->
+      <div class="card" style="padding:14px 18px;margin-bottom:18px">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;flex:1">
+            <div class="cat-search" style="min-width:260px">
+              <svg class="icon"><use href="#icon-search"></use></svg>
+              <input id="cli-filter-search" placeholder="Buscar por Razón Social, RUC, contacto o email..." oninput="renderEditarClientesTable()">
+            </div>
+            <select id="cli-filter-tipo" style="width:auto;min-width:160px" onchange="renderEditarClientesTable()">
+              <option value="">Toda Clasificación</option>
+              <option value="corporativo">Corporativo</option>
+              <option value="pyme">PYME</option>
+              <option value="prospecto">Prospecto</option>
+            </select>
+            <select id="cli-filter-estado" style="width:auto;min-width:130px" onchange="renderEditarClientesTable()">
+              <option value="">Todo Estado</option>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="navigate('crear-clientes')">
+            <svg class="icon" style="color:#fff"><use href="#icon-user-plus"></use></svg>
+            Registrar Cliente
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabla de Clientes -->
+      <div class="table-responsive">
+        <table class="data-table" id="tabla-clientes">
+          <thead>
+            <tr>
+              <th>Razón Social / RUC</th>
+              <th>Contacto Principal</th>
+              <th>Teléfono & Correo</th>
+              <th>Sector / Rubro</th>
+              <th>Clasificación</th>
+              <th>Contratos</th>
+              <th>Estado</th>
+              <th style="text-align:right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-clientes-body">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </div>
@@ -479,6 +1095,64 @@
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="calCloseForm()">Cancelar</button>
       <button class="btn btn-primary" id="cal-save-btn" onclick="calSubmitForm()"><svg class="icon" style="color:#fff"><use href="#icon-check"></use></svg> Guardar reunión</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL REVISAR CONTRATO (DOCUMENTO OFICIAL) ═══ -->
+<div class="modal-overlay" id="contract-view-modal">
+  <div class="modal" style="max-width:880px">
+    <div class="modal-header">
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px" id="contract-modal-code">CTR-2026-0000</div>
+        <div style="font-size:18px;font-weight:700" id="contract-modal-title">Visualización Oficial del Contrato</div>
+      </div>
+      <button class="close-btn" onclick="closeContractModal()"><svg class="icon"><use href="#icon-x"></use></svg></button>
+    </div>
+    <div class="modal-body" id="contract-modal-body" style="background:#f8fafc;padding:24px">
+      <!-- Populated dynamically with contract-paper -->
+    </div>
+    <div class="modal-footer" style="justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:12.5px;color:var(--text-muted)">Estado del Contrato:</span>
+        <select id="contract-modal-status-select" style="width:auto;padding:6px 10px;font-size:12.5px" onchange="changeContractStatusFromModal(this.value)">
+          <option value="borrador">Borrador</option>
+          <option value="pendiente_firma">Pendiente de Firma</option>
+          <option value="vigente">Vigente / Activo</option>
+          <option value="finalizado">Finalizado</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" onclick="closeContractModal()">Cerrar</button>
+        <button class="btn btn-primary" onclick="printContract()">
+          <svg class="icon" style="color:#fff"><use href="#icon-printer"></use></svg>
+          Imprimir / Exportar PDF
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL EDITAR CLIENTE ═══ -->
+<div class="modal-overlay" id="client-edit-modal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header">
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px" id="client-edit-kicker">Editar Cliente</div>
+        <div style="font-size:18px;font-weight:700" id="client-edit-title">Actualizar Ficha Comercial</div>
+      </div>
+      <button class="close-btn" onclick="closeEditClientModal()"><svg class="icon"><use href="#icon-x"></use></svg></button>
+    </div>
+    <div class="modal-body" id="client-edit-body">
+      <!-- Populated dynamically -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeEditClientModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitEditClientForm()">
+        <svg class="icon" style="color:#fff"><use href="#icon-check"></use></svg>
+        Guardar Cambios
+      </button>
     </div>
   </div>
 </div>
@@ -591,17 +1265,26 @@ const PAGE_META = {
   dashboard: { title:'Dashboard', sub:'Resumen de los productos disponibles para venta o alquiler' },
   calendario: { title:'Calendario', sub:'Reuniones de ODN e interconexión con otras áreas' },
   catalogo:  { title:'Catálogo de Productos', sub:'Productos que ADG habilitó para que ODN los ofrezca' },
+  'crear-contrato': { title:'Crear Contrato', sub:'Generación y redacción de contratos comerciales oficiales' },
+  'revisar-contrato': { title:'Revisar Contratos', sub:'Control de cartera, estado de firmas e impresión de contratos' },
+  'crear-clientes': { title:'Crear Clientes', sub:'Alta de nuevos clientes corporativos, PYMEs y prospectos' },
+  'editar-clientes': { title:'Directorio de Clientes', sub:'Edición de cartera, contactos y vinculación de contratos' },
 };
 
 function navigate(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
+  const targetPage = document.getElementById('page-' + page);
+  if (targetPage) targetPage.classList.add('active');
   document.getElementById('page-title').textContent = PAGE_META[page]?.title || page;
   document.getElementById('page-sub').textContent   = PAGE_META[page]?.sub   || '';
   document.querySelectorAll('.nav-item[data-page]').forEach(el => el.classList.toggle('active', el.dataset.page === page));
   if (page === 'dashboard') renderDashboard();
   if (page === 'calendario') calRender();
   if (page === 'catalogo')  renderCatalogo();
+  if (page === 'crear-contrato') renderCrearContrato();
+  if (page === 'revisar-contrato') renderRevisarContrato();
+  if (page === 'crear-clientes') renderCrearClientes();
+  if (page === 'editar-clientes') renderEditarClientes();
   closeSidebar();
 }
 
@@ -1502,6 +2185,1068 @@ function calViewMeeting(id) {
     </div>`;
   document.getElementById('cal-save-btn').style.display = 'none';
   document.getElementById('cal-modal').classList.add('open');
+}
+
+// ══════════════════════════════════════════════════════
+// MÓDULOS CONTRATOS Y CLIENTES (ODN)
+// ══════════════════════════════════════════════════════
+
+// 1. DATA SEEDING & PERSISTENCE
+const DEFAULT_CLIENTES = [
+  {
+    id: 'CLI-001',
+    razon_social: 'Inversiones Ferreteras del Norte S.A.C.',
+    ruc: '20601849201',
+    sector: 'Ferretería & Construcción',
+    direccion: 'Av. Argentina 2840, Cercado de Lima',
+    ciudad: 'Lima, Perú',
+    contacto_nombre: 'Ing. Roberto Mendoza',
+    contacto_cargo: 'Gerente de Operaciones',
+    telefono: '+51 984 123 456',
+    email: 'gerencia@ferreterasdelnorte.pe',
+    tipo: 'corporativo',
+    estado: 'activo',
+    origen: 'Prospección Directa',
+    notas: 'Cadena con 5 almacenes centrales. Interesados en módulo de preventa móvil.',
+    created_at: '2026-01-15'
+  },
+  {
+    id: 'CLI-002',
+    razon_social: 'Corporación Ortecho & Asociados E.I.R.L.',
+    ruc: '20554912034',
+    sector: 'Servicios Financieros & FinTech',
+    direccion: 'Calle Las Begonias 441, Of. 802, San Isidro',
+    ciudad: 'Lima, Perú',
+    contacto_nombre: 'Lic. Carmen Ortecho',
+    contacto_cargo: 'Directora Ejecutiva',
+    telefono: '+51 945 889 120',
+    email: 'carmen.ortecho@ortechoasoc.com',
+    tipo: 'corporativo',
+    estado: 'activo',
+    origen: 'Web Qubira',
+    notas: 'Requieren integración continua con pasarelas de pago y notificaciones SMS.',
+    created_at: '2026-01-20'
+  },
+  {
+    id: 'CLI-003',
+    razon_social: 'Distribuidora Alimentos Andinos S.A.',
+    ruc: '20491823901',
+    sector: 'Logística & Distribución',
+    direccion: 'Carretera Central Km 18, Ate',
+    ciudad: 'Lima, Perú',
+    contacto_nombre: 'Marco Aurelio Paucar',
+    contacto_cargo: 'Jefe de Logística y TI',
+    telefono: '+51 971 334 009',
+    email: 'mpaucar@alimentosandinos.pe',
+    tipo: 'pyme',
+    estado: 'activo',
+    origen: 'Referido',
+    notas: 'Flota de 18 repartidores. Sincronización offline indispensable.',
+    created_at: '2026-02-05'
+  },
+  {
+    id: 'CLI-004',
+    razon_social: 'Consultora Minera Santa Rosa S.A.C.',
+    ruc: '20603418721',
+    sector: 'Minería & Energía',
+    direccion: 'Av. Javier Prado Este 2240, San Borja',
+    ciudad: 'Lima, Perú',
+    contacto_nombre: 'Dra. Patricia Valdivia',
+    contacto_cargo: 'Gerente General',
+    telefono: '+51 998 776 543',
+    email: 'pvaldivia@minerasantarosa.com',
+    tipo: 'prospecto',
+    estado: 'activo',
+    origen: 'Evento / Networking',
+    notas: 'Propuesta técnica presentada. En revisión por directorio.',
+    created_at: '2026-02-18'
+  }
+];
+
+const DEFAULT_CONTRATOS = [
+  {
+    id: 'CTR-2026-001',
+    cliente_id: 'CLI-001',
+    cliente_nombre: 'Inversiones Ferreteras del Norte S.A.C.',
+    cliente_ruc: '20601849201',
+    cliente_contacto: 'Ing. Roberto Mendoza',
+    cliente_cargo: 'Gerente de Operaciones',
+    cliente_direccion: 'Av. Argentina 2840, Cercado de Lima',
+    tipo: 'Venta de Licencia',
+    producto_nombre: 'Sistema Web Ferretería & Facturación Electrónica',
+    moneda: 'USD',
+    monto: 3500.00,
+    modalidad_pago: '50% anticipo, 50% contra entrega',
+    fecha_inicio: '2026-02-01',
+    fecha_fin: '2026-05-30',
+    garantia: '12 meses de soporte técnico y mantenimiento',
+    objeto: 'Licenciamiento definitivo, parametrización y despliegue del Sistema Web Integral de Ferretería, control de stock multibodega, cotizaciones y módulo SUNAT.',
+    entregables: 'Código compilado desplegado en servidor del cliente, manuales de administración y 12 horas de capacitación técnica al personal de caja y almacén.',
+    estado: 'vigente',
+    responsable: 'Equipo Comercial ODN',
+    created_at: '2026-01-25'
+  },
+  {
+    id: 'CTR-2026-002',
+    cliente_id: 'CLI-002',
+    cliente_nombre: 'Corporación Ortecho & Asociados E.I.R.L.',
+    cliente_ruc: '20554912034',
+    cliente_contacto: 'Lic. Carmen Ortecho',
+    cliente_cargo: 'Directora Ejecutiva',
+    cliente_direccion: 'Calle Las Begonias 441, Of. 802, San Isidro',
+    tipo: 'Alquiler / SaaS',
+    producto_nombre: 'Plataforma de Pagos y Notificaciones Ortecho',
+    moneda: 'PEN',
+    monto: 1450.00,
+    modalidad_pago: 'Mensual recurrente (primeros 5 días)',
+    fecha_inicio: '2026-01-15',
+    fecha_fin: '2027-01-15',
+    garantia: 'SLA 99.8% disponibilidad y soporte 24/7',
+    objeto: 'Suscripción anual a la infraestructura cloud de cobros digitales, conciliación de depósitos bancarios y envío masivo de notificaciones transaccionales.',
+    entregables: 'Ambiente SaaS dedicado, acceso a API REST para integración con su ERP contable, soporte técnico 24/7 y backups diarios cifrados.',
+    estado: 'vigente',
+    responsable: 'Equipo Comercial ODN',
+    created_at: '2026-01-12'
+  },
+  {
+    id: 'CTR-2026-003',
+    cliente_id: 'CLI-003',
+    cliente_nombre: 'Distribuidora Alimentos Andinos S.A.',
+    cliente_ruc: '20491823901',
+    cliente_contacto: 'Marco Aurelio Paucar',
+    cliente_cargo: 'Jefe de Logística y TI',
+    cliente_direccion: 'Carretera Central Km 18, Ate',
+    tipo: 'Desarrollo a Medida',
+    producto_nombre: 'App Móvil de Preventa & Rutas GPS',
+    moneda: 'USD',
+    monto: 4800.00,
+    modalidad_pago: '30% firma, 40% entregables, 30% conformidad',
+    fecha_inicio: '2026-03-01',
+    fecha_fin: '2026-07-15',
+    garantia: '6 meses de soporte técnico y mantenimiento',
+    objeto: 'Diseño y desarrollo de aplicativo móvil Android para preventistas con funcionamiento sin conexión (offline-first), ruteo geolocalizado y sincronización automática.',
+    entregables: 'APK firmado para producción, backend sincronizador, panel web administrativo de supervisión y documentación de arquitectura.',
+    estado: 'pendiente_firma',
+    responsable: 'Equipo Comercial ODN',
+    created_at: '2026-02-20'
+  },
+  {
+    id: 'CTR-2026-004',
+    cliente_id: 'CLI-004',
+    cliente_nombre: 'Consultora Minera Santa Rosa S.A.C.',
+    cliente_ruc: '20603418721',
+    cliente_contacto: 'Dra. Patricia Valdivia',
+    cliente_cargo: 'Gerente General',
+    cliente_direccion: 'Av. Javier Prado Este 2240, San Borja',
+    tipo: 'Venta de Licencia',
+    producto_nombre: 'Dashboard de Control Ambiental y Telemetría',
+    moneda: 'USD',
+    monto: 6200.00,
+    modalidad_pago: '50% anticipo, 50% contra entrega',
+    fecha_inicio: '2026-04-01',
+    fecha_fin: '2026-08-30',
+    garantia: '12 meses de soporte técnico y mantenimiento',
+    objeto: 'Implementación de tablero analítico central para monitoreo de sensores ambientales en campo, reportería automática para OEFA y alertas de umbrales críticos.',
+    entregables: 'Dashboard responsivo, ingesta de datos IoT vía MQTT/Webhooks, generador de reportes PDF y manuales técnicos.',
+    estado: 'borrador',
+    responsable: 'Equipo Comercial ODN',
+    created_at: '2026-03-05'
+  }
+];
+
+function getStoredClientes() {
+  try {
+    const raw = localStorage.getItem('qc_clientes');
+    if (raw) return JSON.parse(raw);
+  } catch (_) {}
+  localStorage.setItem('qc_clientes', JSON.stringify(DEFAULT_CLIENTES));
+  return DEFAULT_CLIENTES;
+}
+
+function setStoredClientes(list) {
+  localStorage.setItem('qc_clientes', JSON.stringify(list));
+}
+
+function getStoredContratos() {
+  try {
+    const raw = localStorage.getItem('qc_contratos');
+    if (raw) return JSON.parse(raw);
+  } catch (_) {}
+  localStorage.setItem('qc_contratos', JSON.stringify(DEFAULT_CONTRATOS));
+  return DEFAULT_CONTRATOS;
+}
+
+function setStoredContratos(list) {
+  localStorage.setItem('qc_contratos', JSON.stringify(list));
+}
+
+let _preselectedClientId = null;
+let _activeViewingContractId = null;
+
+// Helpers
+function formatCurrency(monto, moneda) {
+  const num = Number(monto) || 0;
+  const symb = moneda === 'PEN' ? 'S/' : '$';
+  return `${symb} ${num.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function getNextContractCode() {
+  const ctrs = getStoredContratos();
+  const year = new Date().getFullYear();
+  let maxNum = 0;
+  ctrs.forEach(c => {
+    const match = String(c.id).match(/CTR-(\d+)-(\d+)/);
+    if (match) {
+      const n = parseInt(match[2], 10);
+      if (n > maxNum) maxNum = n;
+    }
+  });
+  const nextNum = String(maxNum + 1).padStart(3, '0');
+  return `CTR-${year}-${nextNum}`;
+}
+
+function regenerateContractCode() {
+  const code = getNextContractCode();
+  const el = document.getElementById('ctr-codigo');
+  if (el) el.value = code;
+  updateContractPreview();
+}
+
+// ══════════════════════════════════════════════════════
+// MÓDULO 1: CREAR CONTRATO
+// ══════════════════════════════════════════════════════
+async function renderCrearContrato() {
+  const clientes = getStoredClientes();
+  const selectCli = document.getElementById('ctr-cliente-sel');
+  if (!selectCli) return;
+
+  // Poblar select clientes
+  selectCli.innerHTML = '<option value="">-- Seleccionar Cliente Registrado --</option>' +
+    clientes.map(c => `<option value="${esc(c.id)}">${esc(c.razon_social)} (${esc(c.ruc)})</option>`).join('');
+
+  if (_preselectedClientId) {
+    selectCli.value = _preselectedClientId;
+    _preselectedClientId = null;
+  } else if (clientes.length > 0 && !selectCli.value) {
+    selectCli.value = clientes[0].id;
+  }
+
+  // Poblar select productos (usando productos de catálogo si cargaron, o defaults)
+  const selectProd = document.getElementById('ctr-producto-sel');
+  let products = await ensureProducts();
+  let prodOptions = '';
+  if (products && products.length > 0) {
+    prodOptions = products.map(p => `<option value="${esc(p.name)}">${esc(p.name)} (${esc(p.code || 'PROD')})</option>`).join('');
+  } else {
+    prodOptions = `
+      <option value="Sistema Web Ferretería & Facturación Electrónica">Sistema Web Ferretería & Facturación Electrónica</option>
+      <option value="Plataforma de Pagos y Notificaciones Ortecho">Plataforma de Pagos y Notificaciones Ortecho</option>
+      <option value="App Móvil de Preventa & Rutas GPS">App Móvil de Preventa & Rutas GPS</option>
+      <option value="Dashboard de Control Ambiental y Telemetría">Dashboard de Control Ambiental y Telemetría</option>
+      <option value="Módulo de Gestión de Inventarios y Almacenes">Módulo de Gestión de Inventarios y Almacenes</option>
+    `;
+  }
+  prodOptions += '<option value="Software a Medida / Consultoría Especializada">Software a Medida / Consultoría Especializada</option>';
+  selectProd.innerHTML = prodOptions;
+
+  // Set default dates
+  const today = new Date();
+  const threeMonths = new Date();
+  threeMonths.setMonth(threeMonths.getMonth() + 3);
+
+  const initDateEl = document.getElementById('ctr-fecha-inicio');
+  const endDateEl  = document.getElementById('ctr-fecha-fin');
+  if (initDateEl && !initDateEl.value) initDateEl.value = today.toISOString().split('T')[0];
+  if (endDateEl && !endDateEl.value) endDateEl.value = threeMonths.toISOString().split('T')[0];
+
+  // Set default code
+  const codeEl = document.getElementById('ctr-codigo');
+  if (codeEl && !codeEl.value) codeEl.value = getNextContractCode();
+
+  // Set responsable
+  const respEl = document.getElementById('ctr-responsable');
+  if (respEl) {
+    const userName = qcUser ? `${qcUser.nombre || ''} ${qcUser.apellidos || ''}`.trim() || qcUser.username : 'ODN Qubira';
+    respEl.value = `${userName} (Comercial)`;
+  }
+
+  // Set default objeto y entregables if empty
+  const objEl = document.getElementById('ctr-objeto');
+  if (objEl && !objEl.value) {
+    objEl.value = 'Prestación de servicios de desarrollo, licenciamiento y puesta en producción de software empresarial con estándares de seguridad, alta concurrencia y soporte técnico de Qubira S.A.C.';
+  }
+  const entEl = document.getElementById('ctr-entregables');
+  if (entEl && !entEl.value) {
+    entEl.value = '1. Despliegue en ambiente cloud del cliente.\n2. Manual de usuario y guías operativas.\n3. Capacitación remota al equipo designado.\n4. Soporte técnico durante el periodo de garantía.';
+  }
+
+  updateContractPreview();
+}
+
+function onContractClientSelected(cliId) {
+  updateContractPreview();
+}
+
+function onContractProductChange(prodName) {
+  const objEl = document.getElementById('ctr-objeto');
+  if (objEl) {
+    objEl.value = `Licenciamiento y despliegue del software corporativo "${prodName}", incluyendo configuración de servidores, pruebas de integración y puesta en marcha para las operaciones del cliente.`;
+  }
+  updateContractPreview();
+}
+
+function updateContractPreview() {
+  const clientes = getStoredClientes();
+  const cliId = document.getElementById('ctr-cliente-sel')?.value;
+  const cliente = clientes.find(c => c.id === cliId) || (clientes[0] || {});
+
+  const codigo = document.getElementById('ctr-codigo')?.value || 'CTR-2026-0000';
+  const tipo = document.getElementById('ctr-tipo')?.value || 'Venta de Licencia';
+  const prod = document.getElementById('ctr-producto-sel')?.value || 'Solución de Software';
+  const moneda = document.getElementById('ctr-moneda')?.value || 'USD';
+  const monto = document.getElementById('ctr-monto')?.value || '0.00';
+  const modalidad = document.getElementById('ctr-modalidad')?.value || '50% anticipo, 50% contra entrega';
+  const fInicio = document.getElementById('ctr-fecha-inicio')?.value || '—';
+  const fFin = document.getElementById('ctr-fecha-fin')?.value || '—';
+  const garantia = document.getElementById('ctr-garantia')?.value || '12 meses';
+  const estado = document.getElementById('ctr-estado')?.value || 'borrador';
+
+  // Preview elements
+  const prevCod = document.getElementById('prev-codigo');
+  if (prevCod) prevCod.textContent = codigo;
+
+  const prevCli = document.getElementById('prev-cliente');
+  if (prevCli) prevCli.textContent = cliente.razon_social || 'Cliente no seleccionado';
+
+  const prevRuc = document.getElementById('prev-ruc');
+  if (prevRuc) prevRuc.textContent = cliente.ruc ? `RUC / DNI: ${cliente.ruc}` : 'RUC: —';
+
+  const prevProd = document.getElementById('prev-producto');
+  if (prevProd) prevProd.textContent = prod;
+
+  const prevTipo = document.getElementById('prev-tipo');
+  if (prevTipo) prevTipo.textContent = tipo;
+
+  const prevMonto = document.getElementById('prev-monto');
+  if (prevMonto) prevMonto.textContent = formatCurrency(monto, moneda);
+
+  const prevMod = document.getElementById('prev-modalidad');
+  if (prevMod) prevMod.textContent = modalidad;
+
+  const prevFechas = document.getElementById('prev-fechas');
+  if (prevFechas) prevFechas.textContent = `${fInicio} al ${fFin}`;
+
+  const prevGar = document.getElementById('prev-garantia');
+  if (prevGar) prevGar.textContent = garantia;
+
+  const prevBadge = document.getElementById('prev-badge-status');
+  if (prevBadge) {
+    prevBadge.className = `badge b-${estado}`;
+    const labels = { borrador: 'Borrador', pendiente_firma: 'Pendiente Firma', vigente: 'Vigente', finalizado: 'Finalizado', cancelado: 'Cancelado' };
+    prevBadge.textContent = labels[estado] || estado;
+  }
+
+  const ctrBadgeState = document.getElementById('ctr-badge-state');
+  if (ctrBadgeState) {
+    ctrBadgeState.className = `badge b-${estado}`;
+    ctrBadgeState.textContent = estado.toUpperCase();
+  }
+}
+
+function handleGuardarContrato(e) {
+  e.preventDefault();
+  const clientes = getStoredClientes();
+  const cliId = document.getElementById('ctr-cliente-sel')?.value;
+  const cliente = clientes.find(c => c.id === cliId);
+
+  if (!cliente) {
+    toast('error', 'Cliente requerido', 'Debes seleccionar un cliente registrado.');
+    return;
+  }
+
+  const codigo = document.getElementById('ctr-codigo')?.value || getNextContractCode();
+  const tipo = document.getElementById('ctr-tipo')?.value || 'Venta de Licencia';
+  const producto = document.getElementById('ctr-producto-sel')?.value || 'Software Qubira';
+  const moneda = document.getElementById('ctr-moneda')?.value || 'USD';
+  const monto = parseFloat(document.getElementById('ctr-monto')?.value) || 0;
+  const modalidad = document.getElementById('ctr-modalidad')?.value;
+  const fInicio = document.getElementById('ctr-fecha-inicio')?.value;
+  const fFin = document.getElementById('ctr-fecha-fin')?.value;
+  const garantia = document.getElementById('ctr-garantia')?.value;
+  const objeto = document.getElementById('ctr-objeto')?.value;
+  const entregables = document.getElementById('ctr-entregables')?.value;
+  const estado = document.getElementById('ctr-estado')?.value || 'borrador';
+  const responsable = document.getElementById('ctr-responsable')?.value || 'ODN Qubira';
+
+  const newContract = {
+    id: codigo,
+    cliente_id: cliente.id,
+    cliente_nombre: cliente.razon_social,
+    cliente_ruc: cliente.ruc,
+    cliente_contacto: cliente.contacto_nombre,
+    cliente_cargo: cliente.contacto_cargo,
+    cliente_direccion: cliente.direccion,
+    tipo,
+    producto_nombre: producto,
+    moneda,
+    monto,
+    modalidad_pago: modalidad,
+    fecha_inicio: fInicio,
+    fecha_fin: fFin,
+    garantia,
+    objeto,
+    entregables,
+    estado,
+    responsable,
+    created_at: new Date().toISOString().split('T')[0]
+  };
+
+  const contratos = getStoredContratos();
+  const existingIdx = contratos.findIndex(c => c.id === codigo);
+  if (existingIdx >= 0) {
+    contratos[existingIdx] = newContract;
+  } else {
+    contratos.unshift(newContract);
+  }
+
+  setStoredContratos(contratos);
+  toast('success', 'Contrato Registrado', `El contrato ${codigo} ha sido guardado exitosamente.`);
+  navigate('revisar-contrato');
+}
+
+function resetCrearContratoForm() {
+  document.getElementById('form-crear-contrato')?.reset();
+  renderCrearContrato();
+}
+
+function previewCurrentDraft() {
+  const clientes = getStoredClientes();
+  const cliId = document.getElementById('ctr-cliente-sel')?.value;
+  const cliente = clientes.find(c => c.id === cliId) || { razon_social: 'Cliente en Proceso', ruc: '00000000000', direccion: 'Dirección Comercial' };
+
+  const draftContract = {
+    id: document.getElementById('ctr-codigo')?.value || 'CTR-2026-BORRADOR',
+    cliente_nombre: cliente.razon_social,
+    cliente_ruc: cliente.ruc,
+    cliente_contacto: cliente.contacto_nombre || 'Representante Legal',
+    cliente_cargo: cliente.contacto_cargo || 'Gerente',
+    cliente_direccion: cliente.direccion || 'Lima, Perú',
+    tipo: document.getElementById('ctr-tipo')?.value || 'Venta de Licencia',
+    producto_nombre: document.getElementById('ctr-producto-sel')?.value || 'Software Qubira',
+    moneda: document.getElementById('ctr-moneda')?.value || 'USD',
+    monto: parseFloat(document.getElementById('ctr-monto')?.value) || 0,
+    modalidad_pago: document.getElementById('ctr-modalidad')?.value || 'Pago único',
+    fecha_inicio: document.getElementById('ctr-fecha-inicio')?.value || '2026-01-01',
+    fecha_fin: document.getElementById('ctr-fecha-fin')?.value || '2026-12-31',
+    garantia: document.getElementById('ctr-garantia')?.value || '12 meses',
+    objeto: document.getElementById('ctr-objeto')?.value || 'Prestación de servicios tecnológicos.',
+    entregables: document.getElementById('ctr-entregables')?.value || 'Entregables pactados.',
+    estado: document.getElementById('ctr-estado')?.value || 'borrador',
+    created_at: new Date().toISOString().split('T')[0]
+  };
+
+  renderContractOfficialModal(draftContract);
+}
+
+// ══════════════════════════════════════════════════════
+// MÓDULO 2: REVISAR CONTRATO
+// ══════════════════════════════════════════════════════
+function renderRevisarContrato() {
+  const contratos = getStoredContratos();
+
+  // Calcular métricas
+  const total = contratos.length;
+  const vigentes = contratos.filter(c => c.estado === 'vigente').length;
+  const pendientes = contratos.filter(c => c.estado === 'pendiente_firma').length;
+
+  let totalUSD = 0;
+  contratos.forEach(c => {
+    if (c.estado === 'vigente' || c.estado === 'pendiente_firma') {
+      const val = Number(c.monto) || 0;
+      totalUSD += c.moneda === 'PEN' ? val / 3.75 : val;
+    }
+  });
+
+  document.getElementById('stat-ctr-total').textContent = String(total);
+  document.getElementById('stat-ctr-vigentes').textContent = String(vigentes);
+  document.getElementById('stat-ctr-pendientes').textContent = String(pendientes);
+  document.getElementById('stat-ctr-monto').textContent = `$ ${Math.round(totalUSD).toLocaleString('es-PE')}`;
+
+  renderRevisarContratoTable();
+}
+
+function renderRevisarContratoTable() {
+  const contratos = getStoredContratos();
+  const q = (document.getElementById('ctr-filter-search')?.value || '').toLowerCase().trim();
+  const fEstado = document.getElementById('ctr-filter-estado')?.value;
+  const fMoneda = document.getElementById('ctr-filter-moneda')?.value;
+
+  const filtered = contratos.filter(c => {
+    if (fEstado && c.estado !== fEstado) return false;
+    if (fMoneda && c.moneda !== fMoneda) return false;
+    if (q) {
+      const match = (c.id + ' ' + c.cliente_nombre + ' ' + c.cliente_ruc + ' ' + c.producto_nombre + ' ' + (c.tipo||'')).toLowerCase();
+      if (!match.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const tbody = document.getElementById('tabla-contratos-body');
+  if (!tbody) return;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)">
+      <svg class="icon" style="width:32px;height:32px;margin-bottom:8px;opacity:.4"><use href="#icon-file-text"></use></svg>
+      <div>No se encontraron contratos con los filtros seleccionados.</div>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(c => `
+    <tr>
+      <td>
+        <strong style="font-family:monospace;color:var(--primary);cursor:pointer" onclick="viewContract('${esc(c.id)}')">${esc(c.id)}</strong>
+        <div style="font-size:11px;color:var(--text-muted)">${esc(c.tipo || 'Contrato')}</div>
+      </td>
+      <td>
+        <strong>${esc(c.cliente_nombre)}</strong>
+        <div style="font-size:11.5px;color:var(--text-muted)">RUC: ${esc(c.cliente_ruc || '—')}</div>
+      </td>
+      <td>
+        <span style="font-weight:600">${esc(c.producto_nombre)}</span>
+      </td>
+      <td>
+        <strong style="color:var(--primary);font-size:14px">${formatCurrency(c.monto, c.moneda)}</strong>
+      </td>
+      <td>
+        <span style="font-size:12px;color:var(--text-muted)">${esc(c.modalidad_pago || '—')}</span>
+      </td>
+      <td>
+        <div style="font-size:12px">${esc(c.fecha_inicio || '—')}</div>
+        <div style="font-size:11px;color:var(--text-muted)">hasta ${esc(c.fecha_fin || '—')}</div>
+      </td>
+      <td>
+        <select class="badge b-${esc(c.estado)}" style="border:none;cursor:pointer;font-family:inherit" onchange="quickUpdateContractStatus('${esc(c.id)}', this.value)">
+          <option value="borrador" ${c.estado==='borrador'?'selected':''}>Borrador</option>
+          <option value="pendiente_firma" ${c.estado==='pendiente_firma'?'selected':''}>Pendiente Firma</option>
+          <option value="vigente" ${c.estado==='vigente'?'selected':''}>Vigente</option>
+          <option value="finalizado" ${c.estado==='finalizado'?'selected':''}>Finalizado</option>
+          <option value="cancelado" ${c.estado==='cancelado'?'selected':''}>Cancelado</option>
+        </select>
+      </td>
+      <td style="text-align:right">
+        <div class="table-actions" style="justify-content:flex-end">
+          <button class="btn-icon" title="Ver documento oficial" onclick="viewContract('${esc(c.id)}')">
+            <svg class="icon"><use href="#icon-eye"></use></svg>
+          </button>
+          <button class="btn-icon" title="Imprimir contrato" onclick="quickPrintContract('${esc(c.id)}')">
+            <svg class="icon"><use href="#icon-printer"></use></svg>
+          </button>
+          <button class="btn-icon danger" title="Eliminar contrato" onclick="deleteContract('${esc(c.id)}')">
+            <svg class="icon"><use href="#icon-trash-2"></use></svg>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function quickUpdateContractStatus(id, newStatus) {
+  const contratos = getStoredContratos();
+  const ctr = contratos.find(c => c.id === id);
+  if (!ctr) return;
+  ctr.estado = newStatus;
+  setStoredContratos(contratos);
+  toast('success', 'Estado Actualizado', `Contrato ${id} marcado como ${newStatus}.`);
+  renderRevisarContrato();
+}
+
+function viewContract(id) {
+  const contratos = getStoredContratos();
+  const ctr = contratos.find(c => c.id === id);
+  if (!ctr) return;
+  _activeViewingContractId = id;
+  renderContractOfficialModal(ctr);
+}
+
+function renderContractOfficialModal(c) {
+  document.getElementById('contract-modal-code').textContent = `${c.id} · Qubira ODN`;
+  document.getElementById('contract-modal-title').textContent = `Contrato Oficial: ${c.cliente_nombre}`;
+
+  const statusSel = document.getElementById('contract-modal-status-select');
+  if (statusSel) statusSel.value = c.estado || 'borrador';
+
+  const body = document.getElementById('contract-modal-body');
+  if (!body) return;
+
+  const hoyFormato = new Date().toLocaleDateString('es-PE', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  body.innerHTML = `
+    <div class="contract-paper" id="official-contract-sheet">
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #0f766e;padding-bottom:14px;margin-bottom:22px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <img src="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" alt="Qubira Logo" style="width:48px;height:48px;border-radius:8px;object-fit:contain">
+          <div>
+            <div style="font-size:16px;font-weight:800;letter-spacing:1px;color:#0f766e">QUBIRA S.A.C.</div>
+            <div style="font-size:11px;color:#6b7280">RUC: 20608932145 · Tecnologías de la Información</div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:13px;font-weight:700;font-family:monospace;color:#111827">${esc(c.id)}</div>
+          <div style="font-size:11px;color:#6b7280">${hoyFormato}</div>
+        </div>
+      </div>
+
+      <h2>CONTRATO DE PRESTACIÓN DE SERVICIOS TECNOLÓGICOS Y LICENCIAMIENTO DE SOFTWARE</h2>
+      <div class="contract-subtitle">ACUERDO PRIVADO CON VALOR VINCULANTE · OFICINA DE DESARROLLO DE NEGOCIOS</div>
+
+      <div class="contract-clause">
+        <strong>CLÁUSULA PRIMERA: DE LAS PARTES</strong>
+        <p>Conste por el presente documento el contrato que celebran de una parte <strong>QUBIRA S.A.C.</strong>, con RUC N° 20608932145, con domicilio legal en Lima, debidamente representada por su Apoderado Legal; y de otra parte <strong>${esc(c.cliente_nombre)}</strong>, con Registro Único de Contribuyente (RUC) / DNI N° <strong>${esc(c.cliente_ruc || '—')}</strong>, con domicilio en ${esc(c.cliente_direccion || 'domicilio fijado por el cliente')}, debidamente representada por su representante legal <strong>${esc(c.cliente_contacto || 'EL CLIENTE')}</strong>, en su calidad de ${esc(c.cliente_cargo || 'Representante Autorizado')}, a quienes en adelante se denominará simplemente como <strong>EL CLIENTE</strong>.</p>
+      </div>
+
+      <div class="contract-clause">
+        <strong>CLÁUSULA SEGUNDA: DEL OBJETO DEL CONTRATO</strong>
+        <p>Por el presente acuerdo, QUBIRA S.A.C. se compromete a otorgar la solución tecnológica denominada <strong>"${esc(c.producto_nombre)}"</strong> bajo la modalidad de <strong>${esc(c.tipo)}</strong>. El alcance comprende específicamente: ${esc(c.objeto)}</p>
+      </div>
+
+      <div class="contract-clause">
+        <strong>CLÁUSULA TERCERA: ENTREGABLES Y COMPROMISOS TÉCNICOS</strong>
+        <p style="white-space:pre-wrap">${esc(c.entregables || 'No se registraron condiciones adicionales.')}</p>
+      </div>
+
+      <div class="contract-clause">
+        <strong>CLÁUSULA CUARTA: CONTRAPRESTACIÓN Y FORMA DE PAGO</strong>
+        <p>Como contraprestación por los servicios y productos provistos en el presente contrato, EL CLIENTE se compromete a abonar a QUBIRA S.A.C. el importe total de <strong>${formatCurrency(c.monto, c.moneda)}</strong> (${esc(c.moneda === 'PEN' ? 'Soles' : 'Dólares Americanos')}).</p>
+        <p style="margin-top:4px">La modalidad pactada es: <strong>${esc(c.modalidad_pago || 'Según cronograma valorizado')}</strong>. Los pagos se realizarán mediante abono en las cuentas bancarias autorizadas de QUBIRA S.A.C.</p>
+      </div>
+
+      <div class="contract-clause">
+        <strong>CLÁUSULA QUINTA: PLAZO DE EJECUCIÓN Y VIGENCIA</strong>
+        <p>El periodo de prestación y entrega entra en vigencia a partir del <strong>${esc(c.fecha_inicio)}</strong> y rige formalmente hasta el <strong>${esc(c.fecha_fin)}</strong>, pudiendo ser prorrogado mediante addenda firmada por mutuo acuerdo entre las partes.</p>
+      </div>
+
+      <div class="contract-clause">
+        <strong>CLÁUSULA SEXTA: GARANTÍA TÉCNICA Y NIVEL DE SERVICIO (SLA)</strong>
+        <p>QUBIRA S.A.C. garantiza la funcionalidad, estabilidad e integridad del software durante el término de: <strong>${esc(c.garantia || '12 meses')}</strong>. Dicha garantía incluye corrección de eventuales incidencias de código y soporte técnico prioritario según los protocolos de ODN y TI.</p>
+      </div>
+
+      <div class="contract-clause">
+        <strong>CLÁUSULA SÉPTIMA: CONFIDENCIALIDAD Y PROPIEDAD INTELECTUAL</strong>
+        <p>Ambas partes guardarán reserva y estricta confidencialidad respecto a la información sensible, datos operativos y código al que tengan acceso en mérito a este contrato. Los derechos morales y de autor de la plataforma base corresponden con exclusividad a QUBIRA S.A.C.</p>
+      </div>
+
+      <div class="contract-signatures">
+        <div class="signature-box">
+          <div style="height:35px;display:flex;align-items:center;justify-content:center;color:#0f766e;font-size:11px;font-weight:700">
+            [Firma Digital Qubira S.A.C.]
+          </div>
+          <div class="sign-name">QUBIRA S.A.C.</div>
+          <div class="sign-role">RUC: 20608932145 · Oficina Desarrollo de Negocios</div>
+        </div>
+
+        <div class="signature-box">
+          <div style="height:35px;display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:11px">
+            [Firma y Sello del Cliente]
+          </div>
+          <div class="sign-name">${esc(c.cliente_contacto || c.cliente_nombre)}</div>
+          <div class="sign-role">${esc(c.cliente_cargo || 'Representante Autorizado')} · ${esc(c.cliente_nombre)}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('contract-view-modal').classList.add('open');
+}
+
+function closeContractModal() {
+  document.getElementById('contract-view-modal').classList.remove('open');
+  _activeViewingContractId = null;
+}
+
+function changeContractStatusFromModal(newStatus) {
+  if (!_activeViewingContractId) return;
+  quickUpdateContractStatus(_activeViewingContractId, newStatus);
+}
+
+function quickPrintContract(id) {
+  viewContract(id);
+  setTimeout(() => printContract(), 300);
+}
+
+function printContract() {
+  window.print();
+}
+
+function deleteContract(id) {
+  if (!confirm(`¿Estás seguro de eliminar el contrato ${id}? Esta acción no se puede deshacer.`)) return;
+  const contratos = getStoredContratos().filter(c => c.id !== id);
+  setStoredContratos(contratos);
+  toast('success', 'Contrato Eliminado', `El contrato ${id} fue borrado.`);
+  renderRevisarContrato();
+}
+
+// ══════════════════════════════════════════════════════
+// MÓDULO 3: CREAR CLIENTES
+// ══════════════════════════════════════════════════════
+function renderCrearClientes() {
+  const form = document.getElementById('form-crear-cliente');
+  if (form) form.reset();
+  const ciudadEl = document.getElementById('cli-ciudad');
+  if (ciudadEl) ciudadEl.value = 'Lima, Perú';
+}
+
+function handleGuardarCliente(e) {
+  e.preventDefault();
+  const razon = document.getElementById('cli-razon')?.value.trim();
+  const ruc = document.getElementById('cli-ruc')?.value.trim();
+  const sector = document.getElementById('cli-sector')?.value;
+  const direccion = document.getElementById('cli-direccion')?.value.trim() || 'Lima, Perú';
+  const ciudad = document.getElementById('cli-ciudad')?.value.trim() || 'Lima, Perú';
+  const contacto = document.getElementById('cli-contacto')?.value.trim();
+  const cargo = document.getElementById('cli-cargo')?.value.trim();
+  const telefono = document.getElementById('cli-telefono')?.value.trim();
+  const email = document.getElementById('cli-email')?.value.trim();
+  const tipo = document.getElementById('cli-tipo')?.value || 'pyme';
+  const estado = document.getElementById('cli-estado')?.value || 'activo';
+  const origen = document.getElementById('cli-origen')?.value || 'Prospección Directa';
+  const notas = document.getElementById('cli-notas')?.value.trim() || '';
+
+  if (!razon || !ruc || !contacto || !telefono || !email) {
+    toast('error', 'Campos incompletos', 'Por favor completa todos los campos obligatorios (*).');
+    return;
+  }
+
+  const clientes = getStoredClientes();
+  const existing = clientes.find(c => c.ruc === ruc);
+  if (existing) {
+    toast('error', 'RUC ya registrado', `El cliente con RUC ${ruc} ya existe como ${existing.razon_social}.`);
+    return;
+  }
+
+  // Generar ID
+  let maxId = 0;
+  clientes.forEach(c => {
+    const match = String(c.id).match(/CLI-(\d+)/);
+    if (match) {
+      const n = parseInt(match[1], 10);
+      if (n > maxId) maxId = n;
+    }
+  });
+  const newId = `CLI-${String(maxId + 1).padStart(3, '0')}`;
+
+  const newClient = {
+    id: newId,
+    razon_social: razon,
+    ruc,
+    sector,
+    direccion,
+    ciudad,
+    contacto_nombre: contacto,
+    contacto_cargo: cargo,
+    telefono,
+    email,
+    tipo,
+    estado,
+    origen,
+    notas,
+    created_at: new Date().toISOString().split('T')[0]
+  };
+
+  clientes.unshift(newClient);
+  setStoredClientes(clientes);
+  toast('success', 'Cliente Registrado', `${razon} ha sido agregado a la cartera comercial.`);
+  navigate('editar-clientes');
+}
+
+// ══════════════════════════════════════════════════════
+// MÓDULO 4: EDITAR CLIENTES / DIRECTORIO
+// ══════════════════════════════════════════════════════
+function renderEditarClientes() {
+  const clientes = getStoredClientes();
+  const total = clientes.length;
+  const activos = clientes.filter(c => c.estado === 'activo').length;
+  const corporativos = clientes.filter(c => c.tipo === 'corporativo').length;
+  const prospectos = clientes.filter(c => c.tipo === 'prospecto').length;
+
+  document.getElementById('stat-cli-total').textContent = String(total);
+  document.getElementById('stat-cli-activos').textContent = String(activos);
+  document.getElementById('stat-cli-corporativos').textContent = String(corporativos);
+  document.getElementById('stat-cli-prospectos').textContent = String(prospectos);
+
+  renderEditarClientesTable();
+}
+
+function renderEditarClientesTable() {
+  const clientes = getStoredClientes();
+  const contratos = getStoredContratos();
+  const q = (document.getElementById('cli-filter-search')?.value || '').toLowerCase().trim();
+  const fTipo = document.getElementById('cli-filter-tipo')?.value;
+  const fEstado = document.getElementById('cli-filter-estado')?.value;
+
+  const filtered = clientes.filter(c => {
+    if (fTipo && c.tipo !== fTipo) return false;
+    if (fEstado && c.estado !== fEstado) return false;
+    if (q) {
+      const haystack = (c.razon_social + ' ' + c.ruc + ' ' + c.contacto_nombre + ' ' + c.email + ' ' + c.sector).toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const tbody = document.getElementById('tabla-clientes-body');
+  if (!tbody) return;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)">
+      <svg class="icon" style="width:32px;height:32px;margin-bottom:8px;opacity:.4"><use href="#icon-users"></use></svg>
+      <div>No se encontraron clientes con los filtros aplicados.</div>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(c => {
+    const ctrCount = contratos.filter(ctr => ctr.cliente_id === c.id || ctr.cliente_ruc === c.ruc).length;
+    return `
+      <tr>
+        <td>
+          <div style="font-weight:700;color:var(--text)">${esc(c.razon_social)}</div>
+          <div style="font-size:11.5px;color:var(--text-muted);font-family:monospace">RUC: ${esc(c.ruc)} · ${esc(c.id)}</div>
+        </td>
+        <td>
+          <strong>${esc(c.contacto_nombre)}</strong>
+          <div style="font-size:11.5px;color:var(--text-muted)">${esc(c.contacto_cargo || 'Contacto')}</div>
+        </td>
+        <td>
+          <div style="font-size:12.5px">${esc(c.telefono)}</div>
+          <div style="font-size:11.5px;color:var(--text-muted)">${esc(c.email)}</div>
+        </td>
+        <td>
+          <span style="font-size:12px;font-weight:500">${esc(c.sector)}</span>
+        </td>
+        <td>
+          <span class="badge b-${esc(c.tipo)}">${esc(c.tipo.toUpperCase())}</span>
+        </td>
+        <td>
+          <span class="badge b-${ctrCount > 0 ? 'vigente' : 'borrador'}">
+            <svg class="icon" style="width:11px;height:11px"><use href="#icon-file-text"></use></svg>
+            ${ctrCount} contrato${ctrCount===1?'':'s'}
+          </span>
+        </td>
+        <td>
+          <button type="button" class="badge b-${c.estado==='activo'?'active':'paused'}" style="border:none;cursor:pointer" onclick="toggleClientStatus('${esc(c.id)}')">
+            ${c.estado === 'activo' ? 'ACTIVO' : 'INACTIVO'}
+          </button>
+        </td>
+        <td style="text-align:right">
+          <div class="table-actions" style="justify-content:flex-end">
+            <button class="btn-icon" title="Editar ficha de cliente" onclick="openEditClientModal('${esc(c.id)}')">
+              <svg class="icon"><use href="#icon-edit-2"></use></svg>
+            </button>
+            <button class="btn-icon" title="Crear contrato para este cliente" onclick="startContractForClient('${esc(c.id)}')">
+              <svg class="icon" style="color:var(--primary)"><use href="#icon-file-plus"></use></svg>
+            </button>
+            <button class="btn-icon danger" title="Eliminar cliente" onclick="deleteClient('${esc(c.id)}')">
+              <svg class="icon"><use href="#icon-trash-2"></use></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function startContractForClient(cliId) {
+  _preselectedClientId = cliId;
+  navigate('crear-contrato');
+}
+
+function toggleClientStatus(id) {
+  const clientes = getStoredClientes();
+  const c = clientes.find(x => x.id === id);
+  if (!c) return;
+  c.estado = c.estado === 'activo' ? 'inactivo' : 'activo';
+  setStoredClientes(clientes);
+  toast('info', 'Estado actualizado', `${c.razon_social} ahora está ${c.estado}.`);
+  renderEditarClientes();
+}
+
+function deleteClient(id) {
+  const clientes = getStoredClientes();
+  const client = clientes.find(c => c.id === id);
+  if (!client) return;
+
+  const contratos = getStoredContratos();
+  const hasContracts = contratos.some(ctr => ctr.cliente_id === id || ctr.cliente_ruc === client.ruc);
+  if (hasContracts) {
+    if (!confirm(`El cliente ${client.razon_social} tiene contratos asociados. ¿Deseas eliminarlo de todas formas?`)) return;
+  } else {
+    if (!confirm(`¿Eliminar al cliente ${client.razon_social}?`)) return;
+  }
+
+  const updated = clientes.filter(c => c.id !== id);
+  setStoredClientes(updated);
+  toast('success', 'Cliente eliminado', `${client.razon_social} ha sido removido.`);
+  renderEditarClientes();
+}
+
+let _editingClientId = null;
+
+function openEditClientModal(id) {
+  const clientes = getStoredClientes();
+  const c = clientes.find(x => x.id === id);
+  if (!c) return;
+  _editingClientId = id;
+
+  document.getElementById('client-edit-kicker').textContent = `FICHA DE CLIENTE · ${c.id}`;
+  document.getElementById('client-edit-title').textContent = c.razon_social;
+
+  const body = document.getElementById('client-edit-body');
+  if (!body) return;
+
+  body.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>Razón Social / Nombre Comercial *</label>
+          <input type="text" id="edit-cli-razon" value="${esc(c.razon_social)}" required>
+        </div>
+        <div class="form-group">
+          <label>RUC o DNI *</label>
+          <input type="text" id="edit-cli-ruc" value="${esc(c.ruc)}" maxlength="11" required>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>Sector / Rubro *</label>
+          <select id="edit-cli-sector">
+            <option value="Comercio & Retail" ${c.sector==='Comercio & Retail'?'selected':''}>Comercio & Retail</option>
+            <option value="Ferretería & Construcción" ${c.sector==='Ferretería & Construcción'?'selected':''}>Ferretería & Construcción</option>
+            <option value="Servicios Financieros & FinTech" ${c.sector==='Servicios Financieros & FinTech'?'selected':''}>Servicios Financieros & FinTech</option>
+            <option value="Logística & Distribución" ${c.sector==='Logística & Distribución'?'selected':''}>Logística & Distribución</option>
+            <option value="Minería & Energía" ${c.sector==='Minería & Energía'?'selected':''}>Minería & Energía</option>
+            <option value="Salud & Farmacia" ${c.sector==='Salud & Farmacia'?'selected':''}>Salud & Farmacia</option>
+            <option value="Educación & Capacitación" ${c.sector==='Educación & Capacitación'?'selected':''}>Educación & Capacitación</option>
+            <option value="Tecnología & Telecom" ${c.sector==='Tecnología & Telecom'?'selected':''}>Tecnología & Telecom</option>
+            <option value="Otro" ${c.sector==='Otro'?'selected':''}>Otro Rubro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Dirección Fiscal</label>
+          <input type="text" id="edit-cli-direccion" value="${esc(c.direccion || '')}">
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>Contacto Principal *</label>
+          <input type="text" id="edit-cli-contacto" value="${esc(c.contacto_nombre)}" required>
+        </div>
+        <div class="form-group">
+          <label>Cargo del Contacto</label>
+          <input type="text" id="edit-cli-cargo" value="${esc(c.contacto_cargo || '')}">
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>Teléfono / WhatsApp *</label>
+          <input type="tel" id="edit-cli-telefono" value="${esc(c.telefono)}" required>
+        </div>
+        <div class="form-group">
+          <label>Correo Electrónico *</label>
+          <input type="email" id="edit-cli-email" value="${esc(c.email)}" required>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>Clasificación</label>
+          <select id="edit-cli-tipo">
+            <option value="corporativo" ${c.tipo==='corporativo'?'selected':''}>Corporativo</option>
+            <option value="pyme" ${c.tipo==='pyme'?'selected':''}>PYME</option>
+            <option value="prospecto" ${c.tipo==='prospecto'?'selected':''}>Prospecto</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Estado de Cuenta</label>
+          <select id="edit-cli-estado">
+            <option value="activo" ${c.estado==='activo'?'selected':''}>Activo</option>
+            <option value="inactivo" ${c.estado==='inactivo'?'selected':''}>Inactivo</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Observaciones y Notas Comerciales</label>
+        <textarea id="edit-cli-notas" rows="3">${esc(c.notas || '')}</textarea>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('client-edit-modal').classList.add('open');
+}
+
+function closeEditClientModal() {
+  document.getElementById('client-edit-modal').classList.remove('open');
+  _editingClientId = null;
+}
+
+function submitEditClientForm() {
+  if (!_editingClientId) return;
+  const clientes = getStoredClientes();
+  const c = clientes.find(x => x.id === _editingClientId);
+  if (!c) return;
+
+  const razon = document.getElementById('edit-cli-razon')?.value.trim();
+  const ruc = document.getElementById('edit-cli-ruc')?.value.trim();
+  const sector = document.getElementById('edit-cli-sector')?.value;
+  const direccion = document.getElementById('edit-cli-direccion')?.value.trim();
+  const contacto = document.getElementById('edit-cli-contacto')?.value.trim();
+  const cargo = document.getElementById('edit-cli-cargo')?.value.trim();
+  const telefono = document.getElementById('edit-cli-telefono')?.value.trim();
+  const email = document.getElementById('edit-cli-email')?.value.trim();
+  const tipo = document.getElementById('edit-cli-tipo')?.value;
+  const estado = document.getElementById('edit-cli-estado')?.value;
+  const notas = document.getElementById('edit-cli-notas')?.value.trim();
+
+  if (!razon || !ruc || !contacto || !telefono || !email) {
+    toast('error', 'Campos requeridos', 'Completa los campos obligatorios para guardar.');
+    return;
+  }
+
+  c.razon_social = razon;
+  c.ruc = ruc;
+  c.sector = sector;
+  c.direccion = direccion;
+  c.contacto_nombre = contacto;
+  c.contacto_cargo = cargo;
+  c.telefono = telefono;
+  c.email = email;
+  c.tipo = tipo;
+  c.estado = estado;
+  c.notas = notas;
+
+  // Actualizar también en los contratos asociados
+  const contratos = getStoredContratos();
+  let updatedContracts = false;
+  contratos.forEach(ctr => {
+    if (ctr.cliente_id === c.id) {
+      ctr.cliente_nombre = razon;
+      ctr.cliente_ruc = ruc;
+      ctr.cliente_contacto = contacto;
+      ctr.cliente_cargo = cargo;
+      ctr.cliente_direccion = direccion;
+      updatedContracts = true;
+    }
+  });
+  if (updatedContracts) setStoredContratos(contratos);
+
+  setStoredClientes(clientes);
+  closeEditClientModal();
+  toast('success', 'Cliente Actualizado', `${razon} ha sido guardado exitosamente.`);
+  renderEditarClientes();
 }
 
 // ══════════════════════════════════════════════════════
