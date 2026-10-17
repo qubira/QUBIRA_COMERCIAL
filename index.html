@@ -650,13 +650,8 @@
             <div class="form-grid-2">
               <div class="form-group">
                 <label for="ctr-codigo">Código de Contrato</label>
-                <div style="display:flex;gap:6px">
-                  <input type="text" id="ctr-codigo" readonly style="font-family:monospace;font-weight:700;background:var(--bg-card2)">
-                  <button type="button" class="btn-icon" title="Generar nuevo código" onclick="regenerateContractCode()">
-                    <svg class="icon"><use href="#icon-repeat"></use></svg>
-                  </button>
-                </div>
-                <span class="form-help">Secuencia oficial correlativa ODN 2026</span>
+                <input type="text" id="ctr-codigo" readonly style="font-family:monospace;font-weight:700;background:var(--bg-card2)">
+                <span class="form-help">Automático y correlativo — se asigna al guardar, no se puede editar</span>
               </div>
 
               <div class="form-group">
@@ -964,13 +959,8 @@
             <div class="form-grid-2">
               <div class="form-group">
                 <label for="prf-codigo">Código de Proforma</label>
-                <div style="display:flex;gap:6px">
-                  <input type="text" id="prf-codigo" readonly style="font-family:monospace;font-weight:700;background:var(--bg-card2)">
-                  <button type="button" class="btn-icon" title="Generar nuevo código" onclick="regenerateProformaCode()">
-                    <svg class="icon"><use href="#icon-repeat"></use></svg>
-                  </button>
-                </div>
-                <span class="form-help">Secuencia oficial correlativa ODN 2026</span>
+                <input type="text" id="prf-codigo" readonly style="font-family:monospace;font-weight:700;background:var(--bg-card2)">
+                <span class="form-help">Automático y correlativo — se asigna al guardar, no se puede editar</span>
               </div>
 
               <div class="form-group">
@@ -2914,13 +2904,6 @@ function getNextProformaCode() {
   return `PRF-${year}-${nextNum}`;
 }
 
-function regenerateProformaCode() {
-  const code = getNextProformaCode();
-  const el = document.getElementById('prf-codigo');
-  if (el) el.value = code;
-  updateProformaPreview();
-}
-
 let _preselectedClientId = null;
 let _preselectedProformaClientId = null;
 let _activeViewingContractId = null;
@@ -2947,13 +2930,6 @@ function getNextContractCode() {
   });
   const nextNum = String(maxNum + 1).padStart(3, '0');
   return `CTR-${year}-${nextNum}`;
-}
-
-function regenerateContractCode() {
-  const code = getNextContractCode();
-  const el = document.getElementById('ctr-codigo');
-  if (el) el.value = code;
-  updateContractPreview();
 }
 
 // ══════════════════════════════════════════════════════
