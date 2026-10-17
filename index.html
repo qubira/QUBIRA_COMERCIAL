@@ -1748,13 +1748,22 @@ const PAGE_META = {
   'editar-clientes': { title:'Directorio de Clientes', sub:'Edición de cartera, contactos y vinculación de contratos' },
 };
 
-function navigate(page) {
+const COMERCIAL_DATA_PAGES = ['crear-contrato', 'revisar-contrato', 'crear-proforma', 'consultar-proforma', 'editar-clientes'];
+
+async function navigate(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const targetPage = document.getElementById('page-' + page);
   if (targetPage) targetPage.classList.add('active');
   document.getElementById('page-title').textContent = PAGE_META[page]?.title || page;
   document.getElementById('page-sub').textContent   = PAGE_META[page]?.sub   || '';
   document.querySelectorAll('.nav-item[data-page]').forEach(el => el.classList.toggle('active', el.dataset.page === page));
+  closeSidebar();
+
+  // Clientes/contratos/proformas viven en Postgres (vía /api/comercial) —
+  // se recargan al entrar a cualquier vista que los use, para que siempre
+  // se vea el dato más reciente (incluido lo que haya cambiado otro usuario).
+  if (COMERCIAL_DATA_PAGES.includes(page)) await ensureComercialData(true);
+
   if (page === 'dashboard') renderDashboard();
   if (page === 'calendario') calRender();
   if (page === 'catalogo')  renderCatalogo();
@@ -1764,7 +1773,6 @@ function navigate(page) {
   if (page === 'consultar-proforma') renderConsultarProforma();
   if (page === 'crear-clientes') renderCrearClientes();
   if (page === 'editar-clientes') renderEditarClientes();
-  closeSidebar();
 }
 
 // ══════════════════════════════════════════════════════
@@ -2670,358 +2678,42 @@ function calViewMeeting(id) {
 // MÓDULOS CONTRATOS Y CLIENTES (ODN)
 // ══════════════════════════════════════════════════════
 
-// 1. DATA SEEDING & PERSISTENCE
-const DEFAULT_CLIENTES = [
-  {
-    id: 'CLI-001',
-    razon_social: 'Inversiones Ferreteras del Norte S.A.C.',
-    ruc: '20601849201',
-    sector: 'Ferretería & Construcción',
-    direccion: 'Av. Argentina 2840, Cercado de Lima',
-    ciudad: 'Lima, Perú',
-    contacto_nombre: 'Ing. Roberto Mendoza',
-    contacto_cargo: 'Gerente de Operaciones',
-    telefono: '+51 984 123 456',
-    email: 'gerencia@ferreterasdelnorte.pe',
-    tipo: 'corporativo',
-    estado: 'activo',
-    origen: 'Prospección Directa',
-    notas: 'Cadena con 5 almacenes centrales. Interesados en módulo de preventa móvil.',
-    created_at: '2026-01-15'
-  },
-  {
-    id: 'CLI-002',
-    razon_social: 'Corporación Ortecho & Asociados E.I.R.L.',
-    ruc: '20554912034',
-    sector: 'Servicios Financieros & FinTech',
-    direccion: 'Calle Las Begonias 441, Of. 802, San Isidro',
-    ciudad: 'Lima, Perú',
-    contacto_nombre: 'Lic. Carmen Ortecho',
-    contacto_cargo: 'Directora Ejecutiva',
-    telefono: '+51 945 889 120',
-    email: 'carmen.ortecho@ortechoasoc.com',
-    tipo: 'corporativo',
-    estado: 'activo',
-    origen: 'Web Qubira',
-    notas: 'Requieren integración continua con pasarelas de pago y notificaciones SMS.',
-    created_at: '2026-01-20'
-  },
-  {
-    id: 'CLI-003',
-    razon_social: 'Distribuidora Alimentos Andinos S.A.',
-    ruc: '20491823901',
-    sector: 'Logística & Distribución',
-    direccion: 'Carretera Central Km 18, Ate',
-    ciudad: 'Lima, Perú',
-    contacto_nombre: 'Marco Aurelio Paucar',
-    contacto_cargo: 'Jefe de Logística y TI',
-    telefono: '+51 971 334 009',
-    email: 'mpaucar@alimentosandinos.pe',
-    tipo: 'pyme',
-    estado: 'activo',
-    origen: 'Referido',
-    notas: 'Flota de 18 repartidores. Sincronización offline indispensable.',
-    created_at: '2026-02-05'
-  },
-  {
-    id: 'CLI-004',
-    razon_social: 'Consultora Minera Santa Rosa S.A.C.',
-    ruc: '20603418721',
-    sector: 'Minería & Energía',
-    direccion: 'Av. Javier Prado Este 2240, San Borja',
-    ciudad: 'Lima, Perú',
-    contacto_nombre: 'Dra. Patricia Valdivia',
-    contacto_cargo: 'Gerente General',
-    telefono: '+51 998 776 543',
-    email: 'pvaldivia@minerasantarosa.com',
-    tipo: 'prospecto',
-    estado: 'activo',
-    origen: 'Evento / Networking',
-    notas: 'Propuesta técnica presentada. En revisión por directorio.',
-    created_at: '2026-02-18'
-  }
-];
+// 1. DATOS — respaldados por la API (/api/comercial/*), con Postgres real
+//    detrás. _clientesCache/_contratosCache/_proformasCache son el estado
+//    en memoria; getStoredX() queda como lector síncrono de esa caché
+//    (así no hay que tocar las ~50 lecturas existentes en el resto del
+//    archivo), y cada mutación real (crear/editar/eliminar) llama a la
+//    API y luego refresca la caché correspondiente.
+let _clientesCache = [];
+let _contratosCache = [];
+let _proformasCache = [];
+let _comercialDataLoaded = false;
 
-const DEFAULT_CONTRATOS = [
-  {
-    id: 'CTR-2026-001',
-    cliente_id: 'CLI-001',
-    cliente_nombre: 'Inversiones Ferreteras del Norte S.A.C.',
-    cliente_ruc: '20601849201',
-    cliente_contacto: 'Ing. Roberto Mendoza',
-    cliente_cargo: 'Gerente de Operaciones',
-    cliente_direccion: 'Av. Argentina 2840, Cercado de Lima',
-    tipo: 'Venta de Licencia',
-    producto_nombre: 'Sistema Web Ferretería & Facturación Electrónica',
-    moneda: 'USD',
-    monto: 3500.00,
-    modalidad_pago: '50% anticipo, 50% contra entrega',
-    fecha_inicio: '2026-02-01',
-    fecha_fin: '2026-05-30',
-    garantia: '12 meses de soporte técnico y mantenimiento',
-    objeto: 'Licenciamiento definitivo, parametrización y despliegue del Sistema Web Integral de Ferretería, control de stock multibodega, cotizaciones y módulo SUNAT.',
-    entregables: 'Código compilado desplegado en servidor del cliente, manuales de administración y 12 horas de capacitación técnica al personal de caja y almacén.',
-    estado: 'vigente',
-    responsable: 'Equipo Comercial ODN',
-    created_at: '2026-01-25'
-  },
-  {
-    id: 'CTR-2026-002',
-    cliente_id: 'CLI-002',
-    cliente_nombre: 'Corporación Ortecho & Asociados E.I.R.L.',
-    cliente_ruc: '20554912034',
-    cliente_contacto: 'Lic. Carmen Ortecho',
-    cliente_cargo: 'Directora Ejecutiva',
-    cliente_direccion: 'Calle Las Begonias 441, Of. 802, San Isidro',
-    tipo: 'Alquiler / SaaS',
-    producto_nombre: 'Plataforma de Pagos y Notificaciones Ortecho',
-    moneda: 'PEN',
-    monto: 1450.00,
-    modalidad_pago: 'Mensual recurrente (primeros 5 días)',
-    fecha_inicio: '2026-01-15',
-    fecha_fin: '2027-01-15',
-    garantia: 'SLA 99.8% disponibilidad y soporte 24/7',
-    objeto: 'Suscripción anual a la infraestructura cloud de cobros digitales, conciliación de depósitos bancarios y envío masivo de notificaciones transaccionales.',
-    entregables: 'Ambiente SaaS dedicado, acceso a API REST para integración con su ERP contable, soporte técnico 24/7 y backups diarios cifrados.',
-    estado: 'vigente',
-    responsable: 'Equipo Comercial ODN',
-    created_at: '2026-01-12'
-  },
-  {
-    id: 'CTR-2026-003',
-    cliente_id: 'CLI-003',
-    cliente_nombre: 'Distribuidora Alimentos Andinos S.A.',
-    cliente_ruc: '20491823901',
-    cliente_contacto: 'Marco Aurelio Paucar',
-    cliente_cargo: 'Jefe de Logística y TI',
-    cliente_direccion: 'Carretera Central Km 18, Ate',
-    tipo: 'Desarrollo a Medida',
-    producto_nombre: 'App Móvil de Preventa & Rutas GPS',
-    moneda: 'USD',
-    monto: 4800.00,
-    modalidad_pago: '30% firma, 40% entregables, 30% conformidad',
-    fecha_inicio: '2026-03-01',
-    fecha_fin: '2026-07-15',
-    garantia: '6 meses de soporte técnico y mantenimiento',
-    objeto: 'Diseño y desarrollo de aplicativo móvil Android para preventistas con funcionamiento sin conexión (offline-first), ruteo geolocalizado y sincronización automática.',
-    entregables: 'APK firmado para producción, backend sincronizador, panel web administrativo de supervisión y documentación de arquitectura.',
-    estado: 'pendiente_firma',
-    responsable: 'Equipo Comercial ODN',
-    created_at: '2026-02-20'
-  },
-  {
-    id: 'CTR-2026-004',
-    cliente_id: 'CLI-004',
-    cliente_nombre: 'Consultora Minera Santa Rosa S.A.C.',
-    cliente_ruc: '20603418721',
-    cliente_contacto: 'Dra. Patricia Valdivia',
-    cliente_cargo: 'Gerente General',
-    cliente_direccion: 'Av. Javier Prado Este 2240, San Borja',
-    tipo: 'Venta de Licencia',
-    producto_nombre: 'Dashboard de Control Ambiental y Telemetría',
-    moneda: 'USD',
-    monto: 6200.00,
-    modalidad_pago: '50% anticipo, 50% contra entrega',
-    fecha_inicio: '2026-04-01',
-    fecha_fin: '2026-08-30',
-    garantia: '12 meses de soporte técnico y mantenimiento',
-    objeto: 'Implementación de tablero analítico central para monitoreo de sensores ambientales en campo, reportería automática para OEFA y alertas de umbrales críticos.',
-    entregables: 'Dashboard responsivo, ingesta de datos IoT vía MQTT/Webhooks, generador de reportes PDF y manuales técnicos.',
-    estado: 'borrador',
-    responsable: 'Equipo Comercial ODN',
-    created_at: '2026-03-05'
-  }
-];
-
-function getStoredClientes() {
+async function ensureComercialData(force) {
+  if (_comercialDataLoaded && !force) return;
   try {
-    const raw = localStorage.getItem('qc_clientes');
-    if (raw) return JSON.parse(raw);
-  } catch (_) {}
-  localStorage.setItem('qc_clientes', JSON.stringify(DEFAULT_CLIENTES));
-  return DEFAULT_CLIENTES;
-}
-
-function setStoredClientes(list) {
-  localStorage.setItem('qc_clientes', JSON.stringify(list));
-}
-
-function getStoredContratos() {
-  try {
-    const raw = localStorage.getItem('qc_contratos');
-    if (raw) return JSON.parse(raw);
-  } catch (_) {}
-  localStorage.setItem('qc_contratos', JSON.stringify(DEFAULT_CONTRATOS));
-  return DEFAULT_CONTRATOS;
-}
-
-function setStoredContratos(list) {
-  localStorage.setItem('qc_contratos', JSON.stringify(list));
-}
-
-// ══════════════════════════════════════════════════════
-// DATA SEEDING & STORAGE: PROFORMAS (ODN)
-// ══════════════════════════════════════════════════════
-const DEFAULT_PROFORMAS = [
-  {
-    id: 'PRF-2026-001',
-    cliente_id: 'CLI-001',
-    cliente_nombre: 'Inversiones Ferreteras del Norte S.A.C.',
-    cliente_ruc: '20601849201',
-    cliente_contacto: 'Ing. Roberto Mendoza',
-    cliente_cargo: 'Gerente de Operaciones',
-    cliente_email: 'gerencia@ferreterasdelnorte.pe',
-    cliente_telefono: '+51 984 123 456',
-    cliente_direccion: 'Av. Argentina 2840, Cercado de Lima',
-    tipo: 'Venta de Licencia',
-    producto_nombre: 'Sistema Web Ferretería & Facturación Electrónica',
-    moneda: 'USD',
-    items: [
-      { descripcion: 'Licencia Perpetua Sistema Web Integral Ferretería (Multi-almacén, Ventas y Compras)', cantidad: 1, precio: 2800.00, subtotal: 2800.00 },
-      { descripcion: 'Módulo de Facturación Electrónica SUNAT (Facturas, Boletas, Guías de Remisión y Notas)', cantidad: 1, precio: 450.00, subtotal: 450.00 },
-      { descripcion: 'Servicio de Despliegue en Servidor Cloud y Capacitación al Personal (12 horas)', cantidad: 1, precio: 250.00, subtotal: 250.00 }
-    ],
-    subtotal: 3500.00,
-    descuento_pct: 0,
-    descuento_monto: 0.00,
-    subtotal_neto: 3500.00,
-    igv_tipo: 'igv_18',
-    igv_monto: 630.00,
-    total: 4130.00,
-    modalidad_pago: '50% anticipo, 50% contra entrega',
-    tiempo_entrega: '15 días hábiles tras confirmación',
-    garantia: '12 meses de soporte técnico y mantenimiento',
-    alcance: 'Puesta en marcha de software de gestión comercial para 5 locales con sincronización centralizada, catálogo SUNAT y migración inicial de productos desde Excel.',
-    observaciones: 'Precios no incluyen hardware. La infraestructura de hosting se entrega configurada en ambiente cloud por el primer año.',
-    fecha_emision: '2026-01-20',
-    validez_dias: 15,
-    fecha_vencimiento: '2026-02-04',
-    estado: 'convertida',
-    responsable: 'Equipo Comercial ODN',
-    created_at: '2026-01-20'
-  },
-  {
-    id: 'PRF-2026-002',
-    cliente_id: 'CLI-002',
-    cliente_nombre: 'Corporación Ortecho & Asociados E.I.R.L.',
-    cliente_ruc: '20554912034',
-    cliente_contacto: 'Lic. Carmen Ortecho',
-    cliente_cargo: 'Directora Ejecutiva',
-    cliente_email: 'carmen.ortecho@ortechoasoc.com',
-    cliente_telefono: '+51 945 889 120',
-    cliente_direccion: 'Calle Las Begonias 441, Of. 802, San Isidro',
-    tipo: 'Alquiler / SaaS',
-    producto_nombre: 'Plataforma de Pagos y Notificaciones Ortecho',
-    moneda: 'PEN',
-    items: [
-      { descripcion: 'Suscripción Mensual SaaS Plataforma de Cobros Digitales y Conciliación Bancaria', cantidad: 1, precio: 1200.00, subtotal: 1200.00 },
-      { descripcion: 'Bolsa de 5,000 Notificaciones Transaccionales SMS & WhatsApp Business API', cantidad: 1, precio: 250.00, subtotal: 250.00 }
-    ],
-    subtotal: 1450.00,
-    descuento_pct: 0,
-    descuento_monto: 0.00,
-    subtotal_neto: 1450.00,
-    igv_tipo: 'igv_18',
-    igv_monto: 261.00,
-    total: 1711.00,
-    modalidad_pago: 'Mensual recurrente (primeros 5 días)',
-    tiempo_entrega: 'Inmediato (48 horas tras suscripción)',
-    garantia: 'SLA 99.8% disponibilidad y soporte 24/7',
-    alcance: 'Acceso corporativo ilimitado a pasarela multi-banco, panel analítico en tiempo real y webhooks seguros.',
-    observaciones: 'Renovación automática sujeta a contrato anual con facturación mensual electrónica.',
-    fecha_emision: '2026-01-08',
-    validez_dias: 30,
-    fecha_vencimiento: '2026-02-07',
-    estado: 'aprobada',
-    responsable: 'Equipo Comercial ODN',
-    created_at: '2026-01-08'
-  },
-  {
-    id: 'PRF-2026-003',
-    cliente_id: 'CLI-003',
-    cliente_nombre: 'Distribuidora Alimentos Andinos S.A.',
-    cliente_ruc: '20491823901',
-    cliente_contacto: 'Marco Aurelio Paucar',
-    cliente_cargo: 'Jefe de Logística y TI',
-    cliente_email: 'mpaucar@alimentosandinos.pe',
-    cliente_telefono: '+51 971 334 009',
-    cliente_direccion: 'Carretera Central Km 18, Ate',
-    tipo: 'Desarrollo a Medida',
-    producto_nombre: 'App Móvil de Preventa & Rutas GPS',
-    moneda: 'USD',
-    items: [
-      { descripcion: 'Desarrollo de Aplicativo Móvil Android para Preventistas (Arquitectura Offline-First)', cantidad: 1, precio: 3600.00, subtotal: 3600.00 },
-      { descripcion: 'Panel Web Administrativo de Monitoreo de Flotas y Trazabilidad de Pedidos', cantidad: 1, precio: 1200.00, subtotal: 1200.00 }
-    ],
-    subtotal: 4800.00,
-    descuento_pct: 0,
-    descuento_monto: 0.00,
-    subtotal_neto: 4800.00,
-    igv_tipo: 'igv_18',
-    igv_monto: 864.00,
-    total: 5664.00,
-    modalidad_pago: '30% firma, 40% entregables, 30% conformidad',
-    tiempo_entrega: '45 días calendario según hitos técnicos',
-    garantia: '6 meses de soporte técnico y mantenimiento',
-    alcance: 'Sincronización bidireccional automática, cálculo de comisiones por vendedor y exportación directa a ERP de almacén.',
-    observaciones: 'Se entregará código fuente compilado y manual de instalación en servidor dedicado.',
-    fecha_emision: '2026-02-15',
-    validez_dias: 30,
-    fecha_vencimiento: '2026-03-17',
-    estado: 'enviada',
-    responsable: 'Equipo Comercial ODN',
-    created_at: '2026-02-15'
-  },
-  {
-    id: 'PRF-2026-004',
-    cliente_id: 'CLI-004',
-    cliente_nombre: 'Consultora Minera Santa Rosa S.A.C.',
-    cliente_ruc: '20603418721',
-    cliente_contacto: 'Dra. Patricia Valdivia',
-    cliente_cargo: 'Gerente General',
-    cliente_email: 'pvaldivia@minerasantarosa.com',
-    cliente_telefono: '+51 998 776 543',
-    cliente_direccion: 'Av. Javier Prado Este 2240, San Borja',
-    tipo: 'Venta de Licencia',
-    producto_nombre: 'Dashboard de Control Ambiental y Telemetría',
-    moneda: 'USD',
-    items: [
-      { descripcion: 'Plataforma Analítica Central IoT para Monitoreo de Parámetros Ambientales en Campo', cantidad: 1, precio: 5200.00, subtotal: 5200.00 },
-      { descripcion: 'Módulo de Generación Automatizada de Reportes de Cumplimiento Regulatorio OEFA', cantidad: 1, precio: 1000.00, subtotal: 1000.00 }
-    ],
-    subtotal: 6200.00,
-    descuento_pct: 5,
-    descuento_monto: 310.00,
-    subtotal_neto: 5890.00,
-    igv_tipo: 'igv_18',
-    igv_monto: 1060.20,
-    total: 6950.20,
-    modalidad_pago: '50% anticipo, 50% contra entrega',
-    tiempo_entrega: '30 días hábiles',
-    garantia: '12 meses de soporte técnico y mantenimiento',
-    alcance: 'Ingesta de datos mediante protocolo MQTT/HTTPS, generación de alertas por SMS ante desvíos y tablero ejecutivo interactivo.',
-    observaciones: 'Propuesta sujeta a disponibilidad de conexión satelital en campamento minero.',
-    fecha_emision: '2026-03-02',
-    validez_dias: 30,
-    fecha_vencimiento: '2026-04-01',
-    estado: 'borrador',
-    responsable: 'Equipo Comercial ODN',
-    created_at: '2026-03-02'
+    const [cliData, ctrData, prfData] = await Promise.all([
+      qcApiFetch('/api/comercial/clients'),
+      qcApiFetch('/api/comercial/contracts'),
+      qcApiFetch('/api/comercial/proformas'),
+    ]);
+    _clientesCache = cliData.clients || [];
+    _contratosCache = ctrData.contracts || [];
+    _proformasCache = prfData.proformas || [];
+    _comercialDataLoaded = true;
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') console.error(err);
   }
-];
-
-function getStoredProformas() {
-  try {
-    const raw = localStorage.getItem('qc_proformas');
-    if (raw) return JSON.parse(raw);
-  } catch (_) {}
-  localStorage.setItem('qc_proformas', JSON.stringify(DEFAULT_PROFORMAS));
-  return DEFAULT_PROFORMAS;
 }
 
-function setStoredProformas(list) {
-  localStorage.setItem('qc_proformas', JSON.stringify(list));
-}
+async function reloadClientes() { _clientesCache = (await qcApiFetch('/api/comercial/clients')).clients || []; return _clientesCache; }
+async function reloadContratos() { _contratosCache = (await qcApiFetch('/api/comercial/contracts')).contracts || []; return _contratosCache; }
+async function reloadProformas() { _proformasCache = (await qcApiFetch('/api/comercial/proformas')).proformas || []; return _proformasCache; }
+
+function getStoredClientes() { return _clientesCache; }
+function getStoredContratos() { return _contratosCache; }
+function getStoredProformas() { return _proformasCache; }
+
 
 function getNextProformaCode() {
   const prfs = getStoredProformas();
@@ -3249,7 +2941,7 @@ function updateContractPreview() {
   }
 }
 
-function handleGuardarContrato(e) {
+async function handleGuardarContrato(e) {
   e.preventDefault();
   const clientes = getStoredClientes();
   const cliId = document.getElementById('ctr-cliente-sel')?.value;
@@ -3260,7 +2952,6 @@ function handleGuardarContrato(e) {
     return;
   }
 
-  const codigo = document.getElementById('ctr-codigo')?.value || getNextContractCode();
   const tipo = document.getElementById('ctr-tipo')?.value || 'Venta de Licencia';
   const producto = document.getElementById('ctr-producto-sel')?.value || 'Software Qubira';
   const moneda = document.getElementById('ctr-moneda')?.value || 'USD';
@@ -3274,40 +2965,24 @@ function handleGuardarContrato(e) {
   const estado = document.getElementById('ctr-estado')?.value || 'borrador';
   const responsable = document.getElementById('ctr-responsable')?.value || 'ODN Qubira';
 
-  const newContract = {
-    id: codigo,
-    cliente_id: cliente.id,
-    cliente_nombre: cliente.razon_social,
-    cliente_ruc: cliente.ruc,
-    cliente_contacto: cliente.contacto_nombre,
-    cliente_cargo: cliente.contacto_cargo,
-    cliente_direccion: cliente.direccion,
-    tipo,
-    producto_nombre: producto,
-    moneda,
-    monto,
-    modalidad_pago: modalidad,
-    fecha_inicio: fInicio,
-    fecha_fin: fFin,
-    garantia,
-    objeto,
-    entregables,
-    estado,
-    responsable,
-    created_at: new Date().toISOString().split('T')[0]
-  };
-
-  const contratos = getStoredContratos();
-  const existingIdx = contratos.findIndex(c => c.id === codigo);
-  if (existingIdx >= 0) {
-    contratos[existingIdx] = newContract;
-  } else {
-    contratos.unshift(newContract);
+  const btn = document.querySelector('#form-crear-contrato button[type="submit"]');
+  if (btn) btn.disabled = true;
+  try {
+    const { contract } = await qcApiFetch('/api/comercial/contracts', {
+      method: 'POST',
+      body: JSON.stringify({
+        cliente_id: cliente.id, tipo, producto_nombre: producto, moneda, monto, modalidad_pago: modalidad,
+        fecha_inicio: fInicio, fecha_fin: fFin, garantia, objeto, entregables, estado, responsable,
+      }),
+    });
+    await reloadContratos();
+    toast('success', 'Contrato Registrado', `El contrato ${contract.id} ha sido guardado exitosamente.`);
+    navigate('revisar-contrato');
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo guardar el contrato', err.message);
+  } finally {
+    if (btn) btn.disabled = false;
   }
-
-  setStoredContratos(contratos);
-  toast('success', 'Contrato Registrado', `El contrato ${codigo} ha sido guardado exitosamente.`);
-  navigate('revisar-contrato');
 }
 
 function resetCrearContratoForm() {
@@ -3447,14 +3122,18 @@ function renderRevisarContratoTable() {
   `).join('');
 }
 
-function quickUpdateContractStatus(id, newStatus) {
-  const contratos = getStoredContratos();
-  const ctr = contratos.find(c => c.id === id);
-  if (!ctr) return;
-  ctr.estado = newStatus;
-  setStoredContratos(contratos);
-  toast('success', 'Estado Actualizado', `Contrato ${id} marcado como ${newStatus}.`);
-  renderRevisarContrato();
+async function quickUpdateContractStatus(id, newStatus) {
+  try {
+    await qcApiFetch(`/api/comercial/contracts/${encodeURIComponent(id)}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ estado: newStatus }),
+    });
+    await reloadContratos();
+    toast('success', 'Estado Actualizado', `Contrato ${id} marcado como ${newStatus}.`);
+    renderRevisarContrato();
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo actualizar', err.message);
+  }
 }
 
 function viewContract(id) {
@@ -3574,12 +3253,16 @@ function printContract() {
   window.print();
 }
 
-function deleteContract(id) {
+async function deleteContract(id) {
   if (!confirm(`¿Estás seguro de eliminar el contrato ${id}? Esta acción no se puede deshacer.`)) return;
-  const contratos = getStoredContratos().filter(c => c.id !== id);
-  setStoredContratos(contratos);
-  toast('success', 'Contrato Eliminado', `El contrato ${id} fue borrado.`);
-  renderRevisarContrato();
+  try {
+    await qcApiFetch(`/api/comercial/contracts/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    await reloadContratos();
+    toast('success', 'Contrato Eliminado', `El contrato ${id} fue borrado.`);
+    renderRevisarContrato();
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo eliminar', err.message);
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -3885,7 +3568,7 @@ function updateProformaPreview(subVal, descVal, igvVal, totalVal) {
   }
 }
 
-function handleGuardarProforma(e) {
+async function handleGuardarProforma(e) {
   e.preventDefault();
 
   const clientes = getStoredClientes();
@@ -3902,7 +3585,6 @@ function handleGuardarProforma(e) {
     return;
   }
 
-  const codigo = document.getElementById('prf-codigo')?.value || getNextProformaCode();
   const tipo = document.getElementById('prf-tipo')?.value;
   const prod = document.getElementById('prf-producto-sel')?.value;
   const moneda = document.getElementById('prf-moneda')?.value;
@@ -3922,70 +3604,36 @@ function handleGuardarProforma(e) {
   const estado = document.getElementById('prf-estado')?.value || 'enviada';
   const responsable = document.getElementById('prf-responsable')?.value;
 
-  let subtotal = 0;
-  const itemsClean = _currentProformaItems.map(it => {
-    const cant = Number(it.cantidad) || 1;
-    const prec = Number(it.precio) || 0;
-    const subt = cant * prec;
-    subtotal += subt;
-    return {
-      descripcion: it.descripcion || 'Servicio de desarrollo / software',
-      cantidad: cant,
-      precio: prec,
-      subtotal: subt
-    };
-  });
+  const itemsClean = _currentProformaItems.map(it => ({
+    descripcion: it.descripcion || 'Servicio de desarrollo / software',
+    cantidad: Number(it.cantidad) || 1,
+    precio: Number(it.precio) || 0,
+  }));
 
-  const descMonto = subtotal * (descPct / 100);
-  const subtotalNeto = Math.max(0, subtotal - descMonto);
-  const igvMonto = impOpcion === 'igv_18' ? subtotalNeto * 0.18 : 0;
-  const total = subtotalNeto + igvMonto;
-
-  const newProforma = {
-    id: codigo,
-    cliente_id: cliente.id,
-    cliente_nombre: cliente.razon_social,
-    cliente_ruc: cliente.ruc,
-    cliente_contacto: contacto || cliente.contacto_nombre,
-    cliente_cargo: cliente.contacto_cargo || 'Representante',
-    cliente_email: email || cliente.email,
-    cliente_telefono: tel || cliente.telefono,
-    cliente_direccion: cliente.direccion || 'Lima, Perú',
-    tipo,
-    producto_nombre: prod,
-    moneda,
-    items: itemsClean,
-    subtotal,
-    descuento_pct: descPct,
-    descuento_monto: descMonto,
-    subtotal_neto: subtotalNeto,
-    igv_tipo: impOpcion,
-    igv_monto: igvMonto,
-    total,
-    modalidad_pago: modPago,
-    tiempo_entrega: tEntrega,
-    garantia,
-    alcance,
-    observaciones,
-    fecha_emision: fEmision,
-    validez_dias: validezDias,
-    fecha_vencimiento: fVenc,
-    estado,
-    responsable,
-    created_at: new Date().toISOString().split('T')[0]
-  };
-
-  const proformas = getStoredProformas();
-  const existingIdx = proformas.findIndex(p => p.id === codigo);
-  if (existingIdx >= 0) {
-    proformas[existingIdx] = newProforma;
-  } else {
-    proformas.unshift(newProforma);
+  const btn = document.querySelector('#form-crear-proforma button[type="submit"]');
+  if (btn) btn.disabled = true;
+  try {
+    // Los montos (subtotal/descuento/IGV/total) los recalcula y persiste
+    // el backend a partir de los ítems — aquí solo se mandan los datos
+    // crudos de la cotización.
+    const { proforma } = await qcApiFetch('/api/comercial/proformas', {
+      method: 'POST',
+      body: JSON.stringify({
+        cliente_id: cliente.id, cliente_contacto: contacto, cliente_email: email, cliente_telefono: tel,
+        tipo, producto_nombre: prod, moneda, items: itemsClean,
+        descuento_pct: descPct, igv_tipo: impOpcion, modalidad_pago: modPago, tiempo_entrega: tEntrega,
+        garantia, alcance, observaciones, fecha_emision: fEmision, validez_dias: validezDias,
+        fecha_vencimiento: fVenc, estado, responsable,
+      }),
+    });
+    await reloadProformas();
+    toast('success', 'Proforma Registrada', `La proforma ${proforma.id} para ${cliente.razon_social} ha sido guardada exitosamente.`);
+    navigate('consultar-proforma');
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo guardar la proforma', err.message);
+  } finally {
+    if (btn) btn.disabled = false;
   }
-
-  setStoredProformas(proformas);
-  toast('success', 'Proforma Registrada', `La proforma ${codigo} para ${cliente.razon_social} ha sido guardada exitosamente.`);
-  navigate('consultar-proforma');
 }
 
 function resetCrearProformaForm() {
@@ -4402,32 +4050,41 @@ function convertActiveProformaToContract() {
   convertProformaToContract(_activeViewingProformaId);
 }
 
-function convertProformaToContract(proformaId) {
-  const proformas = getStoredProformas();
-  const prf = proformas.find(p => p.id === proformaId);
+async function convertProformaToContract(proformaId) {
+  const prf = getStoredProformas().find(p => p.id === proformaId);
   if (!prf) {
     toast('error', 'Error', 'No se encontró la proforma para convertir.');
     return;
   }
 
-  // Marcar estado como convertida
-  prf.estado = 'convertida';
-  setStoredProformas(proformas);
+  try {
+    await qcApiFetch(`/api/comercial/proformas/${encodeURIComponent(proformaId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ estado: 'convertida' }),
+    });
+    await reloadProformas();
 
-  // Precargar los datos en el flujo de Crear Contrato
-  _preselectedClientId = prf.cliente_id;
-  _proformaToConvert = prf;
+    // Precargar los datos en el flujo de Crear Contrato
+    _preselectedClientId = prf.cliente_id;
+    _proformaToConvert = prf;
 
-  toast('success', 'Convirtiendo a Contrato', `Preparando borrador de contrato para ${prf.cliente_nombre}...`);
-  navigate('crear-contrato');
+    toast('success', 'Convirtiendo a Contrato', `Preparando borrador de contrato para ${prf.cliente_nombre}...`);
+    navigate('crear-contrato');
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo convertir', err.message);
+  }
 }
 
-function deleteProforma(id) {
+async function deleteProforma(id) {
   if (!confirm(`¿Estás seguro de eliminar la proforma ${id}? Esta acción no se puede deshacer.`)) return;
-  const proformas = getStoredProformas().filter(p => p.id !== id);
-  setStoredProformas(proformas);
-  toast('success', 'Proforma Eliminada', `La proforma ${id} ha sido borrada.`);
-  renderConsultarProforma();
+  try {
+    await qcApiFetch(`/api/comercial/proformas/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    await reloadProformas();
+    toast('success', 'Proforma Eliminada', `La proforma ${id} ha sido borrada.`);
+    renderConsultarProforma();
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo eliminar', err.message);
+  }
 }
 
 function startProformaForClient(cliId) {
@@ -4445,7 +4102,7 @@ function renderCrearClientes() {
   if (ciudadEl) ciudadEl.value = 'Lima, Perú';
 }
 
-function handleGuardarCliente(e) {
+async function handleGuardarCliente(e) {
   e.preventDefault();
   const razon = document.getElementById('cli-razon')?.value.trim();
   const ruc = document.getElementById('cli-ruc')?.value.trim();
@@ -4466,46 +4123,21 @@ function handleGuardarCliente(e) {
     return;
   }
 
-  const clientes = getStoredClientes();
-  const existing = clientes.find(c => c.ruc === ruc);
-  if (existing) {
-    toast('error', 'RUC ya registrado', `El cliente con RUC ${ruc} ya existe como ${existing.razon_social}.`);
-    return;
+  const btn = document.querySelector('#form-crear-cliente button[type="submit"]');
+  if (btn) btn.disabled = true;
+  try {
+    const { client } = await qcApiFetch('/api/comercial/clients', {
+      method: 'POST',
+      body: JSON.stringify({ razon_social: razon, ruc, sector, direccion, ciudad, contacto_nombre: contacto, contacto_cargo: cargo, telefono, email, tipo, estado, origen, notas }),
+    });
+    await reloadClientes();
+    toast('success', 'Cliente Registrado', `${client.razon_social} ha sido agregado a la cartera comercial.`);
+    navigate('editar-clientes');
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo guardar', err.message);
+  } finally {
+    if (btn) btn.disabled = false;
   }
-
-  // Generar ID
-  let maxId = 0;
-  clientes.forEach(c => {
-    const match = String(c.id).match(/CLI-(\d+)/);
-    if (match) {
-      const n = parseInt(match[1], 10);
-      if (n > maxId) maxId = n;
-    }
-  });
-  const newId = `CLI-${String(maxId + 1).padStart(3, '0')}`;
-
-  const newClient = {
-    id: newId,
-    razon_social: razon,
-    ruc,
-    sector,
-    direccion,
-    ciudad,
-    contacto_nombre: contacto,
-    contacto_cargo: cargo,
-    telefono,
-    email,
-    tipo,
-    estado,
-    origen,
-    notas,
-    created_at: new Date().toISOString().split('T')[0]
-  };
-
-  clientes.unshift(newClient);
-  setStoredClientes(clientes);
-  toast('success', 'Cliente Registrado', `${razon} ha sido agregado a la cartera comercial.`);
-  navigate('editar-clientes');
 }
 
 // ══════════════════════════════════════════════════════
@@ -4621,33 +4253,39 @@ function startContractForClient(cliId) {
   navigate('crear-contrato');
 }
 
-function toggleClientStatus(id) {
-  const clientes = getStoredClientes();
-  const c = clientes.find(x => x.id === id);
+async function toggleClientStatus(id) {
+  const c = getStoredClientes().find(x => x.id === id);
   if (!c) return;
-  c.estado = c.estado === 'activo' ? 'inactivo' : 'activo';
-  setStoredClientes(clientes);
-  toast('info', 'Estado actualizado', `${c.razon_social} ahora está ${c.estado}.`);
-  renderEditarClientes();
+  try {
+    const { client } = await qcApiFetch(`/api/comercial/clients/${encodeURIComponent(id)}/toggle-status`, { method: 'PATCH' });
+    await reloadClientes();
+    toast('info', 'Estado actualizado', `${client.razon_social} ahora está ${client.estado}.`);
+    renderEditarClientes();
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo actualizar', err.message);
+  }
 }
 
-function deleteClient(id) {
-  const clientes = getStoredClientes();
-  const client = clientes.find(c => c.id === id);
+async function deleteClient(id) {
+  const client = getStoredClientes().find(c => c.id === id);
   if (!client) return;
 
   const contratos = getStoredContratos();
   const hasContracts = contratos.some(ctr => ctr.cliente_id === id || ctr.cliente_ruc === client.ruc);
   if (hasContracts) {
-    if (!confirm(`El cliente ${client.razon_social} tiene contratos asociados. ¿Deseas eliminarlo de todas formas?`)) return;
+    if (!confirm(`El cliente ${client.razon_social} tiene contratos asociados. ¿Deseas eliminarlo de todas formas? (sus contratos y proformas se conservan con los datos que ya tenían).`)) return;
   } else {
     if (!confirm(`¿Eliminar al cliente ${client.razon_social}?`)) return;
   }
 
-  const updated = clientes.filter(c => c.id !== id);
-  setStoredClientes(updated);
-  toast('success', 'Cliente eliminado', `${client.razon_social} ha sido removido.`);
-  renderEditarClientes();
+  try {
+    await qcApiFetch(`/api/comercial/clients/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    await reloadClientes();
+    toast('success', 'Cliente eliminado', `${client.razon_social} ha sido removido.`);
+    renderEditarClientes();
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo eliminar', err.message);
+  }
 }
 
 let _editingClientId = null;
@@ -4753,11 +4391,8 @@ function closeEditClientModal() {
   _editingClientId = null;
 }
 
-function submitEditClientForm() {
+async function submitEditClientForm() {
   if (!_editingClientId) return;
-  const clientes = getStoredClientes();
-  const c = clientes.find(x => x.id === _editingClientId);
-  if (!c) return;
 
   const razon = document.getElementById('edit-cli-razon')?.value.trim();
   const ruc = document.getElementById('edit-cli-ruc')?.value.trim();
@@ -4776,37 +4411,19 @@ function submitEditClientForm() {
     return;
   }
 
-  c.razon_social = razon;
-  c.ruc = ruc;
-  c.sector = sector;
-  c.direccion = direccion;
-  c.contacto_nombre = contacto;
-  c.contacto_cargo = cargo;
-  c.telefono = telefono;
-  c.email = email;
-  c.tipo = tipo;
-  c.estado = estado;
-  c.notas = notas;
-
-  // Actualizar también en los contratos asociados
-  const contratos = getStoredContratos();
-  let updatedContracts = false;
-  contratos.forEach(ctr => {
-    if (ctr.cliente_id === c.id) {
-      ctr.cliente_nombre = razon;
-      ctr.cliente_ruc = ruc;
-      ctr.cliente_contacto = contacto;
-      ctr.cliente_cargo = cargo;
-      ctr.cliente_direccion = direccion;
-      updatedContracts = true;
-    }
-  });
-  if (updatedContracts) setStoredContratos(contratos);
-
-  setStoredClientes(clientes);
-  closeEditClientModal();
-  toast('success', 'Cliente Actualizado', `${razon} ha sido guardado exitosamente.`);
-  renderEditarClientes();
+  try {
+    const { client } = await qcApiFetch(`/api/comercial/clients/${encodeURIComponent(_editingClientId)}`, {
+      method: 'PUT',
+      body: JSON.stringify({ razon_social: razon, ruc, sector, direccion, contacto_nombre: contacto, contacto_cargo: cargo, telefono, email, tipo, estado, notas }),
+    });
+    // El backend ya refleja estos datos en los contratos que sigan en borrador.
+    await Promise.all([reloadClientes(), reloadContratos()]);
+    closeEditClientModal();
+    toast('success', 'Cliente Actualizado', `${client.razon_social} ha sido guardado exitosamente.`);
+    renderEditarClientes();
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo guardar', err.message);
+  }
 }
 
 // ══════════════════════════════════════════════════════
