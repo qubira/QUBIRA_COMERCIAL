@@ -1136,6 +1136,7 @@
               <div class="form-group">
                 <label for="prf-modalidad-pago">Forma de Pago Propuesta *</label>
                 <select id="prf-modalidad-pago" required onchange="updateProformaPreview()">
+                  <option value="" disabled selected hidden>Selecciona una forma de pago...</option>
                   <option value="50% anticipo, 50% contra entrega">50% anticipo y 50% contra entrega</option>
                   <option value="100% pago adelantado (con 5% desc. pronto pago)">100% pago adelantado</option>
                   <option value="30% firma, 40% hitos, 30% conformidad">30% firma / 40% hitos / 30% fin</option>
@@ -1146,12 +1147,13 @@
 
               <div class="form-group">
                 <label for="prf-tiempo-entrega">Plazo Estimado de Entrega *</label>
-                <input type="text" id="prf-tiempo-entrega" value="15 días hábiles tras confirmación" required oninput="updateProformaPreview()">
+                <input type="text" id="prf-tiempo-entrega" placeholder="Ej. 15 días hábiles tras confirmación" required oninput="updateProformaPreview()">
               </div>
 
               <div class="form-group">
                 <label for="prf-garantia">Garantía / SLA Incluido *</label>
-                <select id="prf-garantia" onchange="updateProformaPreview()">
+                <select id="prf-garantia" required onchange="updateProformaPreview()">
+                  <option value="" disabled selected hidden>Selecciona una garantía...</option>
                   <option value="12 meses de soporte técnico y mantenimiento">12 Meses Soporte & Garantía</option>
                   <option value="6 meses de soporte técnico y mantenimiento">6 Meses Soporte Estándar</option>
                   <option value="3 meses de garantía técnica básica">3 Meses Garantía Básica</option>
@@ -1163,20 +1165,21 @@
 
             <div class="form-group" style="margin-top:14px">
               <label for="prf-alcance">Alcance y Entregables Técnicos Comprendidos *</label>
-              <textarea id="prf-alcance" rows="3" required oninput="updateProformaPreview()"></textarea>
+              <textarea id="prf-alcance" rows="3" required oninput="updateProformaPreview()" placeholder="Ej. Configuración, personalización y puesta en marcha de la solución tecnológica, incluyendo manuales y soporte continuo."></textarea>
               <span class="form-help">Detalle de módulos, accesos, manuales o licencias que incluye la cotización.</span>
             </div>
 
             <div class="form-grid-2" style="margin-top:14px">
               <div class="form-group">
                 <label for="prf-observaciones">Observaciones y Notas Comerciales</label>
-                <textarea id="prf-observaciones" rows="2" oninput="updateProformaPreview()"></textarea>
+                <textarea id="prf-observaciones" rows="2" oninput="updateProformaPreview()" placeholder="Ej. Precios cotizados en condición neta según régimen tributario..."></textarea>
               </div>
 
               <div class="form-group">
                 <label for="prf-estado">Estado Inicial de la Proforma</label>
                 <select id="prf-estado" onchange="updateProformaPreview()">
-                  <option value="enviada" selected>Enviada al Cliente</option>
+                  <option value="" disabled selected hidden>Selecciona un estado...</option>
+                  <option value="enviada">Enviada al Cliente</option>
                   <option value="borrador">Borrador (Interno ODN)</option>
                   <option value="aprobada">Aprobada por el Cliente</option>
                 </select>
@@ -3488,6 +3491,14 @@ async function renderCrearProforma() {
   const monEl0p = document.getElementById('prf-moneda');
   if (tipoEl0p) tipoEl0p.value = '';
   if (monEl0p) monEl0p.value = '';
+  const modPagoEl0 = document.getElementById('prf-modalidad-pago');
+  const plazoEl0 = document.getElementById('prf-tiempo-entrega');
+  const garEl0 = document.getElementById('prf-garantia');
+  const estadoEl0 = document.getElementById('prf-estado');
+  if (modPagoEl0) modPagoEl0.value = '';
+  if (plazoEl0) plazoEl0.value = '';
+  if (garEl0) garEl0.value = '';
+  if (estadoEl0) estadoEl0.value = '';
 
   // Fechas por defecto
   const today = new Date();
@@ -3512,24 +3523,16 @@ async function renderCrearProforma() {
     onProformaClientSelected(selectCli.value);
   }
 
-  // Inicializar ítems de la proforma
-  if (!_currentProformaItems || _currentProformaItems.length === 0) {
-    _currentProformaItems = [
-      { descripcion: 'Licenciamiento del Software Corporativo y Configuración Inicial', cantidad: 1, precio: 3500.00 },
-      { descripcion: 'Servicio de Despliegue en Servidor Cloud y Capacitación al Personal', cantidad: 1, precio: 500.00 }
-    ];
-  }
+  // Inicializar ítems de la proforma — en blanco por defecto, un solo renglón
+  // para que el usuario describa el primer producto/servicio.
+  _currentProformaItems = [{ descripcion: '', cantidad: 1, precio: 0 }];
 
-  // Textos por defecto
+  // En blanco por defecto al abrir el módulo, igual que el resto del formulario.
   const alcEl = document.getElementById('prf-alcance');
-  if (alcEl && !alcEl.value) {
-    alcEl.value = 'Configuración, personalización y puesta en marcha de la solución tecnológica según los estándares de ingeniería de software de Qubira S.A.C., incluyendo manuales y soporte continuo.';
-  }
+  if (alcEl) alcEl.value = '';
 
   const obsEl = document.getElementById('prf-observaciones');
-  if (obsEl && !obsEl.value) {
-    obsEl.value = 'Precios cotizados en condición neta según régimen tributario. Los entregables se iniciarán una vez abonado el anticipo pactado y validado por la Oficina de Desarrollo de Negocios (ODN).';
-  }
+  if (obsEl) obsEl.value = '';
 
   renderProformaItemsTable();
   calcProformaTotals();
