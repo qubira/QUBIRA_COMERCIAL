@@ -1320,10 +1320,10 @@
             </div>
           </div>
 
-          <div class="form-grid-3" style="margin-top:14px">
-            <div class="form-group">
-              <label for="cli-sector">Rubro o Sector Industrial *</label>
-              <select id="cli-sector" required>
+          <div class="form-group" style="margin-top:14px">
+            <label for="cli-sector">Rubro o Sector Industrial *</label>
+            <div style="display:flex;gap:8px;align-items:flex-start">
+              <select id="cli-sector" required style="flex:1">
                 <option value="Comercio & Retail">Comercio & Retail</option>
                 <option value="Ferretería & Construcción">Ferretería & Construcción</option>
                 <option value="Servicios Financieros & FinTech">Servicios Financieros & FinTech</option>
@@ -1332,10 +1332,18 @@
                 <option value="Salud & Farmacia">Salud & Farmacia</option>
                 <option value="Educación & Capacitación">Educación & Capacitación</option>
                 <option value="Tecnología & Telecom">Tecnología & Telecom</option>
-                <option value="Otro">Otro Rubro</option>
               </select>
+              <button type="button" class="btn-icon" title="Agregar un rubro que no está en la lista" onclick="toggleCustomSectorInput('cli-sector')">
+                <svg class="icon"><use href="#icon-plus"></use></svg>
+              </button>
             </div>
+            <div id="cli-sector-custom-wrap" style="display:none;gap:8px;margin-top:8px">
+              <input type="text" id="cli-sector-custom" placeholder="Escribe el nuevo rubro..." style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomSector('cli-sector');}">
+              <button type="button" class="btn btn-outline btn-sm" onclick="addCustomSector('cli-sector')">Agregar</button>
+            </div>
+          </div>
 
+          <div class="form-grid-2" style="margin-top:14px">
             <div class="form-group">
               <label for="cli-direccion">Dirección Fiscal / Sede</label>
               <input type="text" id="cli-direccion" placeholder="Ej: Av. Rivera Navarrete 501, San Isidro">
@@ -1795,6 +1803,7 @@ function toast(type, title, msg) {
 // DATOS — catálogo de productos (ti.projects filtrados por ADG)
 // ══════════════════════════════════════════════════════
 const STATUS_LABEL = { pending:'Pendiente', active:'Activo', paused:'Pausado', finished_by_ti:'Finalizado (por revisar)', completed:'Completado', cancelled:'Cancelado' };
+const CLIENT_SECTORS = ['Comercio & Retail', 'Ferretería & Construcción', 'Servicios Financieros & FinTech', 'Logística & Distribución', 'Minería & Energía', 'Salud & Farmacia', 'Educación & Capacitación', 'Tecnología & Telecom'];
 const TYPE_LABEL = { web:'Web', mobile:'Aplicativo Móvil', desktop:'Aplicativo de Escritorio' };
 const OFFER_LABEL = { venta:'Venta', alquiler:'Alquiler', venta_alquiler:'Venta o alquiler' };
 const CURRENCY_SYMBOL = { PEN:'S/', USD:'$', EUR:'€' };
@@ -4100,6 +4109,43 @@ function renderCrearClientes() {
   if (form) form.reset();
   const ciudadEl = document.getElementById('cli-ciudad');
   if (ciudadEl) ciudadEl.value = 'Lima, Perú';
+  const customWrap = document.getElementById('cli-sector-custom-wrap');
+  if (customWrap) customWrap.style.display = 'none';
+}
+
+/* Usado tanto por "Crear Cliente" (cli-sector) como por el modal
+   "Editar Cliente" (edit-cli-sector) — el rubro escrito se agrega
+   como una opción más del <select> y queda seleccionado; como el
+   campo en la base de datos es texto libre, no hace falta ningún
+   catálogo aparte. */
+function toggleCustomSectorInput(selectId) {
+  const wrap = document.getElementById(selectId + '-custom-wrap');
+  if (!wrap) return;
+  const show = wrap.style.display === 'none' || !wrap.style.display;
+  wrap.style.display = show ? 'flex' : 'none';
+  if (show) document.getElementById(selectId + '-custom')?.focus();
+}
+
+function addCustomSector(selectId) {
+  const input = document.getElementById(selectId + '-custom');
+  const select = document.getElementById(selectId);
+  if (!input || !select) return;
+  const value = input.value.trim();
+  if (!value) { input.focus(); return; }
+
+  const existing = [...select.options].find(o => o.value.toLowerCase() === value.toLowerCase());
+  if (existing) {
+    select.value = existing.value;
+  } else {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = value;
+    opt.selected = true;
+    select.appendChild(opt);
+  }
+
+  input.value = '';
+  document.getElementById(selectId + '-custom-wrap').style.display = 'none';
 }
 
 async function handleGuardarCliente(e) {
@@ -4318,17 +4364,19 @@ function openEditClientModal(id) {
       <div class="form-grid-2">
         <div class="form-group">
           <label>Sector / Rubro *</label>
-          <select id="edit-cli-sector">
-            <option value="Comercio & Retail" ${c.sector==='Comercio & Retail'?'selected':''}>Comercio & Retail</option>
-            <option value="Ferretería & Construcción" ${c.sector==='Ferretería & Construcción'?'selected':''}>Ferretería & Construcción</option>
-            <option value="Servicios Financieros & FinTech" ${c.sector==='Servicios Financieros & FinTech'?'selected':''}>Servicios Financieros & FinTech</option>
-            <option value="Logística & Distribución" ${c.sector==='Logística & Distribución'?'selected':''}>Logística & Distribución</option>
-            <option value="Minería & Energía" ${c.sector==='Minería & Energía'?'selected':''}>Minería & Energía</option>
-            <option value="Salud & Farmacia" ${c.sector==='Salud & Farmacia'?'selected':''}>Salud & Farmacia</option>
-            <option value="Educación & Capacitación" ${c.sector==='Educación & Capacitación'?'selected':''}>Educación & Capacitación</option>
-            <option value="Tecnología & Telecom" ${c.sector==='Tecnología & Telecom'?'selected':''}>Tecnología & Telecom</option>
-            <option value="Otro" ${c.sector==='Otro'?'selected':''}>Otro Rubro</option>
-          </select>
+          <div style="display:flex;gap:8px;align-items:flex-start">
+            <select id="edit-cli-sector" style="flex:1">
+              ${CLIENT_SECTORS.map(s => `<option value="${esc(s)}" ${c.sector===s?'selected':''}>${esc(s)}</option>`).join('')}
+              ${!CLIENT_SECTORS.includes(c.sector) && c.sector ? `<option value="${esc(c.sector)}" selected>${esc(c.sector)}</option>` : ''}
+            </select>
+            <button type="button" class="btn-icon" title="Agregar un rubro que no está en la lista" onclick="toggleCustomSectorInput('edit-cli-sector')">
+              <svg class="icon"><use href="#icon-plus"></use></svg>
+            </button>
+          </div>
+          <div id="edit-cli-sector-custom-wrap" style="display:none;gap:8px;margin-top:8px">
+            <input type="text" id="edit-cli-sector-custom" placeholder="Escribe el nuevo rubro..." style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomSector('edit-cli-sector');}">
+            <button type="button" class="btn btn-outline btn-sm" onclick="addCustomSector('edit-cli-sector')">Agregar</button>
+          </div>
         </div>
         <div class="form-group">
           <label>Dirección Fiscal</label>
