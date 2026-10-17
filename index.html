@@ -436,6 +436,7 @@
   <symbol id="icon-chevron-left" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></symbol>
   <symbol id="icon-chevron-right" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></symbol>
   <symbol id="icon-chevron-down" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></symbol>
+  <symbol id="icon-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></symbol>
   <symbol id="icon-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></symbol>
   <symbol id="icon-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></symbol>
   <symbol id="icon-edit-2" viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></symbol>
@@ -498,6 +499,11 @@
     </div>
     <div class="nav-item" data-page="editar-clientes" onclick="navigate('editar-clientes')">
       <svg class="icon"><use href="#icon-users"></use></svg> Editar Clientes
+    </div>
+
+    <div class="nav-section">Configuración</div>
+    <div class="nav-item" data-page="configuracion" onclick="navigate('configuracion')">
+      <svg class="icon"><use href="#icon-settings"></use></svg> Configuración
     </div>
   </nav>
   <div class="sidebar-footer">
@@ -1536,6 +1542,45 @@
       </div>
     </div>
 
+    <!-- ═══ CONFIGURACIÓN: RUBROS PERSONALIZADOS ═══ -->
+    <div class="page" id="page-configuracion">
+      <div class="card" style="padding:14px 18px;margin-bottom:18px">
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between">
+          <div style="flex:1;min-width:260px">
+            <label for="config-sector-new">Agregar un rubro al catálogo</label>
+            <div style="display:flex;gap:8px;margin-top:6px">
+              <input type="text" id="config-sector-new" placeholder="Ej: Agroindustria y Exportaciones"
+                onkeydown="if(event.key==='Enter'){event.preventDefault();addSectorFromConfig();}">
+              <button type="button" class="btn btn-primary" style="white-space:nowrap" onclick="addSectorFromConfig()">
+                <svg class="icon" style="width:14px;height:14px;color:#fff"><use href="#icon-plus"></use></svg> Agregar
+              </button>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:12.5px;color:var(--text-muted);margin-top:12px">
+          Los 16 rubros base (Comercio, Retail, Ferretería, etc.) siempre están disponibles y no se pueden editar
+          desde acá. Esta lista es solo para los rubros que el equipo agregó a mano al registrar o editar un
+          cliente — <strong id="config-sectors-count">0</strong> hasta ahora.
+        </p>
+      </div>
+
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Rubro</th>
+              <th>Clientes que lo usan</th>
+              <th>Agregado</th>
+              <th style="text-align:right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="config-sectors-body">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </main>
 
@@ -1648,6 +1693,35 @@
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeEditClientModal()">Cancelar</button>
       <button class="btn btn-primary" onclick="submitEditClientForm()">
+        <svg class="icon" style="color:#fff"><use href="#icon-check"></use></svg>
+        Guardar Cambios
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: EDITAR RUBRO PERSONALIZADO ═══ -->
+<div class="modal-overlay" id="sector-edit-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Configuración · Rubros</div>
+        <div style="font-size:18px;font-weight:700">Editar rubro</div>
+      </div>
+      <button class="close-btn" onclick="closeEditSectorModal()"><svg class="icon"><use href="#icon-x"></use></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="edit-sector-nombre">Nombre del rubro</label>
+        <input type="text" id="edit-sector-nombre" onkeydown="if(event.key==='Enter'){event.preventDefault();submitEditSectorForm();}">
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:4px">
+        Los clientes que ya tienen este rubro se actualizan automáticamente al nuevo nombre.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeEditSectorModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitEditSectorForm()">
         <svg class="icon" style="color:#fff"><use href="#icon-check"></use></svg>
         Guardar Cambios
       </button>
@@ -1769,9 +1843,15 @@ const PAGE_META = {
   'consultar-proforma': { title:'Consultar Proformas', sub:'Historial, seguimiento de cotizaciones emitidas y conversión a contrato' },
   'crear-clientes': { title:'Crear Clientes', sub:'Alta de nuevos clientes corporativos, PYMEs y prospectos' },
   'editar-clientes': { title:'Directorio de Clientes', sub:'Edición de cartera, contactos y vinculación de contratos' },
+  configuracion: { title:'Configuración', sub:'Rubros y sectores agregados manualmente en el formulario de clientes' },
 };
 
-const COMERCIAL_DATA_PAGES = ['crear-contrato', 'revisar-contrato', 'crear-proforma', 'consultar-proforma', 'editar-clientes'];
+/* "crear-clientes" queda fuera a propósito: su render hace form.reset(),
+   y si eso corriera recién después de esperar la carga de datos, podría
+   borrar lo que el usuario ya empezó a escribir mientras esperaba (carga
+   lenta de red). Carga sus rubros personalizados en segundo plano, sin
+   bloquear ni resetear nada — ver renderCrearClientes(). */
+const COMERCIAL_DATA_PAGES = ['crear-contrato', 'revisar-contrato', 'crear-proforma', 'consultar-proforma', 'editar-clientes', 'configuracion'];
 
 async function navigate(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1796,6 +1876,7 @@ async function navigate(page) {
   if (page === 'consultar-proforma') renderConsultarProforma();
   if (page === 'crear-clientes') renderCrearClientes();
   if (page === 'editar-clientes') renderEditarClientes();
+  if (page === 'configuracion') renderConfiguracion();
 }
 
 // ══════════════════════════════════════════════════════
@@ -2711,19 +2792,22 @@ function calViewMeeting(id) {
 let _clientesCache = [];
 let _contratosCache = [];
 let _proformasCache = [];
+let _customSectorsCache = [];
 let _comercialDataLoaded = false;
 
 async function ensureComercialData(force) {
   if (_comercialDataLoaded && !force) return;
   try {
-    const [cliData, ctrData, prfData] = await Promise.all([
+    const [cliData, ctrData, prfData, secData] = await Promise.all([
       qcApiFetch('/api/comercial/clients'),
       qcApiFetch('/api/comercial/contracts'),
       qcApiFetch('/api/comercial/proformas'),
+      qcApiFetch('/api/comercial/sectors'),
     ]);
     _clientesCache = cliData.clients || [];
     _contratosCache = ctrData.contracts || [];
     _proformasCache = prfData.proformas || [];
+    _customSectorsCache = secData.sectors || [];
     _comercialDataLoaded = true;
   } catch (err) {
     if (err.message !== 'SESSION_EXPIRED') console.error(err);
@@ -2733,10 +2817,12 @@ async function ensureComercialData(force) {
 async function reloadClientes() { _clientesCache = (await qcApiFetch('/api/comercial/clients')).clients || []; return _clientesCache; }
 async function reloadContratos() { _contratosCache = (await qcApiFetch('/api/comercial/contracts')).contracts || []; return _contratosCache; }
 async function reloadProformas() { _proformasCache = (await qcApiFetch('/api/comercial/proformas')).proformas || []; return _proformasCache; }
+async function reloadCustomSectors() { _customSectorsCache = (await qcApiFetch('/api/comercial/sectors')).sectors || []; return _customSectorsCache; }
 
 function getStoredClientes() { return _clientesCache; }
 function getStoredContratos() { return _contratosCache; }
 function getStoredProformas() { return _proformasCache; }
+function getStoredCustomSectors() { return _customSectorsCache; }
 
 
 function getNextProformaCode() {
@@ -4125,6 +4211,10 @@ function renderCrearClientes() {
   const ciudadEl = document.getElementById('cli-ciudad');
   if (ciudadEl) ciudadEl.value = 'Lima, Perú';
   closeSectorCombo('cli-sector');
+  // En segundo plano, sin bloquear ni volver a tocar el formulario — si
+  // esto esperara aquí, una carga lenta podría borrar lo que el usuario
+  // ya empezó a escribir mientras tanto.
+  reloadCustomSectors().catch(() => {});
 }
 
 /* Combobox de Rubro/Sector — reemplaza el <select> nativo. El input
@@ -4135,14 +4225,22 @@ function renderCrearClientes() {
    "agregar" — se usa directo lo que se escribió). Reutilizado tanto
    por "Crear Cliente" (cli-sector) como por el modal "Editar
    Cliente" (edit-cli-sector). */
+function allSectorOptions() {
+  const custom = getStoredCustomSectors().map(s => s.nombre);
+  const seen = new Set(CLIENT_SECTORS.map(s => s.toLowerCase()));
+  const extra = custom.filter(s => !seen.has(s.toLowerCase())).sort((a, b) => a.localeCompare(b));
+  return [...CLIENT_SECTORS, ...extra];
+}
+
 function renderSectorOptions(inputId) {
   const input = document.getElementById(inputId);
   const list = document.getElementById(inputId + '-list');
   const combo = document.getElementById(inputId + '-combo');
   if (!input || !list) return;
 
+  const allSectors = allSectorOptions();
   const q = input.value.trim().toLowerCase();
-  const matches = CLIENT_SECTORS.filter(s => s.toLowerCase().includes(q));
+  const matches = allSectors.filter(s => s.toLowerCase().includes(q));
 
   let html = matches.map(s => `
     <div class="sector-combo-item ${s.toLowerCase() === q ? 'active' : ''}" onmousedown="event.preventDefault();selectSectorOption('${inputId}', '${esc(s).replace(/'/g, "\\'")}')">${esc(s)}</div>
@@ -4151,8 +4249,8 @@ function renderSectorOptions(inputId) {
   if (!matches.length) {
     html = '<div class="sector-combo-empty">Sin coincidencias en la lista.</div>';
   }
-  if (q && !CLIENT_SECTORS.some(s => s.toLowerCase() === q)) {
-    html += `<div class="sector-combo-add" onmousedown="event.preventDefault();selectSectorOption('${inputId}', '${esc(input.value.trim()).replace(/'/g, "\\'")}')">+ Usar "${esc(input.value.trim())}" como nuevo rubro</div>`;
+  if (q && !allSectors.some(s => s.toLowerCase() === q)) {
+    html += `<div class="sector-combo-add" onmousedown="event.preventDefault();addCustomSectorAndSelect('${inputId}', '${esc(input.value.trim()).replace(/'/g, "\\'")}')">+ Usar "${esc(input.value.trim())}" como nuevo rubro</div>`;
   }
 
   list.innerHTML = html;
@@ -4164,6 +4262,20 @@ function selectSectorOption(inputId, value) {
   const input = document.getElementById(inputId);
   if (input) input.value = value;
   closeSectorCombo(inputId);
+}
+
+/* Un rubro escrito a mano (que no estaba en la lista de 16 ni en los
+   personalizados ya guardados) se registra en el catálogo del backend
+   al elegirlo — así queda disponible como sugerencia la próxima vez y
+   aparece en Configuración para poder editarlo o eliminarlo después. */
+async function addCustomSectorAndSelect(inputId, value) {
+  selectSectorOption(inputId, value);
+  try {
+    await qcApiFetch('/api/comercial/sectors', { method: 'POST', body: JSON.stringify({ nombre: value }) });
+    await reloadCustomSectors();
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') console.error(err);
+  }
 }
 
 function closeSectorCombo(inputId) {
@@ -4180,6 +4292,106 @@ document.addEventListener('click', (e) => {
     if (combo && !combo.contains(e.target)) closeSectorCombo(id);
   });
 });
+
+// ══════════════════════════════════════════════════════
+// MÓDULO 5: CONFIGURACIÓN — rubros personalizados
+// ══════════════════════════════════════════════════════
+function renderConfiguracion() {
+  const sectors = getStoredCustomSectors();
+  const clientes = getStoredClientes();
+  const body = document.getElementById('config-sectors-body');
+  if (!body) return;
+
+  document.getElementById('config-sectors-count').textContent = sectors.length;
+
+  if (!sectors.length) {
+    body.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:30px">
+      Todavía no se agregó ningún rubro personalizado. Se agregan escribiendo uno nuevo en el campo
+      "Rubro o Sector Industrial" al crear o editar un cliente — o directamente acá arriba.
+    </td></tr>`;
+    return;
+  }
+
+  body.innerHTML = sectors.map(s => {
+    const enUso = clientes.filter(c => (c.sector || '').toLowerCase() === s.nombre.toLowerCase()).length;
+    const fecha = s.created_at ? new Date(s.created_at).toLocaleDateString('es-PE', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+    return `
+      <tr>
+        <td style="font-weight:600">${esc(s.nombre)}</td>
+        <td style="color:var(--text-muted)">${enUso} cliente${enUso === 1 ? '' : 's'}</td>
+        <td style="color:var(--text-muted)">${fecha}</td>
+        <td style="text-align:right;white-space:nowrap">
+          <button class="btn-icon" title="Editar rubro" onclick="openEditSectorModal(${s.id})"><svg class="icon"><use href="#icon-edit-2"></use></svg></button>
+          <button class="btn-icon danger" title="Eliminar rubro" onclick="deleteCustomSector(${s.id})"><svg class="icon"><use href="#icon-trash-2"></use></svg></button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+async function addSectorFromConfig() {
+  const input = document.getElementById('config-sector-new');
+  const nombre = input?.value.trim();
+  if (!nombre) { input?.focus(); return; }
+  try {
+    await qcApiFetch('/api/comercial/sectors', { method: 'POST', body: JSON.stringify({ nombre }) });
+    await reloadCustomSectors();
+    input.value = '';
+    toast('success', 'Rubro agregado', `"${nombre}" ya está disponible en el catálogo.`);
+    renderConfiguracion();
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo agregar', err.message);
+  }
+}
+
+let _editingSectorId = null;
+function openEditSectorModal(id) {
+  const sector = getStoredCustomSectors().find(s => s.id === id);
+  if (!sector) return;
+  _editingSectorId = id;
+  document.getElementById('edit-sector-nombre').value = sector.nombre;
+  document.getElementById('sector-edit-modal').classList.add('open');
+  setTimeout(() => document.getElementById('edit-sector-nombre')?.focus(), 60);
+}
+
+function closeEditSectorModal() {
+  document.getElementById('sector-edit-modal').classList.remove('open');
+  _editingSectorId = null;
+}
+
+async function submitEditSectorForm() {
+  if (!_editingSectorId) return;
+  const nombre = document.getElementById('edit-sector-nombre')?.value.trim();
+  if (!nombre) { toast('error', 'Falta el nombre', 'Escribe un nombre para el rubro.'); return; }
+
+  try {
+    await qcApiFetch(`/api/comercial/sectors/${_editingSectorId}`, { method: 'PUT', body: JSON.stringify({ nombre }) });
+    await Promise.all([reloadCustomSectors(), reloadClientes()]);
+    closeEditSectorModal();
+    toast('success', 'Rubro actualizado', `Ahora se llama "${nombre}".`);
+    renderConfiguracion();
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo actualizar', err.message);
+  }
+}
+
+async function deleteCustomSector(id) {
+  const sector = getStoredCustomSectors().find(s => s.id === id);
+  if (!sector) return;
+  const enUso = getStoredClientes().filter(c => (c.sector || '').toLowerCase() === sector.nombre.toLowerCase()).length;
+  const aviso = enUso
+    ? `"${sector.nombre}" lo tienen ${enUso} cliente(s) — seguirán mostrándolo, solo desaparece de la lista de sugerencias. ¿Eliminarlo?`
+    : `¿Eliminar el rubro "${sector.nombre}"?`;
+  if (!confirm(aviso)) return;
+
+  try {
+    await qcApiFetch(`/api/comercial/sectors/${id}`, { method: 'DELETE' });
+    await reloadCustomSectors();
+    toast('success', 'Rubro eliminado', `"${sector.nombre}" se quitó del catálogo.`);
+    renderConfiguracion();
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo eliminar', err.message);
+  }
+}
 
 async function handleGuardarCliente(e) {
   e.preventDefault();
