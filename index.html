@@ -679,6 +679,7 @@
               <div class="form-group">
                 <label for="ctr-tipo">Tipo de Contrato / Naturaleza *</label>
                 <select id="ctr-tipo" required onchange="updateContractPreview()">
+                  <option value="" disabled selected hidden>Selecciona una modalidad...</option>
                   <option value="Venta de Licencia">Venta de Software / Licencia Definitiva</option>
                   <option value="Alquiler / SaaS">Alquiler / Suscripción SaaS Mensual</option>
                   <option value="Desarrollo a Medida">Desarrollo de Software a Medida</option>
@@ -711,6 +712,7 @@
               <div class="form-group">
                 <label for="ctr-moneda">Moneda *</label>
                 <select id="ctr-moneda" required onchange="updateContractPreview()">
+                  <option value="" disabled selected hidden>Selecciona una moneda...</option>
                   <option value="USD">Dólares Americanos (USD $)</option>
                   <option value="PEN">Soles Peruanos (PEN S/)</option>
                 </select>
@@ -1040,6 +1042,7 @@
               <div class="form-group">
                 <label for="prf-tipo">Modalidad Propuesta *</label>
                 <select id="prf-tipo" required onchange="updateProformaPreview()">
+                  <option value="" disabled selected hidden>Selecciona una modalidad...</option>
                   <option value="Venta de Licencia">Venta de Software / Licencia Definitiva</option>
                   <option value="Alquiler / SaaS">Alquiler / Suscripción SaaS Mensual</option>
                   <option value="Desarrollo a Medida">Desarrollo de Software a Medida</option>
@@ -1064,6 +1067,7 @@
               <div class="form-group">
                 <label for="prf-moneda">Moneda *</label>
                 <select id="prf-moneda" required onchange="onProformaCurrencyChange()">
+                  <option value="" disabled selected hidden>Selecciona una moneda...</option>
                   <option value="USD">Dólares Americanos (USD $)</option>
                   <option value="PEN">Soles Peruanos (PEN S/)</option>
                 </select>
@@ -2982,6 +2986,10 @@ async function renderCrearContrato() {
   // En blanco por defecto al abrir el módulo, igual que el Cliente.
   if (selectProd) selectProd.value = '';
   if (searchProd) searchProd.value = '';
+  const tipoEl0 = document.getElementById('ctr-tipo');
+  const monEl0 = document.getElementById('ctr-moneda');
+  if (tipoEl0) tipoEl0.value = '';
+  if (monEl0) monEl0.value = '';
 
   // Set default dates
   const today = new Date();
@@ -3021,10 +3029,9 @@ async function renderCrearContrato() {
     const tipoEl = document.getElementById('ctr-tipo');
     if (tipoEl && p.tipo) tipoEl.value = p.tipo;
     if (selectProd && p.producto_nombre) {
-      if (![...selectProd.options].some(o => o.value === p.producto_nombre)) {
-        selectProd.add(new Option(p.producto_nombre, p.producto_nombre));
-      }
       selectProd.value = p.producto_nombre;
+      const existing = (_productOptionsCache['ctr-producto-search'] || []).find(o => o.value === p.producto_nombre);
+      if (searchProd) searchProd.value = existing ? existing.label : p.producto_nombre;
     }
     const monEl = document.getElementById('ctr-moneda');
     if (monEl && p.moneda) monEl.value = p.moneda;
@@ -3477,6 +3484,10 @@ async function renderCrearProforma() {
   // En blanco por defecto al abrir el módulo, igual que el Cliente.
   if (selectProd) selectProd.value = '';
   if (searchProd) searchProd.value = '';
+  const tipoEl0p = document.getElementById('prf-tipo');
+  const monEl0p = document.getElementById('prf-moneda');
+  if (tipoEl0p) tipoEl0p.value = '';
+  if (monEl0p) monEl0p.value = '';
 
   // Fechas por defecto
   const today = new Date();
