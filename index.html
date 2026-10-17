@@ -2001,6 +2001,17 @@ async function ensureProducts() {
   return _products;
 }
 
+/* ADG habilita el producto para Comercial apenas lo marca visible — no
+   espera a que OPP fije el precio. Así que un producto puede aparecer en
+   el catálogo sin precio todavía: se marca en rojo ("Precio pendiente de
+   OPP") para dejar claro que es un estado transitorio. Esos productos sin
+   precio NO deben ofrecerse como base de una Proforma/Contrato real. */
+function productHasPrice(p) {
+  const hasVenta = p.commercial_price != null && p.commercial_price !== '';
+  const hasAlquiler = p.rental_price != null && p.rental_price !== '';
+  return hasVenta || hasAlquiler;
+}
+
 function productCardHtml(p) {
   const logo = p.company_logo
     ? `<img class="product-logo" src="${esc(p.company_logo)}" alt="">`
@@ -2012,14 +2023,9 @@ function productCardHtml(p) {
     p.commercial_offer_type ? `<span class="badge b-${esc(p.commercial_offer_type)}">${esc(OFFER_LABEL[p.commercial_offer_type] || p.commercial_offer_type)}</span>` : '',
   ].filter(Boolean).join('');
   const progress = Number(p.progress) || 0;
-  /* ADG habilita el producto para Comercial apenas lo marca visible —
-     no espera a que OPP fije el precio. Así que un producto puede
-     aparecer en el catálogo sin precio todavía: se marca en rojo para
-     que quede claro que es un estado transitorio (pendiente de OPP),
-     no un error ni un "a consultar" permanente. */
   const hasVenta = p.commercial_price != null && p.commercial_price !== '';
   const hasAlquiler = p.rental_price != null && p.rental_price !== '';
-  const hasPrice = hasVenta || hasAlquiler;
+  const hasPrice = productHasPrice(p);
   const sym = CURRENCY_SYMBOL[p.commercial_price_currency] || 'S/';
   let price;
   if (hasVenta && hasAlquiler) {
@@ -2974,7 +2980,7 @@ async function renderCrearContrato() {
   // Poblar buscador de productos (catálogo habilitado por ADG, o defaults)
   const selectProd = document.getElementById('ctr-producto-sel');
   const searchProd = document.getElementById('ctr-producto-search');
-  let products = await ensureProducts();
+  let products = (await ensureProducts()).filter(productHasPrice);
   let prodOptions = (products && products.length > 0)
     ? products.map(p => ({ value: p.name, label: `${p.name} (${p.code || 'PROD'})` }))
     : [
@@ -3472,7 +3478,7 @@ async function renderCrearProforma() {
   // Poblar buscador de productos (catálogo habilitado por ADG, o defaults)
   const selectProd = document.getElementById('prf-producto-sel');
   const searchProd = document.getElementById('prf-producto-search');
-  let products = await ensureProducts();
+  let products = (await ensureProducts()).filter(productHasPrice);
   let prodOptions = (products && products.length > 0)
     ? products.map(p => ({ value: p.name, label: `${p.name} (${p.code || 'PROD'})` }))
     : [
