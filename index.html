@@ -1425,7 +1425,14 @@
 
             <div class="form-group">
               <label for="cli-cargo">Cargo en la Empresa *</label>
-              <input type="text" id="cli-cargo" placeholder="Ej: Gerente General / Director TI" required>
+              <div class="sector-combo" id="cli-cargo-combo">
+                <input type="text" id="cli-cargo" class="sector-combo-input" autocomplete="off" required
+                  placeholder="Selecciona o escribe un cargo..."
+                  onfocus="renderComboOptions('cli-cargo','cargo')" oninput="renderComboOptions('cli-cargo','cargo')"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();closeCombo('cli-cargo');}">
+                <svg class="icon sector-combo-caret"><use href="#icon-chevron-down"></use></svg>
+                <div class="sector-combo-list" id="cli-cargo-list" style="display:none"></div>
+              </div>
             </div>
           </div>
 
@@ -1584,6 +1591,7 @@
         <button type="button" class="cfg-tab" data-tab="pais" onclick="switchConfigTab('pais')">Países</button>
         <button type="button" class="cfg-tab" data-tab="provincia" onclick="switchConfigTab('provincia')">Provincias</button>
         <button type="button" class="cfg-tab" data-tab="distrito" onclick="switchConfigTab('distrito')">Distritos</button>
+        <button type="button" class="cfg-tab" data-tab="cargo" onclick="switchConfigTab('cargo')">Cargos</button>
       </div>
 
       <div class="card" style="padding:14px 18px;margin-bottom:18px">
@@ -1885,7 +1893,7 @@ const PAGE_META = {
   'consultar-proforma': { title:'Consultar Proformas', sub:'Historial, seguimiento de cotizaciones emitidas y conversión a contrato' },
   'crear-clientes': { title:'Crear Clientes', sub:'Alta de nuevos clientes corporativos, PYMEs y prospectos' },
   'editar-clientes': { title:'Directorio de Clientes', sub:'Edición de cartera, contactos y vinculación de contratos' },
-  configuracion: { title:'Configuración', sub:'Rubros y sectores agregados manualmente en el formulario de clientes' },
+  configuracion: { title:'Configuración', sub:'Valores agregados manualmente en los formularios de clientes (rubro, país, provincia, distrito, cargo)' },
 };
 
 /* "crear-clientes" queda fuera a propósito: su render hace form.reset(),
@@ -1945,6 +1953,7 @@ const CLIENT_SECTORS = ['Comercio', 'Retail', 'Ferretería', 'Construcción', 'S
 const COUNTRY_LIST = ['Perú', 'Chile', 'Colombia', 'Ecuador', 'Bolivia', 'Argentina', 'México', 'España', 'Estados Unidos'];
 const PERU_PROVINCES = ['Amazonas', 'Áncash', 'Apurímac', 'Arequipa', 'Ayacucho', 'Cajamarca', 'Callao', 'Cusco', 'Huancavelica', 'Huánuco', 'Ica', 'Junín', 'La Libertad', 'Lambayeque', 'Lima', 'Loreto', 'Madre de Dios', 'Moquegua', 'Pasco', 'Piura', 'Puno', 'San Martín', 'Tacna', 'Tumbes', 'Ucayali'];
 const PERU_DISTRICTS = ['Cercado de Lima', 'San Isidro', 'Miraflores', 'San Borja', 'Surco', 'La Molina', 'San Miguel', 'Magdalena del Mar', 'Jesús María', 'Lince', 'Barranco', 'Chorrillos', 'Pueblo Libre', 'Ate', 'San Juan de Lurigancho', 'Los Olivos', 'Comas'];
+const JOB_TITLES = ['Gerente General', 'Gerente de Operaciones', 'Gerente Comercial', 'Gerente de Administración y Finanzas', 'Director TI', 'Jefe de Logística', 'Jefe de Compras', 'Jefe de Ventas', 'Jefe de Marketing', 'Contador', 'Administrador', 'Propietario'];
 const TYPE_LABEL = { web:'Web', mobile:'Aplicativo Móvil', desktop:'Aplicativo de Escritorio' };
 const OFFER_LABEL = { venta:'Venta', alquiler:'Alquiler', venta_alquiler:'Venta o alquiler' };
 const CURRENCY_SYMBOL = { PEN:'S/', USD:'$', EUR:'€' };
@@ -2837,27 +2846,27 @@ function calViewMeeting(id) {
 let _clientesCache = [];
 let _contratosCache = [];
 let _proformasCache = [];
-let _customSectorsCache = [];
-let _locationsCache = { pais: [], provincia: [], distrito: [] };
+// Catálogo genérico de valores agregados a mano (Rubro, País, Provincia,
+// Distrito, Cargo...) — un solo objeto cacheado por tipo, respaldado por
+// /api/comercial/catalog/:tipo, para no repetir caché+reload por cada
+// campo nuevo que use el mismo patrón de combobox.
+let _catalogCache = { sector: [], pais: [], provincia: [], distrito: [], cargo: [] };
 let _comercialDataLoaded = false;
 
 async function ensureComercialData(force) {
   if (_comercialDataLoaded && !force) return;
   try {
-    const [cliData, ctrData, prfData, secData, paisData, provData, distData] = await Promise.all([
+    const catalogTypes = Object.keys(_catalogCache);
+    const [cliData, ctrData, prfData, ...catalogResults] = await Promise.all([
       qcApiFetch('/api/comercial/clients'),
       qcApiFetch('/api/comercial/contracts'),
       qcApiFetch('/api/comercial/proformas'),
-      qcApiFetch('/api/comercial/sectors'),
-      qcApiFetch('/api/comercial/locations/pais'),
-      qcApiFetch('/api/comercial/locations/provincia'),
-      qcApiFetch('/api/comercial/locations/distrito'),
+      ...catalogTypes.map(tipo => qcApiFetch('/api/comercial/catalog/' + tipo)),
     ]);
     _clientesCache = cliData.clients || [];
     _contratosCache = ctrData.contracts || [];
     _proformasCache = prfData.proformas || [];
-    _customSectorsCache = secData.sectors || [];
-    _locationsCache = { pais: paisData.locations || [], provincia: provData.locations || [], distrito: distData.locations || [] };
+    catalogTypes.forEach((tipo, i) => { _catalogCache[tipo] = catalogResults[i].items || []; });
     _comercialDataLoaded = true;
   } catch (err) {
     if (err.message !== 'SESSION_EXPIRED') console.error(err);
@@ -2867,14 +2876,12 @@ async function ensureComercialData(force) {
 async function reloadClientes() { _clientesCache = (await qcApiFetch('/api/comercial/clients')).clients || []; return _clientesCache; }
 async function reloadContratos() { _contratosCache = (await qcApiFetch('/api/comercial/contracts')).contracts || []; return _contratosCache; }
 async function reloadProformas() { _proformasCache = (await qcApiFetch('/api/comercial/proformas')).proformas || []; return _proformasCache; }
-async function reloadCustomSectors() { _customSectorsCache = (await qcApiFetch('/api/comercial/sectors')).sectors || []; return _customSectorsCache; }
-async function reloadLocations(tipo) { _locationsCache[tipo] = (await qcApiFetch('/api/comercial/locations/' + tipo)).locations || []; return _locationsCache[tipo]; }
+async function reloadCatalog(tipo) { _catalogCache[tipo] = (await qcApiFetch('/api/comercial/catalog/' + tipo)).items || []; return _catalogCache[tipo]; }
 
 function getStoredClientes() { return _clientesCache; }
 function getStoredContratos() { return _contratosCache; }
 function getStoredProformas() { return _proformasCache; }
-function getStoredCustomSectors() { return _customSectorsCache; }
-function getStoredLocations(tipo) { return _locationsCache[tipo] || []; }
+function getStoredCatalog(tipo) { return _catalogCache[tipo] || []; }
 
 
 function getNextProformaCode() {
@@ -4260,15 +4267,15 @@ function startProformaForClient(cliId) {
 function renderCrearClientes() {
   const form = document.getElementById('form-crear-cliente');
   if (form) form.reset();
-  ['cli-sector', 'cli-pais', 'cli-provincia', 'cli-distrito'].forEach(closeCombo);
+  Object.keys(COMBO_TYPES).forEach(tipo => closeCombo('cli-' + tipo));
   // En segundo plano, sin bloquear ni volver a tocar el formulario — si
   // esto esperara aquí, una carga lenta podría borrar lo que el usuario
   // ya empezó a escribir mientras tanto.
-  Promise.all([reloadCustomSectors(), reloadLocations('pais'), reloadLocations('provincia'), reloadLocations('distrito')]).catch(() => {});
+  Promise.all(Object.keys(COMBO_TYPES).map(reloadCatalog)).catch(() => {});
 }
 
-/* Combobox de Rubro/País/Provincia/Distrito — reemplaza el <select>
-   nativo en los cuatro. El input sirve a la vez de valor y de
+/* Combobox de Rubro/País/Provincia/Distrito/Cargo — reemplaza el
+   <select> nativo en los cinco. El input sirve a la vez de valor y de
    buscador: al escribir filtra la lista en vivo, y si lo que se
    escribió no coincide con ninguna opción, ese mismo texto queda como
    el valor del campo (todos son texto libre en la base de datos, así
@@ -4277,11 +4284,17 @@ function renderCrearClientes() {
    para la próxima vez). Reutilizado tanto por "Crear Cliente" como
    por el modal "Editar Cliente" (ids con prefijo edit-). */
 const COMBO_TYPES = {
-  sector:    { base: CLIENT_SECTORS,  endpoint: '/api/comercial/sectors',             singular: 'rubro',      getCache: getStoredCustomSectors,          reload: reloadCustomSectors },
-  pais:      { base: COUNTRY_LIST,    endpoint: '/api/comercial/locations/pais',      singular: 'país',       getCache: () => getStoredLocations('pais'),      reload: () => reloadLocations('pais') },
-  provincia: { base: PERU_PROVINCES,  endpoint: '/api/comercial/locations/provincia', singular: 'provincia',  getCache: () => getStoredLocations('provincia'), reload: () => reloadLocations('provincia') },
-  distrito:  { base: PERU_DISTRICTS,  endpoint: '/api/comercial/locations/distrito',  singular: 'distrito',   getCache: () => getStoredLocations('distrito'),  reload: () => reloadLocations('distrito') },
+  sector:    { base: CLIENT_SECTORS,  singular: 'rubro' },
+  pais:      { base: COUNTRY_LIST,    singular: 'país' },
+  provincia: { base: PERU_PROVINCES,  singular: 'provincia' },
+  distrito:  { base: PERU_DISTRICTS,  singular: 'distrito' },
+  cargo:     { base: JOB_TITLES,      singular: 'cargo' },
 };
+Object.keys(COMBO_TYPES).forEach(tipo => {
+  COMBO_TYPES[tipo].endpoint = '/api/comercial/catalog/' + tipo;
+  COMBO_TYPES[tipo].getCache = () => getStoredCatalog(tipo);
+  COMBO_TYPES[tipo].reload = () => reloadCatalog(tipo);
+});
 
 /* Genera el markup de un combobox ya con un valor precargado — usado
    por el modal "Editar Cliente", que arma su formulario entero vía
@@ -4364,7 +4377,7 @@ function closeCombo(inputId) {
   document.getElementById(inputId)?.blur();
 }
 
-const COMBO_INPUT_IDS = ['cli-sector', 'edit-cli-sector', 'cli-pais', 'edit-cli-pais', 'cli-provincia', 'edit-cli-provincia', 'cli-distrito', 'edit-cli-distrito'];
+const COMBO_INPUT_IDS = Object.keys(COMBO_TYPES).flatMap(tipo => ['cli-' + tipo, 'edit-cli-' + tipo]);
 document.addEventListener('click', (e) => {
   COMBO_INPUT_IDS.forEach(id => {
     const combo = document.getElementById(id + '-combo');
@@ -4394,6 +4407,10 @@ const CONFIG_TABS = {
   distrito: {
     col: 'Distrito', addLabel: 'Agregar un distrito al catálogo', placeholder: 'Ej: Barranco',
     baseNote: `Los ${PERU_DISTRICTS.length} distritos base de Lima siempre están disponibles y no se pueden editar desde acá.`,
+  },
+  cargo: {
+    col: 'Cargo', addLabel: 'Agregar un cargo al catálogo', placeholder: 'Ej: Jefe de Compras',
+    baseNote: `Los ${JOB_TITLES.length} cargos base (Gerente General, Director TI, etc.) siempre están disponibles y no se pueden editar desde acá.`,
   },
 };
 
@@ -4768,8 +4785,8 @@ function openEditClientModal(id) {
           <input type="text" id="edit-cli-contacto" value="${esc(c.contacto_nombre)}" required>
         </div>
         <div class="form-group">
-          <label>Cargo del Contacto</label>
-          <input type="text" id="edit-cli-cargo" value="${esc(c.contacto_cargo || '')}">
+          <label for="edit-cli-cargo">Cargo del Contacto</label>
+          ${comboFieldHtml('edit-cli-cargo', 'cargo', c.contacto_cargo, 'Selecciona o escribe un cargo...')}
         </div>
       </div>
 
