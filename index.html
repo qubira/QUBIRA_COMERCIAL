@@ -660,16 +660,23 @@
               </div>
 
               <div class="form-group">
-                <label for="ctr-cliente-sel">Cliente / Empresa *</label>
+                <label for="ctr-cliente-search">Cliente / Empresa *</label>
                 <div style="display:flex;gap:6px">
-                  <select id="ctr-cliente-sel" required onchange="onContractClientSelected(this.value)">
-                    <!-- Populated dynamically -->
-                  </select>
+                  <div class="sector-combo" id="ctr-cliente-search-combo" style="flex:1">
+                    <input type="text" id="ctr-cliente-search" class="sector-combo-input" autocomplete="off" required
+                      placeholder="Busca por nombre o RUC..."
+                      onfocus="this.select();renderClientOptions('ctr-cliente-search','ctr-cliente-sel','onContractClientSelected',true)"
+                      oninput="renderClientOptions('ctr-cliente-search','ctr-cliente-sel','onContractClientSelected')"
+                      onkeydown="if(event.key==='Enter'){event.preventDefault();closeCombo('ctr-cliente-search');}">
+                    <input type="hidden" id="ctr-cliente-sel">
+                    <svg class="icon sector-combo-caret"><use href="#icon-chevron-down"></use></svg>
+                    <div class="sector-combo-list" id="ctr-cliente-search-list" style="display:none"></div>
+                  </div>
                   <button type="button" class="btn-icon" title="Crear cliente rápido" onclick="navigate('crear-clientes')">
                     <svg class="icon"><use href="#icon-user-plus"></use></svg>
                   </button>
                 </div>
-                <span class="form-help">Selecciona un cliente o regístralo si es nuevo</span>
+                <span class="form-help">Busca y selecciona un cliente, o regístralo si es nuevo</span>
               </div>
             </div>
 
@@ -967,16 +974,23 @@
               </div>
 
               <div class="form-group">
-                <label for="prf-cliente-sel">Cliente / Empresa Destinataria *</label>
+                <label for="prf-cliente-search">Cliente / Empresa Destinataria *</label>
                 <div style="display:flex;gap:6px">
-                  <select id="prf-cliente-sel" required onchange="onProformaClientSelected(this.value)">
-                    <!-- Populated dynamically -->
-                  </select>
+                  <div class="sector-combo" id="prf-cliente-search-combo" style="flex:1">
+                    <input type="text" id="prf-cliente-search" class="sector-combo-input" autocomplete="off" required
+                      placeholder="Busca por nombre o RUC..."
+                      onfocus="this.select();renderClientOptions('prf-cliente-search','prf-cliente-sel','onProformaClientSelected',true)"
+                      oninput="renderClientOptions('prf-cliente-search','prf-cliente-sel','onProformaClientSelected')"
+                      onkeydown="if(event.key==='Enter'){event.preventDefault();closeCombo('prf-cliente-search');}">
+                    <input type="hidden" id="prf-cliente-sel">
+                    <svg class="icon sector-combo-caret"><use href="#icon-chevron-down"></use></svg>
+                    <div class="sector-combo-list" id="prf-cliente-search-list" style="display:none"></div>
+                  </div>
                   <button type="button" class="btn-icon" title="Crear cliente rápido" onclick="navigate('crear-clientes')">
                     <svg class="icon"><use href="#icon-user-plus"></use></svg>
                   </button>
                 </div>
-                <span class="form-help">Selecciona un cliente o regístralo si es nuevo</span>
+                <span class="form-help">Busca y selecciona un cliente, o regístralo si es nuevo</span>
               </div>
             </div>
 
@@ -2948,18 +2962,15 @@ function regenerateContractCode() {
 async function renderCrearContrato() {
   const clientes = getStoredClientes();
   const selectCli = document.getElementById('ctr-cliente-sel');
+  const searchCli = document.getElementById('ctr-cliente-search');
   if (!selectCli) return;
 
-  // Poblar select clientes
-  selectCli.innerHTML = '<option value="">-- Seleccionar Cliente Registrado --</option>' +
-    clientes.map(c => `<option value="${esc(c.id)}">${esc(c.razon_social)} (${esc(c.ruc)})</option>`).join('');
-
-  if (_preselectedClientId) {
-    selectCli.value = _preselectedClientId;
-    _preselectedClientId = null;
-  } else if (clientes.length > 0 && !selectCli.value) {
-    selectCli.value = clientes[0].id;
-  }
+  closeCombo('ctr-cliente-search');
+  const selectedId = _preselectedClientId || (clientes.length > 0 ? clientes[0].id : '');
+  _preselectedClientId = null;
+  selectCli.value = selectedId;
+  const selectedClient = clientes.find(c => c.id === selectedId);
+  if (searchCli) searchCli.value = selectedClient ? `${selectedClient.razon_social} (${selectedClient.ruc})` : '';
 
   // Poblar select productos (usando productos de catálogo si cargaron, o defaults)
   const selectProd = document.getElementById('ctr-producto-sel');
@@ -3443,18 +3454,15 @@ let _currentProformaItems = [];
 async function renderCrearProforma() {
   const clientes = getStoredClientes();
   const selectCli = document.getElementById('prf-cliente-sel');
+  const searchCli = document.getElementById('prf-cliente-search');
   if (!selectCli) return;
 
-  // Poblar select clientes
-  selectCli.innerHTML = '<option value="">-- Seleccionar Cliente Registrado --</option>' +
-    clientes.map(c => `<option value="${esc(c.id)}">${esc(c.razon_social)} (${esc(c.ruc)})</option>`).join('');
-
-  if (_preselectedProformaClientId) {
-    selectCli.value = _preselectedProformaClientId;
-    _preselectedProformaClientId = null;
-  } else if (clientes.length > 0 && !selectCli.value) {
-    selectCli.value = clientes[0].id;
-  }
+  closeCombo('prf-cliente-search');
+  const selectedId = _preselectedProformaClientId || (clientes.length > 0 ? clientes[0].id : '');
+  _preselectedProformaClientId = null;
+  selectCli.value = selectedId;
+  const selectedClient = clientes.find(c => c.id === selectedId);
+  if (searchCli) searchCli.value = selectedClient ? `${selectedClient.razon_social} (${selectedClient.ruc})` : '';
 
   // Poblar select productos (catálogo ODN + servicios personalizados)
   const selectProd = document.getElementById('prf-producto-sel');
@@ -4378,7 +4386,53 @@ function closeCombo(inputId) {
   document.getElementById(inputId)?.blur();
 }
 
-const COMBO_INPUT_IDS = Object.keys(COMBO_TYPES).flatMap(tipo => ['cli-' + tipo, 'edit-cli-' + tipo]);
+/* Buscador de Cliente — mismo diseño que los combobox de arriba, pero
+   selecciona de la cartera real (no texto libre): el input visible
+   (searchId) solo busca/filtra y muestra "Razón Social (RUC)"; el
+   valor real que usa el resto del formulario (hiddenId, el mismo id
+   que antes tenía el <select>, para no tocar el resto del código) es
+   un input oculto con el cliente_id. Usado en Crear Contrato y Crear
+   Proforma. */
+function renderClientOptions(searchId, hiddenId, onSelectFnName, forceAll) {
+  const combo = document.getElementById(searchId + '-combo');
+  const search = document.getElementById(searchId);
+  const list = document.getElementById(searchId + '-list');
+  if (!combo || !search || !list) return;
+
+  // forceAll (usado en onfocus): si el campo ya tiene un cliente elegido,
+  // su texto mostrado es "Razón Social (RUC)" — filtrar con ESO como
+  // búsqueda no encuentra nada (el formato interno no tiene paréntesis),
+  // dejando la lista vacía al reabrir. Al enfocar, siempre se muestra la
+  // lista completa primero; el filtro en vivo recién aplica al escribir.
+  const q = forceAll ? '' : search.value.trim().toLowerCase();
+  const clientes = getStoredClientes();
+  const matches = !q ? clientes : clientes.filter(c => (c.razon_social + ' ' + c.ruc).toLowerCase().includes(q));
+
+  let html = matches.slice(0, 50).map(c => `
+    <div class="sector-combo-item" onmousedown="event.preventDefault();selectClientOption('${searchId}','${hiddenId}','${esc(c.id)}','${onSelectFnName || ''}')">
+      <strong>${esc(c.razon_social)}</strong> <span style="color:var(--text-muted);font-size:12px">(${esc(c.ruc)})</span>
+    </div>
+  `).join('');
+
+  if (!matches.length) html = '<div class="sector-combo-empty">Sin clientes que coincidan.</div>';
+  html += `<div class="sector-combo-add" onmousedown="event.preventDefault();navigate('crear-clientes')">+ Registrar un cliente nuevo</div>`;
+
+  list.innerHTML = html;
+  list.style.display = 'block';
+  combo.classList.add('open');
+}
+
+function selectClientOption(searchId, hiddenId, clienteId, onSelectFnName) {
+  const search = document.getElementById(searchId);
+  const hidden = document.getElementById(hiddenId);
+  const c = getStoredClientes().find(x => x.id === clienteId);
+  if (hidden) hidden.value = clienteId;
+  if (search && c) search.value = `${c.razon_social} (${c.ruc})`;
+  closeCombo(searchId);
+  if (onSelectFnName && typeof window[onSelectFnName] === 'function') window[onSelectFnName](clienteId);
+}
+
+const COMBO_INPUT_IDS = Object.keys(COMBO_TYPES).flatMap(tipo => ['cli-' + tipo, 'edit-cli-' + tipo]).concat(['ctr-cliente-search', 'prf-cliente-search']);
 document.addEventListener('click', (e) => {
   COMBO_INPUT_IDS.forEach(id => {
     const combo = document.getElementById(id + '-combo');
