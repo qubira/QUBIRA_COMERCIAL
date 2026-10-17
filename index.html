@@ -2966,7 +2966,9 @@ async function renderCrearContrato() {
   if (!selectCli) return;
 
   closeCombo('ctr-cliente-search');
-  const selectedId = _preselectedClientId || (clientes.length > 0 ? clientes[0].id : '');
+  // En blanco por defecto al abrir el módulo — solo se precarga si viene
+  // de un atajo explícito (ej. "Generar Contrato desde esta Proforma").
+  const selectedId = _preselectedClientId || '';
   _preselectedClientId = null;
   selectCli.value = selectedId;
   const selectedClient = clientes.find(c => c.id === selectedId);
@@ -3067,7 +3069,7 @@ function onContractProductChange(prodName) {
 function updateContractPreview() {
   const clientes = getStoredClientes();
   const cliId = document.getElementById('ctr-cliente-sel')?.value;
-  const cliente = clientes.find(c => c.id === cliId) || (clientes[0] || {});
+  const cliente = clientes.find(c => c.id === cliId) || {};
 
   const codigo = document.getElementById('ctr-codigo')?.value || 'CTR-2026-0000';
   const tipo = document.getElementById('ctr-tipo')?.value || 'Venta de Licencia';
@@ -3458,7 +3460,9 @@ async function renderCrearProforma() {
   if (!selectCli) return;
 
   closeCombo('prf-cliente-search');
-  const selectedId = _preselectedProformaClientId || (clientes.length > 0 ? clientes[0].id : '');
+  // En blanco por defecto al abrir el módulo — solo se precarga si viene
+  // de un atajo explícito (ej. "Crear proforma para este cliente").
+  const selectedId = _preselectedProformaClientId || '';
   _preselectedProformaClientId = null;
   selectCli.value = selectedId;
   const selectedClient = clientes.find(c => c.id === selectedId);
@@ -3665,7 +3669,7 @@ function calcProformaTotals() {
 function updateProformaPreview(subVal, descVal, igvVal, totalVal) {
   const clientes = getStoredClientes();
   const cliId = document.getElementById('prf-cliente-sel')?.value;
-  const cliente = clientes.find(c => c.id === cliId) || (clientes[0] || {});
+  const cliente = clientes.find(c => c.id === cliId) || {};
 
   const codigo = document.getElementById('prf-codigo')?.value || 'PRF-2026-0000';
   const prod = document.getElementById('prf-producto-sel')?.value || 'Solución Tecnológica Qubira';
