@@ -2979,11 +2979,9 @@ async function renderCrearContrato() {
       ];
   prodOptions = prodOptions.concat([{ value: 'Software a Medida / Consultoría Especializada', label: 'Software a Medida / Consultoría Especializada' }]);
   _productOptionsCache['ctr-producto-search'] = prodOptions;
-  if (selectProd && !selectProd.value && prodOptions.length) selectProd.value = prodOptions[0].value;
-  if (searchProd) {
-    const current = prodOptions.find(o => o.value === selectProd.value);
-    searchProd.value = current ? current.label : '';
-  }
+  // En blanco por defecto al abrir el módulo, igual que el Cliente.
+  if (selectProd) selectProd.value = '';
+  if (searchProd) searchProd.value = '';
 
   // Set default dates
   const today = new Date();
@@ -3476,11 +3474,9 @@ async function renderCrearProforma() {
       ];
   prodOptions = prodOptions.concat([{ value: 'Desarrollo de Software a Medida / Consultoría ODN', label: 'Desarrollo de Software a Medida / Consultoría ODN' }]);
   _productOptionsCache['prf-producto-search'] = prodOptions;
-  if (selectProd && !selectProd.value && prodOptions.length) selectProd.value = prodOptions[0].value;
-  if (searchProd) {
-    const current = prodOptions.find(o => o.value === selectProd.value);
-    searchProd.value = current ? current.label : '';
-  }
+  // En blanco por defecto al abrir el módulo, igual que el Cliente.
+  if (selectProd) selectProd.value = '';
+  if (searchProd) searchProd.value = '';
 
   // Fechas por defecto
   const today = new Date();
