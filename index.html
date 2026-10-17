@@ -687,10 +687,17 @@
               </div>
 
               <div class="form-group">
-                <label for="ctr-producto-sel">Producto / Solución Tecnológica *</label>
-                <select id="ctr-producto-sel" required onchange="onContractProductChange(this.value)">
-                  <!-- Populated dynamically with ODN catalog + custom -->
-                </select>
+                <label for="ctr-producto-search">Producto / Solución Tecnológica *</label>
+                <div class="sector-combo" id="ctr-producto-search-combo">
+                  <input type="text" id="ctr-producto-search" class="sector-combo-input" autocomplete="off" required
+                    placeholder="Busca un producto del catálogo..."
+                    onfocus="this.select();renderProductOptions('ctr-producto-search','ctr-producto-sel','onContractProductChange',true)"
+                    oninput="renderProductOptions('ctr-producto-search','ctr-producto-sel','onContractProductChange')"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();closeCombo('ctr-producto-search');}">
+                  <input type="hidden" id="ctr-producto-sel">
+                  <svg class="icon sector-combo-caret"><use href="#icon-chevron-down"></use></svg>
+                  <div class="sector-combo-list" id="ctr-producto-search-list" style="display:none"></div>
+                </div>
               </div>
             </div>
 
@@ -1041,10 +1048,17 @@
               </div>
 
               <div class="form-group">
-                <label for="prf-producto-sel">Producto Base del Catálogo *</label>
-                <select id="prf-producto-sel" required onchange="onProformaProductChange(this.value)">
-                  <!-- Populated dynamically -->
-                </select>
+                <label for="prf-producto-search">Producto Base del Catálogo *</label>
+                <div class="sector-combo" id="prf-producto-search-combo">
+                  <input type="text" id="prf-producto-search" class="sector-combo-input" autocomplete="off" required
+                    placeholder="Busca un producto del catálogo..."
+                    onfocus="this.select();renderProductOptions('prf-producto-search','prf-producto-sel','onProformaProductChange',true)"
+                    oninput="renderProductOptions('prf-producto-search','prf-producto-sel','onProformaProductChange')"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();closeCombo('prf-producto-search');}">
+                  <input type="hidden" id="prf-producto-sel">
+                  <svg class="icon sector-combo-caret"><use href="#icon-chevron-down"></use></svg>
+                  <div class="sector-combo-list" id="prf-producto-search-list" style="display:none"></div>
+                </div>
               </div>
 
               <div class="form-group">
@@ -2950,23 +2964,26 @@ async function renderCrearContrato() {
   const selectedClient = clientes.find(c => c.id === selectedId);
   if (searchCli) searchCli.value = selectedClient ? `${selectedClient.razon_social} (${selectedClient.ruc})` : '';
 
-  // Poblar select productos (usando productos de catálogo si cargaron, o defaults)
+  // Poblar buscador de productos (catálogo habilitado por ADG, o defaults)
   const selectProd = document.getElementById('ctr-producto-sel');
+  const searchProd = document.getElementById('ctr-producto-search');
   let products = await ensureProducts();
-  let prodOptions = '';
-  if (products && products.length > 0) {
-    prodOptions = products.map(p => `<option value="${esc(p.name)}">${esc(p.name)} (${esc(p.code || 'PROD')})</option>`).join('');
-  } else {
-    prodOptions = `
-      <option value="Sistema Web Ferretería & Facturación Electrónica">Sistema Web Ferretería & Facturación Electrónica</option>
-      <option value="Plataforma de Pagos y Notificaciones Ortecho">Plataforma de Pagos y Notificaciones Ortecho</option>
-      <option value="App Móvil de Preventa & Rutas GPS">App Móvil de Preventa & Rutas GPS</option>
-      <option value="Dashboard de Control Ambiental y Telemetría">Dashboard de Control Ambiental y Telemetría</option>
-      <option value="Módulo de Gestión de Inventarios y Almacenes">Módulo de Gestión de Inventarios y Almacenes</option>
-    `;
+  let prodOptions = (products && products.length > 0)
+    ? products.map(p => ({ value: p.name, label: `${p.name} (${p.code || 'PROD'})` }))
+    : [
+        { value: 'Sistema Web Ferretería & Facturación Electrónica', label: 'Sistema Web Ferretería & Facturación Electrónica' },
+        { value: 'Plataforma de Pagos y Notificaciones Ortecho', label: 'Plataforma de Pagos y Notificaciones Ortecho' },
+        { value: 'App Móvil de Preventa & Rutas GPS', label: 'App Móvil de Preventa & Rutas GPS' },
+        { value: 'Dashboard de Control Ambiental y Telemetría', label: 'Dashboard de Control Ambiental y Telemetría' },
+        { value: 'Módulo de Gestión de Inventarios y Almacenes', label: 'Módulo de Gestión de Inventarios y Almacenes' },
+      ];
+  prodOptions = prodOptions.concat([{ value: 'Software a Medida / Consultoría Especializada', label: 'Software a Medida / Consultoría Especializada' }]);
+  _productOptionsCache['ctr-producto-search'] = prodOptions;
+  if (selectProd && !selectProd.value && prodOptions.length) selectProd.value = prodOptions[0].value;
+  if (searchProd) {
+    const current = prodOptions.find(o => o.value === selectProd.value);
+    searchProd.value = current ? current.label : '';
   }
-  prodOptions += '<option value="Software a Medida / Consultoría Especializada">Software a Medida / Consultoría Especializada</option>';
-  selectProd.innerHTML = prodOptions;
 
   // Set default dates
   const today = new Date();
@@ -3444,23 +3461,26 @@ async function renderCrearProforma() {
   const selectedClient = clientes.find(c => c.id === selectedId);
   if (searchCli) searchCli.value = selectedClient ? `${selectedClient.razon_social} (${selectedClient.ruc})` : '';
 
-  // Poblar select productos (catálogo ODN + servicios personalizados)
+  // Poblar buscador de productos (catálogo habilitado por ADG, o defaults)
   const selectProd = document.getElementById('prf-producto-sel');
+  const searchProd = document.getElementById('prf-producto-search');
   let products = await ensureProducts();
-  let prodOptions = '';
-  if (products && products.length > 0) {
-    prodOptions = products.map(p => `<option value="${esc(p.name)}">${esc(p.name)} (${esc(p.code || 'PROD')})</option>`).join('');
-  } else {
-    prodOptions = `
-      <option value="Sistema Web Ferretería & Facturación Electrónica">Sistema Web Ferretería & Facturación Electrónica</option>
-      <option value="Plataforma de Pagos y Notificaciones Ortecho">Plataforma de Pagos y Notificaciones Ortecho</option>
-      <option value="App Móvil de Preventa & Rutas GPS">App Móvil de Preventa & Rutas GPS</option>
-      <option value="Dashboard de Control Ambiental y Telemetría">Dashboard de Control Ambiental y Telemetría</option>
-      <option value="Módulo de Gestión de Inventarios y Almacenes">Módulo de Gestión de Inventarios y Almacenes</option>
-    `;
+  let prodOptions = (products && products.length > 0)
+    ? products.map(p => ({ value: p.name, label: `${p.name} (${p.code || 'PROD'})` }))
+    : [
+        { value: 'Sistema Web Ferretería & Facturación Electrónica', label: 'Sistema Web Ferretería & Facturación Electrónica' },
+        { value: 'Plataforma de Pagos y Notificaciones Ortecho', label: 'Plataforma de Pagos y Notificaciones Ortecho' },
+        { value: 'App Móvil de Preventa & Rutas GPS', label: 'App Móvil de Preventa & Rutas GPS' },
+        { value: 'Dashboard de Control Ambiental y Telemetría', label: 'Dashboard de Control Ambiental y Telemetría' },
+        { value: 'Módulo de Gestión de Inventarios y Almacenes', label: 'Módulo de Gestión de Inventarios y Almacenes' },
+      ];
+  prodOptions = prodOptions.concat([{ value: 'Desarrollo de Software a Medida / Consultoría ODN', label: 'Desarrollo de Software a Medida / Consultoría ODN' }]);
+  _productOptionsCache['prf-producto-search'] = prodOptions;
+  if (selectProd && !selectProd.value && prodOptions.length) selectProd.value = prodOptions[0].value;
+  if (searchProd) {
+    const current = prodOptions.find(o => o.value === selectProd.value);
+    searchProd.value = current ? current.label : '';
   }
-  prodOptions += '<option value="Desarrollo de Software a Medida / Consultoría ODN">Desarrollo de Software a Medida / Consultoría ODN</option>';
-  selectProd.innerHTML = prodOptions;
 
   // Fechas por defecto
   const today = new Date();
@@ -4412,7 +4432,48 @@ function selectClientOption(searchId, hiddenId, clienteId, onSelectFnName) {
   if (onSelectFnName && typeof window[onSelectFnName] === 'function') window[onSelectFnName](clienteId);
 }
 
-const COMBO_INPUT_IDS = Object.keys(COMBO_TYPES).flatMap(tipo => ['cli-' + tipo, 'edit-cli-' + tipo]).concat(['ctr-cliente-search', 'prf-cliente-search']);
+/* Buscador de Producto — mismo diseño y mecánica que el de Cliente
+   (input visible que busca, valor real en un input oculto con el
+   mismo id que antes tenía el <select>), pero SIN "+ agregar": el
+   catálogo de productos lo habilita ADG, no se crea desde acá. Las
+   opciones se arman una vez por render en _productOptionsCache
+   (clave = searchId) para no re-awaitear ensureProducts() en cada
+   tecla. */
+let _productOptionsCache = {};
+
+function renderProductOptions(searchId, hiddenId, onSelectFnName, forceAll) {
+  const combo = document.getElementById(searchId + '-combo');
+  const search = document.getElementById(searchId);
+  const list = document.getElementById(searchId + '-list');
+  if (!combo || !search || !list) return;
+
+  const options = _productOptionsCache[searchId] || [];
+  const q = forceAll ? '' : search.value.trim().toLowerCase();
+  const matches = !q ? options : options.filter(o => o.label.toLowerCase().includes(q));
+
+  let html = matches.slice(0, 50).map(o => `
+    <div class="sector-combo-item" onmousedown="event.preventDefault();selectProductOption('${searchId}','${hiddenId}','${esc(o.value).replace(/'/g, "\\'")}','${esc(o.label).replace(/'/g, "\\'")}','${onSelectFnName || ''}')">
+      ${esc(o.label)}
+    </div>
+  `).join('');
+
+  if (!matches.length) html = '<div class="sector-combo-empty">Sin productos que coincidan.</div>';
+
+  list.innerHTML = html;
+  list.style.display = 'block';
+  combo.classList.add('open');
+}
+
+function selectProductOption(searchId, hiddenId, value, label, onSelectFnName) {
+  const search = document.getElementById(searchId);
+  const hidden = document.getElementById(hiddenId);
+  if (hidden) hidden.value = value;
+  if (search) search.value = label;
+  closeCombo(searchId);
+  if (onSelectFnName && typeof window[onSelectFnName] === 'function') window[onSelectFnName](value);
+}
+
+const COMBO_INPUT_IDS = Object.keys(COMBO_TYPES).flatMap(tipo => ['cli-' + tipo, 'edit-cli-' + tipo]).concat(['ctr-cliente-search', 'prf-cliente-search', 'ctr-producto-search', 'prf-producto-search']);
 document.addEventListener('click', (e) => {
   COMBO_INPUT_IDS.forEach(id => {
     const combo = document.getElementById(id + '-combo');
