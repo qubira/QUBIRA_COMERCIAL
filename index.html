@@ -244,6 +244,15 @@
     .sector-combo-add:hover { background: var(--primary-light); }
     .sector-combo-empty { padding: 9px 12px; font-size: 12.5px; color: var(--text-muted); }
 
+    /* ── Pestañas de Configuración (Rubros/Países/Provincias/Distritos) ── */
+    .cfg-tabs { display: flex; gap: 6px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .cfg-tab {
+      padding: 10px 16px; background: none; border: none; border-bottom: 2px solid transparent;
+      font-size: 13.5px; font-weight: 600; color: var(--text-muted); cursor: pointer; font-family: inherit;
+    }
+    .cfg-tab:hover { color: var(--text); }
+    .cfg-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
     /* ── FILTERS / TABS (calendario) ── */
     .filters-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
     .filters-bar input, .filters-bar select { width: auto; min-width: 150px; }
@@ -1357,22 +1366,48 @@
             <div class="sector-combo" id="cli-sector-combo">
               <input type="text" id="cli-sector" class="sector-combo-input" autocomplete="off" required
                 placeholder="Selecciona o escribe un rubro..."
-                onfocus="renderSectorOptions('cli-sector')" oninput="renderSectorOptions('cli-sector')"
-                onkeydown="if(event.key==='Enter'){event.preventDefault();closeSectorCombo('cli-sector');}">
+                onfocus="renderComboOptions('cli-sector','sector')" oninput="renderComboOptions('cli-sector','sector')"
+                onkeydown="if(event.key==='Enter'){event.preventDefault();closeCombo('cli-sector');}">
               <svg class="icon sector-combo-caret"><use href="#icon-chevron-down"></use></svg>
               <div class="sector-combo-list" id="cli-sector-list" style="display:none"></div>
             </div>
           </div>
 
-          <div class="form-grid-2" style="margin-top:14px">
-            <div class="form-group">
-              <label for="cli-direccion">Dirección Fiscal / Sede</label>
-              <input type="text" id="cli-direccion" placeholder="Ej: Av. Rivera Navarrete 501, San Isidro">
-            </div>
+          <div class="form-group" style="margin-top:14px">
+            <label for="cli-direccion">Dirección Fiscal / Sede</label>
+            <input type="text" id="cli-direccion" placeholder="Ej: Av. Rivera Navarrete 501, San Isidro">
+          </div>
 
+          <div class="form-grid-3" style="margin-top:14px">
             <div class="form-group">
-              <label for="cli-ciudad">Ciudad / Región</label>
-              <input type="text" id="cli-ciudad" value="Lima, Perú">
+              <label for="cli-pais">País</label>
+              <div class="sector-combo" id="cli-pais-combo">
+                <input type="text" id="cli-pais" class="sector-combo-input" autocomplete="off" value="Perú"
+                  onfocus="renderComboOptions('cli-pais','pais')" oninput="renderComboOptions('cli-pais','pais')"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();closeCombo('cli-pais');}">
+                <svg class="icon sector-combo-caret"><use href="#icon-chevron-down"></use></svg>
+                <div class="sector-combo-list" id="cli-pais-list" style="display:none"></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="cli-provincia">Provincia</label>
+              <div class="sector-combo" id="cli-provincia-combo">
+                <input type="text" id="cli-provincia" class="sector-combo-input" autocomplete="off" placeholder="Ej: Lima"
+                  onfocus="renderComboOptions('cli-provincia','provincia')" oninput="renderComboOptions('cli-provincia','provincia')"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();closeCombo('cli-provincia');}">
+                <svg class="icon sector-combo-caret"><use href="#icon-chevron-down"></use></svg>
+                <div class="sector-combo-list" id="cli-provincia-list" style="display:none"></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="cli-distrito">Distrito</label>
+              <div class="sector-combo" id="cli-distrito-combo">
+                <input type="text" id="cli-distrito" class="sector-combo-input" autocomplete="off" placeholder="Ej: San Isidro"
+                  onfocus="renderComboOptions('cli-distrito','distrito')" oninput="renderComboOptions('cli-distrito','distrito')"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();closeCombo('cli-distrito');}">
+                <svg class="icon sector-combo-caret"><use href="#icon-chevron-down"></use></svg>
+                <div class="sector-combo-list" id="cli-distrito-list" style="display:none"></div>
+              </div>
             </div>
           </div>
 
@@ -1544,23 +1579,30 @@
 
     <!-- ═══ CONFIGURACIÓN: RUBROS PERSONALIZADOS ═══ -->
     <div class="page" id="page-configuracion">
+      <div class="cfg-tabs" id="config-tabs">
+        <button type="button" class="cfg-tab active" data-tab="sector" onclick="switchConfigTab('sector')">Rubros</button>
+        <button type="button" class="cfg-tab" data-tab="pais" onclick="switchConfigTab('pais')">Países</button>
+        <button type="button" class="cfg-tab" data-tab="provincia" onclick="switchConfigTab('provincia')">Provincias</button>
+        <button type="button" class="cfg-tab" data-tab="distrito" onclick="switchConfigTab('distrito')">Distritos</button>
+      </div>
+
       <div class="card" style="padding:14px 18px;margin-bottom:18px">
         <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between">
           <div style="flex:1;min-width:260px">
-            <label for="config-sector-new">Agregar un rubro al catálogo</label>
+            <label for="config-new-value" id="config-add-label">Agregar un rubro al catálogo</label>
             <div style="display:flex;gap:8px;margin-top:6px">
-              <input type="text" id="config-sector-new" placeholder="Ej: Agroindustria y Exportaciones"
-                onkeydown="if(event.key==='Enter'){event.preventDefault();addSectorFromConfig();}">
-              <button type="button" class="btn btn-primary" style="white-space:nowrap" onclick="addSectorFromConfig()">
+              <input type="text" id="config-new-value" placeholder="Ej: Agroindustria y Exportaciones"
+                onkeydown="if(event.key==='Enter'){event.preventDefault();addConfigValue();}">
+              <button type="button" class="btn btn-primary" style="white-space:nowrap" onclick="addConfigValue()">
                 <svg class="icon" style="width:14px;height:14px;color:#fff"><use href="#icon-plus"></use></svg> Agregar
               </button>
             </div>
           </div>
         </div>
-        <p style="font-size:12.5px;color:var(--text-muted);margin-top:12px">
+        <p style="font-size:12.5px;color:var(--text-muted);margin-top:12px" id="config-base-note">
           Los 16 rubros base (Comercio, Retail, Ferretería, etc.) siempre están disponibles y no se pueden editar
           desde acá. Esta lista es solo para los rubros que el equipo agregó a mano al registrar o editar un
-          cliente — <strong id="config-sectors-count">0</strong> hasta ahora.
+          cliente — <strong id="config-count">0</strong> hasta ahora.
         </p>
       </div>
 
@@ -1568,13 +1610,13 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>Rubro</th>
+              <th id="config-col-label">Rubro</th>
               <th>Clientes que lo usan</th>
               <th>Agregado</th>
               <th style="text-align:right">Acciones</th>
             </tr>
           </thead>
-          <tbody id="config-sectors-body">
+          <tbody id="config-body">
             <!-- Populated dynamically -->
           </tbody>
         </table>
@@ -1705,18 +1747,18 @@
   <div class="modal" style="max-width:420px">
     <div class="modal-header">
       <div>
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Configuración · Rubros</div>
-        <div style="font-size:18px;font-weight:700">Editar rubro</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px" id="edit-sector-kicker">Configuración · Rubros</div>
+        <div style="font-size:18px;font-weight:700" id="edit-sector-title">Editar rubro</div>
       </div>
       <button class="close-btn" onclick="closeEditSectorModal()"><svg class="icon"><use href="#icon-x"></use></svg></button>
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label for="edit-sector-nombre">Nombre del rubro</label>
+        <label for="edit-sector-nombre" id="edit-sector-label">Nombre del rubro</label>
         <input type="text" id="edit-sector-nombre" onkeydown="if(event.key==='Enter'){event.preventDefault();submitEditSectorForm();}">
       </div>
       <p style="font-size:12px;color:var(--text-muted);margin-top:4px">
-        Los clientes que ya tienen este rubro se actualizan automáticamente al nuevo nombre.
+        Los clientes que ya tienen este valor se actualizan automáticamente al nuevo nombre.
       </p>
     </div>
     <div class="modal-footer">
@@ -1900,6 +1942,9 @@ function toast(type, title, msg) {
 // ══════════════════════════════════════════════════════
 const STATUS_LABEL = { pending:'Pendiente', active:'Activo', paused:'Pausado', finished_by_ti:'Finalizado (por revisar)', completed:'Completado', cancelled:'Cancelado' };
 const CLIENT_SECTORS = ['Comercio', 'Retail', 'Ferretería', 'Construcción', 'Servicios Financieros', 'FinTech', 'Logística', 'Distribución', 'Minería', 'Energía', 'Salud', 'Farmacia', 'Educación', 'Capacitación', 'Tecnología', 'Telecom'];
+const COUNTRY_LIST = ['Perú', 'Chile', 'Colombia', 'Ecuador', 'Bolivia', 'Argentina', 'México', 'España', 'Estados Unidos'];
+const PERU_PROVINCES = ['Amazonas', 'Áncash', 'Apurímac', 'Arequipa', 'Ayacucho', 'Cajamarca', 'Callao', 'Cusco', 'Huancavelica', 'Huánuco', 'Ica', 'Junín', 'La Libertad', 'Lambayeque', 'Lima', 'Loreto', 'Madre de Dios', 'Moquegua', 'Pasco', 'Piura', 'Puno', 'San Martín', 'Tacna', 'Tumbes', 'Ucayali'];
+const PERU_DISTRICTS = ['Cercado de Lima', 'San Isidro', 'Miraflores', 'San Borja', 'Surco', 'La Molina', 'San Miguel', 'Magdalena del Mar', 'Jesús María', 'Lince', 'Barranco', 'Chorrillos', 'Pueblo Libre', 'Ate', 'San Juan de Lurigancho', 'Los Olivos', 'Comas'];
 const TYPE_LABEL = { web:'Web', mobile:'Aplicativo Móvil', desktop:'Aplicativo de Escritorio' };
 const OFFER_LABEL = { venta:'Venta', alquiler:'Alquiler', venta_alquiler:'Venta o alquiler' };
 const CURRENCY_SYMBOL = { PEN:'S/', USD:'$', EUR:'€' };
@@ -2793,21 +2838,26 @@ let _clientesCache = [];
 let _contratosCache = [];
 let _proformasCache = [];
 let _customSectorsCache = [];
+let _locationsCache = { pais: [], provincia: [], distrito: [] };
 let _comercialDataLoaded = false;
 
 async function ensureComercialData(force) {
   if (_comercialDataLoaded && !force) return;
   try {
-    const [cliData, ctrData, prfData, secData] = await Promise.all([
+    const [cliData, ctrData, prfData, secData, paisData, provData, distData] = await Promise.all([
       qcApiFetch('/api/comercial/clients'),
       qcApiFetch('/api/comercial/contracts'),
       qcApiFetch('/api/comercial/proformas'),
       qcApiFetch('/api/comercial/sectors'),
+      qcApiFetch('/api/comercial/locations/pais'),
+      qcApiFetch('/api/comercial/locations/provincia'),
+      qcApiFetch('/api/comercial/locations/distrito'),
     ]);
     _clientesCache = cliData.clients || [];
     _contratosCache = ctrData.contracts || [];
     _proformasCache = prfData.proformas || [];
     _customSectorsCache = secData.sectors || [];
+    _locationsCache = { pais: paisData.locations || [], provincia: provData.locations || [], distrito: distData.locations || [] };
     _comercialDataLoaded = true;
   } catch (err) {
     if (err.message !== 'SESSION_EXPIRED') console.error(err);
@@ -2818,11 +2868,13 @@ async function reloadClientes() { _clientesCache = (await qcApiFetch('/api/comer
 async function reloadContratos() { _contratosCache = (await qcApiFetch('/api/comercial/contracts')).contracts || []; return _contratosCache; }
 async function reloadProformas() { _proformasCache = (await qcApiFetch('/api/comercial/proformas')).proformas || []; return _proformasCache; }
 async function reloadCustomSectors() { _customSectorsCache = (await qcApiFetch('/api/comercial/sectors')).sectors || []; return _customSectorsCache; }
+async function reloadLocations(tipo) { _locationsCache[tipo] = (await qcApiFetch('/api/comercial/locations/' + tipo)).locations || []; return _locationsCache[tipo]; }
 
 function getStoredClientes() { return _clientesCache; }
 function getStoredContratos() { return _contratosCache; }
 function getStoredProformas() { return _proformasCache; }
 function getStoredCustomSectors() { return _customSectorsCache; }
+function getStoredLocations(tipo) { return _locationsCache[tipo] || []; }
 
 
 function getNextProformaCode() {
@@ -4208,49 +4260,73 @@ function startProformaForClient(cliId) {
 function renderCrearClientes() {
   const form = document.getElementById('form-crear-cliente');
   if (form) form.reset();
-  const ciudadEl = document.getElementById('cli-ciudad');
-  if (ciudadEl) ciudadEl.value = 'Lima, Perú';
-  closeSectorCombo('cli-sector');
+  ['cli-sector', 'cli-pais', 'cli-provincia', 'cli-distrito'].forEach(closeCombo);
   // En segundo plano, sin bloquear ni volver a tocar el formulario — si
   // esto esperara aquí, una carga lenta podría borrar lo que el usuario
   // ya empezó a escribir mientras tanto.
-  reloadCustomSectors().catch(() => {});
+  Promise.all([reloadCustomSectors(), reloadLocations('pais'), reloadLocations('provincia'), reloadLocations('distrito')]).catch(() => {});
 }
 
-/* Combobox de Rubro/Sector — reemplaza el <select> nativo. El input
-   sirve a la vez de valor y de buscador: al escribir filtra la lista
-   en vivo, y si lo que se escribió no coincide con ninguna opción,
-   ese mismo texto queda como el valor del campo (el rubro en la base
-   de datos es texto libre, así que no hace falta un paso aparte de
-   "agregar" — se usa directo lo que se escribió). Reutilizado tanto
-   por "Crear Cliente" (cli-sector) como por el modal "Editar
-   Cliente" (edit-cli-sector). */
-function allSectorOptions() {
-  const custom = getStoredCustomSectors().map(s => s.nombre);
-  const seen = new Set(CLIENT_SECTORS.map(s => s.toLowerCase()));
+/* Combobox de Rubro/País/Provincia/Distrito — reemplaza el <select>
+   nativo en los cuatro. El input sirve a la vez de valor y de
+   buscador: al escribir filtra la lista en vivo, y si lo que se
+   escribió no coincide con ninguna opción, ese mismo texto queda como
+   el valor del campo (todos son texto libre en la base de datos, así
+   que no hace falta un paso aparte de "agregar" — se usa directo lo
+   que se escribió, y además se guarda en el catálogo correspondiente
+   para la próxima vez). Reutilizado tanto por "Crear Cliente" como
+   por el modal "Editar Cliente" (ids con prefijo edit-). */
+const COMBO_TYPES = {
+  sector:    { base: CLIENT_SECTORS,  endpoint: '/api/comercial/sectors',             singular: 'rubro',      getCache: getStoredCustomSectors,          reload: reloadCustomSectors },
+  pais:      { base: COUNTRY_LIST,    endpoint: '/api/comercial/locations/pais',      singular: 'país',       getCache: () => getStoredLocations('pais'),      reload: () => reloadLocations('pais') },
+  provincia: { base: PERU_PROVINCES,  endpoint: '/api/comercial/locations/provincia', singular: 'provincia',  getCache: () => getStoredLocations('provincia'), reload: () => reloadLocations('provincia') },
+  distrito:  { base: PERU_DISTRICTS,  endpoint: '/api/comercial/locations/distrito',  singular: 'distrito',   getCache: () => getStoredLocations('distrito'),  reload: () => reloadLocations('distrito') },
+};
+
+/* Genera el markup de un combobox ya con un valor precargado — usado
+   por el modal "Editar Cliente", que arma su formulario entero vía
+   JS (a diferencia de "Crear Cliente", que es HTML estático). */
+function comboFieldHtml(inputId, type, value, placeholder, required) {
+  return `
+    <div class="sector-combo" id="${inputId}-combo">
+      <input type="text" id="${inputId}" class="sector-combo-input" autocomplete="off" ${required ? 'required' : ''}
+        value="${esc(value || '')}" placeholder="${esc(placeholder || '')}"
+        onfocus="renderComboOptions('${inputId}','${type}')" oninput="renderComboOptions('${inputId}','${type}')"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();closeCombo('${inputId}');}">
+      <svg class="icon sector-combo-caret"><use href="#icon-chevron-down"></use></svg>
+      <div class="sector-combo-list" id="${inputId}-list" style="display:none"></div>
+    </div>`;
+}
+
+function allComboOptions(type) {
+  const cfg = COMBO_TYPES[type];
+  if (!cfg) return [];
+  const custom = cfg.getCache().map(s => s.nombre);
+  const seen = new Set(cfg.base.map(s => s.toLowerCase()));
   const extra = custom.filter(s => !seen.has(s.toLowerCase())).sort((a, b) => a.localeCompare(b));
-  return [...CLIENT_SECTORS, ...extra];
+  return [...cfg.base, ...extra];
 }
 
-function renderSectorOptions(inputId) {
+function renderComboOptions(inputId, type) {
+  const cfg = COMBO_TYPES[type];
   const input = document.getElementById(inputId);
   const list = document.getElementById(inputId + '-list');
   const combo = document.getElementById(inputId + '-combo');
-  if (!input || !list) return;
+  if (!input || !list || !cfg) return;
 
-  const allSectors = allSectorOptions();
+  const options = allComboOptions(type);
   const q = input.value.trim().toLowerCase();
-  const matches = allSectors.filter(s => s.toLowerCase().includes(q));
+  const matches = options.filter(s => s.toLowerCase().includes(q));
 
   let html = matches.map(s => `
-    <div class="sector-combo-item ${s.toLowerCase() === q ? 'active' : ''}" onmousedown="event.preventDefault();selectSectorOption('${inputId}', '${esc(s).replace(/'/g, "\\'")}')">${esc(s)}</div>
+    <div class="sector-combo-item ${s.toLowerCase() === q ? 'active' : ''}" onmousedown="event.preventDefault();selectComboOption('${inputId}', '${esc(s).replace(/'/g, "\\'")}')">${esc(s)}</div>
   `).join('');
 
   if (!matches.length) {
     html = '<div class="sector-combo-empty">Sin coincidencias en la lista.</div>';
   }
-  if (q && !allSectors.some(s => s.toLowerCase() === q)) {
-    html += `<div class="sector-combo-add" onmousedown="event.preventDefault();addCustomSectorAndSelect('${inputId}', '${esc(input.value.trim()).replace(/'/g, "\\'")}')">+ Usar "${esc(input.value.trim())}" como nuevo rubro</div>`;
+  if (q && !options.some(s => s.toLowerCase() === q)) {
+    html += `<div class="sector-combo-add" onmousedown="event.preventDefault();addCustomComboValueAndSelect('${inputId}', '${type}', '${esc(input.value.trim()).replace(/'/g, "\\'")}')">+ Usar "${esc(input.value.trim())}" como ${esc(cfg.singular)} nuevo</div>`;
   }
 
   list.innerHTML = html;
@@ -4258,27 +4334,29 @@ function renderSectorOptions(inputId) {
   combo?.classList.add('open');
 }
 
-function selectSectorOption(inputId, value) {
+function selectComboOption(inputId, value) {
   const input = document.getElementById(inputId);
   if (input) input.value = value;
-  closeSectorCombo(inputId);
+  closeCombo(inputId);
 }
 
-/* Un rubro escrito a mano (que no estaba en la lista de 16 ni en los
+/* Un valor escrito a mano (que no estaba en la lista base ni en los
    personalizados ya guardados) se registra en el catálogo del backend
    al elegirlo — así queda disponible como sugerencia la próxima vez y
    aparece en Configuración para poder editarlo o eliminarlo después. */
-async function addCustomSectorAndSelect(inputId, value) {
-  selectSectorOption(inputId, value);
+async function addCustomComboValueAndSelect(inputId, type, value) {
+  selectComboOption(inputId, value);
+  const cfg = COMBO_TYPES[type];
+  if (!cfg) return;
   try {
-    await qcApiFetch('/api/comercial/sectors', { method: 'POST', body: JSON.stringify({ nombre: value }) });
-    await reloadCustomSectors();
+    await qcApiFetch(cfg.endpoint, { method: 'POST', body: JSON.stringify({ nombre: value }) });
+    await cfg.reload();
   } catch (err) {
     if (err.message !== 'SESSION_EXPIRED') console.error(err);
   }
 }
 
-function closeSectorCombo(inputId) {
+function closeCombo(inputId) {
   const list = document.getElementById(inputId + '-list');
   const combo = document.getElementById(inputId + '-combo');
   if (list) list.style.display = 'none';
@@ -4286,107 +4364,157 @@ function closeSectorCombo(inputId) {
   document.getElementById(inputId)?.blur();
 }
 
+const COMBO_INPUT_IDS = ['cli-sector', 'edit-cli-sector', 'cli-pais', 'edit-cli-pais', 'cli-provincia', 'edit-cli-provincia', 'cli-distrito', 'edit-cli-distrito'];
 document.addEventListener('click', (e) => {
-  ['cli-sector', 'edit-cli-sector'].forEach(id => {
+  COMBO_INPUT_IDS.forEach(id => {
     const combo = document.getElementById(id + '-combo');
-    if (combo && !combo.contains(e.target)) closeSectorCombo(id);
+    if (combo && !combo.contains(e.target)) closeCombo(id);
   });
 });
 
 // ══════════════════════════════════════════════════════
-// MÓDULO 5: CONFIGURACIÓN — rubros personalizados
+// MÓDULO 5: CONFIGURACIÓN — rubros, países, provincias y distritos
+// personalizados. Un solo módulo con pestañas, reutilizando COMBO_TYPES
+// (misma fuente que usan los combobox de Cliente) para no duplicar
+// listas base ni lógica de caché/recarga.
 // ══════════════════════════════════════════════════════
+const CONFIG_TABS = {
+  sector: {
+    col: 'Rubro', addLabel: 'Agregar un rubro al catálogo', placeholder: 'Ej: Agroindustria y Exportaciones',
+    baseNote: `Los ${CLIENT_SECTORS.length} rubros base (Comercio, Retail, Ferretería, etc.) siempre están disponibles y no se pueden editar desde acá.`,
+  },
+  pais: {
+    col: 'País', addLabel: 'Agregar un país al catálogo', placeholder: 'Ej: Brasil',
+    baseNote: `Los ${COUNTRY_LIST.length} países base (${COUNTRY_LIST.join(', ')}) siempre están disponibles y no se pueden editar desde acá.`,
+  },
+  provincia: {
+    col: 'Provincia', addLabel: 'Agregar una provincia al catálogo', placeholder: 'Ej: Áncash',
+    baseNote: `Las ${PERU_PROVINCES.length} regiones del Perú siempre están disponibles y no se pueden editar desde acá.`,
+  },
+  distrito: {
+    col: 'Distrito', addLabel: 'Agregar un distrito al catálogo', placeholder: 'Ej: Barranco',
+    baseNote: `Los ${PERU_DISTRICTS.length} distritos base de Lima siempre están disponibles y no se pueden editar desde acá.`,
+  },
+};
+
+let _configActiveTab = 'sector';
+
+function switchConfigTab(tab) {
+  _configActiveTab = tab;
+  document.querySelectorAll('#config-tabs .cfg-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  renderConfiguracion();
+}
+
 function renderConfiguracion() {
-  const sectors = getStoredCustomSectors();
+  const tab = _configActiveTab;
+  const meta = CONFIG_TABS[tab];
+  const cfg = COMBO_TYPES[tab];
+  const body = document.getElementById('config-body');
+  if (!body || !meta || !cfg) return;
+
+  const items = cfg.getCache();
   const clientes = getStoredClientes();
-  const body = document.getElementById('config-sectors-body');
-  if (!body) return;
 
-  document.getElementById('config-sectors-count').textContent = sectors.length;
+  document.getElementById('config-add-label').textContent = meta.addLabel;
+  document.getElementById('config-new-value').placeholder = meta.placeholder;
+  document.getElementById('config-col-label').textContent = meta.col;
+  document.getElementById('config-base-note').innerHTML =
+    `${esc(meta.baseNote)} Esta lista es solo para los valores que el equipo agregó a mano — <strong id="config-count">${items.length}</strong> hasta ahora.`;
 
-  if (!sectors.length) {
+  if (!items.length) {
     body.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:30px">
-      Todavía no se agregó ningún rubro personalizado. Se agregan escribiendo uno nuevo en el campo
-      "Rubro o Sector Industrial" al crear o editar un cliente — o directamente acá arriba.
+      Todavía no se agregó ningún valor personalizado en esta lista. Se agrega escribiendo uno nuevo en el
+      campo correspondiente al crear o editar un cliente — o directamente acá arriba.
     </td></tr>`;
     return;
   }
 
-  body.innerHTML = sectors.map(s => {
-    const enUso = clientes.filter(c => (c.sector || '').toLowerCase() === s.nombre.toLowerCase()).length;
-    const fecha = s.created_at ? new Date(s.created_at).toLocaleDateString('es-PE', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+  body.innerHTML = items.map(it => {
+    const enUso = clientes.filter(c => (c[tab] || '').toLowerCase() === it.nombre.toLowerCase()).length;
+    const fecha = it.created_at ? new Date(it.created_at).toLocaleDateString('es-PE', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
     return `
       <tr>
-        <td style="font-weight:600">${esc(s.nombre)}</td>
+        <td style="font-weight:600">${esc(it.nombre)}</td>
         <td style="color:var(--text-muted)">${enUso} cliente${enUso === 1 ? '' : 's'}</td>
         <td style="color:var(--text-muted)">${fecha}</td>
         <td style="text-align:right;white-space:nowrap">
-          <button class="btn-icon" title="Editar rubro" onclick="openEditSectorModal(${s.id})"><svg class="icon"><use href="#icon-edit-2"></use></svg></button>
-          <button class="btn-icon danger" title="Eliminar rubro" onclick="deleteCustomSector(${s.id})"><svg class="icon"><use href="#icon-trash-2"></use></svg></button>
+          <button class="btn-icon" title="Editar" onclick="openEditConfigModal('${tab}', ${it.id})"><svg class="icon"><use href="#icon-edit-2"></use></svg></button>
+          <button class="btn-icon danger" title="Eliminar" onclick="deleteConfigValue('${tab}', ${it.id})"><svg class="icon"><use href="#icon-trash-2"></use></svg></button>
         </td>
       </tr>`;
   }).join('');
 }
 
-async function addSectorFromConfig() {
-  const input = document.getElementById('config-sector-new');
+async function addConfigValue() {
+  const tab = _configActiveTab;
+  const cfg = COMBO_TYPES[tab];
+  const input = document.getElementById('config-new-value');
   const nombre = input?.value.trim();
   if (!nombre) { input?.focus(); return; }
   try {
-    await qcApiFetch('/api/comercial/sectors', { method: 'POST', body: JSON.stringify({ nombre }) });
-    await reloadCustomSectors();
+    await qcApiFetch(cfg.endpoint, { method: 'POST', body: JSON.stringify({ nombre }) });
+    await cfg.reload();
     input.value = '';
-    toast('success', 'Rubro agregado', `"${nombre}" ya está disponible en el catálogo.`);
+    toast('success', 'Agregado', `"${nombre}" ya está disponible en el catálogo.`);
     renderConfiguracion();
   } catch (err) {
     if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo agregar', err.message);
   }
 }
 
-let _editingSectorId = null;
-function openEditSectorModal(id) {
-  const sector = getStoredCustomSectors().find(s => s.id === id);
-  if (!sector) return;
-  _editingSectorId = id;
-  document.getElementById('edit-sector-nombre').value = sector.nombre;
+let _editingConfigTab = null;
+let _editingConfigId = null;
+function openEditConfigModal(tab, id) {
+  const cfg = COMBO_TYPES[tab];
+  const item = cfg.getCache().find(s => s.id === id);
+  if (!item) return;
+  _editingConfigTab = tab;
+  _editingConfigId = id;
+  document.getElementById('edit-sector-kicker').textContent = `Configuración · ${CONFIG_TABS[tab].col}s`;
+  document.getElementById('edit-sector-title').textContent = `Editar ${cfg.singular}`;
+  document.getElementById('edit-sector-label').textContent = `Nombre ${tab === 'provincia' ? 'de la' : 'del'} ${cfg.singular}`;
+  document.getElementById('edit-sector-nombre').value = item.nombre;
   document.getElementById('sector-edit-modal').classList.add('open');
   setTimeout(() => document.getElementById('edit-sector-nombre')?.focus(), 60);
 }
 
 function closeEditSectorModal() {
   document.getElementById('sector-edit-modal').classList.remove('open');
-  _editingSectorId = null;
+  _editingConfigTab = null;
+  _editingConfigId = null;
 }
 
 async function submitEditSectorForm() {
-  if (!_editingSectorId) return;
+  if (!_editingConfigId || !_editingConfigTab) return;
   const nombre = document.getElementById('edit-sector-nombre')?.value.trim();
-  if (!nombre) { toast('error', 'Falta el nombre', 'Escribe un nombre para el rubro.'); return; }
+  if (!nombre) { toast('error', 'Falta el nombre', 'Escribe un nombre.'); return; }
 
+  const cfg = COMBO_TYPES[_editingConfigTab];
   try {
-    await qcApiFetch(`/api/comercial/sectors/${_editingSectorId}`, { method: 'PUT', body: JSON.stringify({ nombre }) });
-    await Promise.all([reloadCustomSectors(), reloadClientes()]);
+    await qcApiFetch(`${cfg.endpoint}/${_editingConfigId}`, { method: 'PUT', body: JSON.stringify({ nombre }) });
+    await Promise.all([cfg.reload(), reloadClientes()]);
     closeEditSectorModal();
-    toast('success', 'Rubro actualizado', `Ahora se llama "${nombre}".`);
+    toast('success', 'Actualizado', `Ahora se llama "${nombre}".`);
     renderConfiguracion();
   } catch (err) {
     if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo actualizar', err.message);
   }
 }
 
-async function deleteCustomSector(id) {
-  const sector = getStoredCustomSectors().find(s => s.id === id);
-  if (!sector) return;
-  const enUso = getStoredClientes().filter(c => (c.sector || '').toLowerCase() === sector.nombre.toLowerCase()).length;
+async function deleteConfigValue(tab, id) {
+  const cfg = COMBO_TYPES[tab];
+  const item = cfg.getCache().find(s => s.id === id);
+  if (!item) return;
+  const enUso = getStoredClientes().filter(c => (c[tab] || '').toLowerCase() === item.nombre.toLowerCase()).length;
   const aviso = enUso
-    ? `"${sector.nombre}" lo tienen ${enUso} cliente(s) — seguirán mostrándolo, solo desaparece de la lista de sugerencias. ¿Eliminarlo?`
-    : `¿Eliminar el rubro "${sector.nombre}"?`;
+    ? `"${item.nombre}" lo tienen ${enUso} cliente(s) — seguirán mostrándolo, solo desaparece de la lista de sugerencias. ¿Eliminarlo?`
+    : `¿Eliminar "${item.nombre}"?`;
   if (!confirm(aviso)) return;
 
   try {
-    await qcApiFetch(`/api/comercial/sectors/${id}`, { method: 'DELETE' });
-    await reloadCustomSectors();
-    toast('success', 'Rubro eliminado', `"${sector.nombre}" se quitó del catálogo.`);
+    await qcApiFetch(`${cfg.endpoint}/${id}`, { method: 'DELETE' });
+    await cfg.reload();
+    toast('success', 'Eliminado', `"${item.nombre}" se quitó del catálogo.`);
     renderConfiguracion();
   } catch (err) {
     if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo eliminar', err.message);
@@ -4398,8 +4526,10 @@ async function handleGuardarCliente(e) {
   const razon = document.getElementById('cli-razon')?.value.trim();
   const ruc = document.getElementById('cli-ruc')?.value.trim();
   const sector = document.getElementById('cli-sector')?.value;
-  const direccion = document.getElementById('cli-direccion')?.value.trim() || 'Lima, Perú';
-  const ciudad = document.getElementById('cli-ciudad')?.value.trim() || 'Lima, Perú';
+  const direccion = document.getElementById('cli-direccion')?.value.trim();
+  const pais = document.getElementById('cli-pais')?.value.trim() || 'Perú';
+  const provincia = document.getElementById('cli-provincia')?.value.trim();
+  const distrito = document.getElementById('cli-distrito')?.value.trim();
   const contacto = document.getElementById('cli-contacto')?.value.trim();
   const cargo = document.getElementById('cli-cargo')?.value.trim();
   const telefono = document.getElementById('cli-telefono')?.value.trim();
@@ -4419,7 +4549,7 @@ async function handleGuardarCliente(e) {
   try {
     const { client } = await qcApiFetch('/api/comercial/clients', {
       method: 'POST',
-      body: JSON.stringify({ razon_social: razon, ruc, sector, direccion, ciudad, contacto_nombre: contacto, contacto_cargo: cargo, telefono, email, tipo, estado, origen, notas }),
+      body: JSON.stringify({ razon_social: razon, ruc, sector, direccion, pais, provincia, distrito, contacto_nombre: contacto, contacto_cargo: cargo, telefono, email, tipo, estado, origen, notas }),
     });
     await reloadClientes();
     toast('success', 'Cliente Registrado', `${client.razon_social} ha sido agregado a la cartera comercial.`);
@@ -4609,18 +4739,26 @@ function openEditClientModal(id) {
       <div class="form-grid-2">
         <div class="form-group">
           <label for="edit-cli-sector">Sector / Rubro *</label>
-          <div class="sector-combo" id="edit-cli-sector-combo">
-            <input type="text" id="edit-cli-sector" class="sector-combo-input" autocomplete="off" required
-              value="${esc(c.sector || '')}" placeholder="Selecciona o escribe un rubro..."
-              onfocus="renderSectorOptions('edit-cli-sector')" oninput="renderSectorOptions('edit-cli-sector')"
-              onkeydown="if(event.key==='Enter'){event.preventDefault();closeSectorCombo('edit-cli-sector');}">
-            <svg class="icon sector-combo-caret"><use href="#icon-chevron-down"></use></svg>
-            <div class="sector-combo-list" id="edit-cli-sector-list" style="display:none"></div>
-          </div>
+          ${comboFieldHtml('edit-cli-sector', 'sector', c.sector, 'Selecciona o escribe un rubro...', true)}
         </div>
         <div class="form-group">
           <label>Dirección Fiscal</label>
           <input type="text" id="edit-cli-direccion" value="${esc(c.direccion || '')}">
+        </div>
+      </div>
+
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label>País</label>
+          ${comboFieldHtml('edit-cli-pais', 'pais', c.pais || 'Perú', '')}
+        </div>
+        <div class="form-group">
+          <label>Provincia</label>
+          ${comboFieldHtml('edit-cli-provincia', 'provincia', c.provincia, 'Ej: Lima')}
+        </div>
+        <div class="form-group">
+          <label>Distrito</label>
+          ${comboFieldHtml('edit-cli-distrito', 'distrito', c.distrito, 'Ej: San Isidro')}
         </div>
       </div>
 
@@ -4686,6 +4824,9 @@ async function submitEditClientForm() {
   const ruc = document.getElementById('edit-cli-ruc')?.value.trim();
   const sector = document.getElementById('edit-cli-sector')?.value;
   const direccion = document.getElementById('edit-cli-direccion')?.value.trim();
+  const pais = document.getElementById('edit-cli-pais')?.value.trim() || 'Perú';
+  const provincia = document.getElementById('edit-cli-provincia')?.value.trim();
+  const distrito = document.getElementById('edit-cli-distrito')?.value.trim();
   const contacto = document.getElementById('edit-cli-contacto')?.value.trim();
   const cargo = document.getElementById('edit-cli-cargo')?.value.trim();
   const telefono = document.getElementById('edit-cli-telefono')?.value.trim();
@@ -4702,7 +4843,7 @@ async function submitEditClientForm() {
   try {
     const { client } = await qcApiFetch(`/api/comercial/clients/${encodeURIComponent(_editingClientId)}`, {
       method: 'PUT',
-      body: JSON.stringify({ razon_social: razon, ruc, sector, direccion, contacto_nombre: contacto, contacto_cargo: cargo, telefono, email, tipo, estado, notas }),
+      body: JSON.stringify({ razon_social: razon, ruc, sector, direccion, pais, provincia, distrito, contacto_nombre: contacto, contacto_cargo: cargo, telefono, email, tipo, estado, notas }),
     });
     // El backend ya refleja estos datos en los contratos que sigan en borrador.
     await Promise.all([reloadClientes(), reloadContratos()]);
