@@ -1541,7 +1541,7 @@
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;flex:1">
             <div class="cat-search" style="min-width:260px">
               <svg class="icon"><use href="#icon-search"></use></svg>
-              <input id="cli-filter-search" placeholder="Buscar por Razón Social, RUC, contacto o email..." oninput="renderEditarClientesTable()">
+              <input id="cli-filter-search" placeholder="Buscar por Razón Social, RUC, contacto, email, sector, cargo o ubicación..." oninput="renderEditarClientesTable()">
             </div>
             <select id="cli-filter-tipo" style="width:auto;min-width:160px" onchange="renderEditarClientesTable()">
               <option value="">Toda Clasificación</option>
@@ -1571,6 +1571,7 @@
               <th>Contacto Principal</th>
               <th>Teléfono & Correo</th>
               <th>Sector / Rubro</th>
+              <th>Ubicación</th>
               <th>Clasificación</th>
               <th>Contratos</th>
               <th>Estado</th>
@@ -4608,7 +4609,7 @@ function renderEditarClientesTable() {
     if (fTipo && c.tipo !== fTipo) return false;
     if (fEstado && c.estado !== fEstado) return false;
     if (q) {
-      const haystack = (c.razon_social + ' ' + c.ruc + ' ' + c.contacto_nombre + ' ' + c.email + ' ' + c.sector).toLowerCase();
+      const haystack = (c.razon_social + ' ' + c.ruc + ' ' + c.contacto_nombre + ' ' + c.email + ' ' + c.sector + ' ' + (c.distrito || '') + ' ' + (c.provincia || '') + ' ' + (c.contacto_cargo || '')).toLowerCase();
       if (!haystack.includes(q)) return false;
     }
     return true;
@@ -4618,7 +4619,7 @@ function renderEditarClientesTable() {
   if (!tbody) return;
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)">
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted)">
       <svg class="icon" style="width:32px;height:32px;margin-bottom:8px;opacity:.4"><use href="#icon-users"></use></svg>
       <div>No se encontraron clientes con los filtros aplicados.</div>
     </td></tr>`;
@@ -4644,6 +4645,10 @@ function renderEditarClientesTable() {
         </td>
         <td>
           <span style="font-size:12px;font-weight:500">${esc(c.sector)}</span>
+        </td>
+        <td>
+          <div style="font-size:12.5px">${esc(c.distrito || c.provincia || c.pais || '—')}</div>
+          ${c.distrito && c.provincia ? `<div style="font-size:11px;color:var(--text-muted)">${esc(c.provincia)}${c.pais ? ', ' + esc(c.pais) : ''}</div>` : ''}
         </td>
         <td>
           <span class="badge b-${esc(c.tipo)}">${esc(c.tipo.toUpperCase())}</span>
