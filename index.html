@@ -219,6 +219,31 @@
     }
     textarea { resize: vertical; min-height: 70px; }
 
+    /* ── Combobox de Rubro/Sector: input editable + lista desplegable
+       con diseño propio (no el <select> nativo del navegador) ── */
+    .sector-combo { position: relative; }
+    .sector-combo-input { padding-right: 38px; cursor: text; }
+    .sector-combo-caret {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); pointer-events: none; transition: transform .15s;
+    }
+    .sector-combo.open .sector-combo-caret { transform: translateY(-50%) rotate(180deg); }
+    .sector-combo-list {
+      position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 6px);
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: var(--shadow-md); max-height: 240px; overflow-y: auto; padding: 6px;
+    }
+    .sector-combo-item {
+      padding: 9px 12px; font-size: 13.5px; border-radius: 7px; cursor: pointer; color: var(--text);
+    }
+    .sector-combo-item:hover, .sector-combo-item.active { background: var(--primary-light); color: var(--primary); }
+    .sector-combo-add {
+      padding: 9px 12px; font-size: 13px; border-radius: 7px; cursor: pointer; color: var(--primary);
+      font-weight: 600; border-top: 1px solid var(--border); margin-top: 4px; padding-top: 11px;
+    }
+    .sector-combo-add:hover { background: var(--primary-light); }
+    .sector-combo-empty { padding: 9px 12px; font-size: 12.5px; color: var(--text-muted); }
+
     /* ── FILTERS / TABS (calendario) ── */
     .filters-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
     .filters-bar input, .filters-bar select { width: auto; min-width: 150px; }
@@ -410,6 +435,7 @@
   <symbol id="icon-repeat" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></symbol>
   <symbol id="icon-chevron-left" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></symbol>
   <symbol id="icon-chevron-right" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></symbol>
+  <symbol id="icon-chevron-down" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></symbol>
   <symbol id="icon-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></symbol>
   <symbol id="icon-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></symbol>
   <symbol id="icon-edit-2" viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></symbol>
@@ -1322,24 +1348,13 @@
 
           <div class="form-group" style="margin-top:14px">
             <label for="cli-sector">Rubro o Sector Industrial *</label>
-            <div style="display:flex;gap:8px;align-items:flex-start">
-              <select id="cli-sector" required style="flex:1">
-                <option value="Comercio & Retail">Comercio & Retail</option>
-                <option value="Ferretería & Construcción">Ferretería & Construcción</option>
-                <option value="Servicios Financieros & FinTech">Servicios Financieros & FinTech</option>
-                <option value="Logística & Distribución">Logística & Distribución</option>
-                <option value="Minería & Energía">Minería & Energía</option>
-                <option value="Salud & Farmacia">Salud & Farmacia</option>
-                <option value="Educación & Capacitación">Educación & Capacitación</option>
-                <option value="Tecnología & Telecom">Tecnología & Telecom</option>
-              </select>
-              <button type="button" class="btn-icon" title="Agregar un rubro que no está en la lista" onclick="toggleCustomSectorInput('cli-sector')">
-                <svg class="icon"><use href="#icon-plus"></use></svg>
-              </button>
-            </div>
-            <div id="cli-sector-custom-wrap" style="display:none;gap:8px;margin-top:8px">
-              <input type="text" id="cli-sector-custom" placeholder="Escribe el nuevo rubro..." style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomSector('cli-sector');}">
-              <button type="button" class="btn btn-outline btn-sm" onclick="addCustomSector('cli-sector')">Agregar</button>
+            <div class="sector-combo" id="cli-sector-combo">
+              <input type="text" id="cli-sector" class="sector-combo-input" autocomplete="off" required
+                placeholder="Selecciona o escribe un rubro..."
+                onfocus="renderSectorOptions('cli-sector')" oninput="renderSectorOptions('cli-sector')"
+                onkeydown="if(event.key==='Enter'){event.preventDefault();closeSectorCombo('cli-sector');}">
+              <svg class="icon sector-combo-caret"><use href="#icon-chevron-down"></use></svg>
+              <div class="sector-combo-list" id="cli-sector-list" style="display:none"></div>
             </div>
           </div>
 
@@ -1803,7 +1818,7 @@ function toast(type, title, msg) {
 // DATOS — catálogo de productos (ti.projects filtrados por ADG)
 // ══════════════════════════════════════════════════════
 const STATUS_LABEL = { pending:'Pendiente', active:'Activo', paused:'Pausado', finished_by_ti:'Finalizado (por revisar)', completed:'Completado', cancelled:'Cancelado' };
-const CLIENT_SECTORS = ['Comercio & Retail', 'Ferretería & Construcción', 'Servicios Financieros & FinTech', 'Logística & Distribución', 'Minería & Energía', 'Salud & Farmacia', 'Educación & Capacitación', 'Tecnología & Telecom'];
+const CLIENT_SECTORS = ['Comercio', 'Retail', 'Ferretería', 'Construcción', 'Servicios Financieros', 'FinTech', 'Logística', 'Distribución', 'Minería', 'Energía', 'Salud', 'Farmacia', 'Educación', 'Capacitación', 'Tecnología', 'Telecom'];
 const TYPE_LABEL = { web:'Web', mobile:'Aplicativo Móvil', desktop:'Aplicativo de Escritorio' };
 const OFFER_LABEL = { venta:'Venta', alquiler:'Alquiler', venta_alquiler:'Venta o alquiler' };
 const CURRENCY_SYMBOL = { PEN:'S/', USD:'$', EUR:'€' };
@@ -4109,44 +4124,62 @@ function renderCrearClientes() {
   if (form) form.reset();
   const ciudadEl = document.getElementById('cli-ciudad');
   if (ciudadEl) ciudadEl.value = 'Lima, Perú';
-  const customWrap = document.getElementById('cli-sector-custom-wrap');
-  if (customWrap) customWrap.style.display = 'none';
+  closeSectorCombo('cli-sector');
 }
 
-/* Usado tanto por "Crear Cliente" (cli-sector) como por el modal
-   "Editar Cliente" (edit-cli-sector) — el rubro escrito se agrega
-   como una opción más del <select> y queda seleccionado; como el
-   campo en la base de datos es texto libre, no hace falta ningún
-   catálogo aparte. */
-function toggleCustomSectorInput(selectId) {
-  const wrap = document.getElementById(selectId + '-custom-wrap');
-  if (!wrap) return;
-  const show = wrap.style.display === 'none' || !wrap.style.display;
-  wrap.style.display = show ? 'flex' : 'none';
-  if (show) document.getElementById(selectId + '-custom')?.focus();
-}
+/* Combobox de Rubro/Sector — reemplaza el <select> nativo. El input
+   sirve a la vez de valor y de buscador: al escribir filtra la lista
+   en vivo, y si lo que se escribió no coincide con ninguna opción,
+   ese mismo texto queda como el valor del campo (el rubro en la base
+   de datos es texto libre, así que no hace falta un paso aparte de
+   "agregar" — se usa directo lo que se escribió). Reutilizado tanto
+   por "Crear Cliente" (cli-sector) como por el modal "Editar
+   Cliente" (edit-cli-sector). */
+function renderSectorOptions(inputId) {
+  const input = document.getElementById(inputId);
+  const list = document.getElementById(inputId + '-list');
+  const combo = document.getElementById(inputId + '-combo');
+  if (!input || !list) return;
 
-function addCustomSector(selectId) {
-  const input = document.getElementById(selectId + '-custom');
-  const select = document.getElementById(selectId);
-  if (!input || !select) return;
-  const value = input.value.trim();
-  if (!value) { input.focus(); return; }
+  const q = input.value.trim().toLowerCase();
+  const matches = CLIENT_SECTORS.filter(s => s.toLowerCase().includes(q));
 
-  const existing = [...select.options].find(o => o.value.toLowerCase() === value.toLowerCase());
-  if (existing) {
-    select.value = existing.value;
-  } else {
-    const opt = document.createElement('option');
-    opt.value = value;
-    opt.textContent = value;
-    opt.selected = true;
-    select.appendChild(opt);
+  let html = matches.map(s => `
+    <div class="sector-combo-item ${s.toLowerCase() === q ? 'active' : ''}" onmousedown="event.preventDefault();selectSectorOption('${inputId}', '${esc(s).replace(/'/g, "\\'")}')">${esc(s)}</div>
+  `).join('');
+
+  if (!matches.length) {
+    html = '<div class="sector-combo-empty">Sin coincidencias en la lista.</div>';
+  }
+  if (q && !CLIENT_SECTORS.some(s => s.toLowerCase() === q)) {
+    html += `<div class="sector-combo-add" onmousedown="event.preventDefault();selectSectorOption('${inputId}', '${esc(input.value.trim()).replace(/'/g, "\\'")}')">+ Usar "${esc(input.value.trim())}" como nuevo rubro</div>`;
   }
 
-  input.value = '';
-  document.getElementById(selectId + '-custom-wrap').style.display = 'none';
+  list.innerHTML = html;
+  list.style.display = 'block';
+  combo?.classList.add('open');
 }
+
+function selectSectorOption(inputId, value) {
+  const input = document.getElementById(inputId);
+  if (input) input.value = value;
+  closeSectorCombo(inputId);
+}
+
+function closeSectorCombo(inputId) {
+  const list = document.getElementById(inputId + '-list');
+  const combo = document.getElementById(inputId + '-combo');
+  if (list) list.style.display = 'none';
+  combo?.classList.remove('open');
+  document.getElementById(inputId)?.blur();
+}
+
+document.addEventListener('click', (e) => {
+  ['cli-sector', 'edit-cli-sector'].forEach(id => {
+    const combo = document.getElementById(id + '-combo');
+    if (combo && !combo.contains(e.target)) closeSectorCombo(id);
+  });
+});
 
 async function handleGuardarCliente(e) {
   e.preventDefault();
@@ -4363,19 +4396,14 @@ function openEditClientModal(id) {
 
       <div class="form-grid-2">
         <div class="form-group">
-          <label>Sector / Rubro *</label>
-          <div style="display:flex;gap:8px;align-items:flex-start">
-            <select id="edit-cli-sector" style="flex:1">
-              ${CLIENT_SECTORS.map(s => `<option value="${esc(s)}" ${c.sector===s?'selected':''}>${esc(s)}</option>`).join('')}
-              ${!CLIENT_SECTORS.includes(c.sector) && c.sector ? `<option value="${esc(c.sector)}" selected>${esc(c.sector)}</option>` : ''}
-            </select>
-            <button type="button" class="btn-icon" title="Agregar un rubro que no está en la lista" onclick="toggleCustomSectorInput('edit-cli-sector')">
-              <svg class="icon"><use href="#icon-plus"></use></svg>
-            </button>
-          </div>
-          <div id="edit-cli-sector-custom-wrap" style="display:none;gap:8px;margin-top:8px">
-            <input type="text" id="edit-cli-sector-custom" placeholder="Escribe el nuevo rubro..." style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomSector('edit-cli-sector');}">
-            <button type="button" class="btn btn-outline btn-sm" onclick="addCustomSector('edit-cli-sector')">Agregar</button>
+          <label for="edit-cli-sector">Sector / Rubro *</label>
+          <div class="sector-combo" id="edit-cli-sector-combo">
+            <input type="text" id="edit-cli-sector" class="sector-combo-input" autocomplete="off" required
+              value="${esc(c.sector || '')}" placeholder="Selecciona o escribe un rubro..."
+              onfocus="renderSectorOptions('edit-cli-sector')" oninput="renderSectorOptions('edit-cli-sector')"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();closeSectorCombo('edit-cli-sector');}">
+            <svg class="icon sector-combo-caret"><use href="#icon-chevron-down"></use></svg>
+            <div class="sector-combo-list" id="edit-cli-sector-list" style="display:none"></div>
           </div>
         </div>
         <div class="form-group">
