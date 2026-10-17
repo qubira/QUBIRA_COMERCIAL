@@ -485,6 +485,9 @@
     <div class="nav-item" data-page="catalogo" onclick="navigate('catalogo')">
       <svg class="icon"><use href="#icon-package"></use></svg> Catálogo de Productos
     </div>
+    <div class="nav-item" data-page="costo-herramientas" onclick="navigate('costo-herramientas')">
+      <svg class="icon"><use href="#icon-tag"></use></svg> Costo por OPP HERRAMIENTAS
+    </div>
 
     <div class="nav-section">Contratos</div>
     <div class="nav-item" data-page="crear-contrato" onclick="navigate('crear-contrato')">
@@ -624,6 +627,44 @@
         </select>
       </div>
       <div id="catalogo-content"></div>
+    </div>
+
+    <!-- ═══ COSTO POR HERRAMIENTAS (solo lectura) ═══ -->
+    <div class="page" id="page-costo-herramientas">
+      <div class="card" style="padding:18px 20px;margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
+          <div>
+            <h2 style="font-size:16px;font-weight:700;margin-bottom:4px">Costo por OPP HERRAMIENTAS</h2>
+            <p style="font-size:12.5px;color:var(--text-muted);margin:0">
+              Lista reutilizable de lenguajes y herramientas con costos y márgenes de propuesta definidos por ADG y OPP — solo lectura para ODN.
+            </p>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="openTechCostModal()">
+            <svg class="icon"><use href="#icon-tag"></use></svg> Herramientas Costo
+          </button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:20px">
+        <div class="card" style="padding:18px 20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px">
+            <h3 style="font-size:15px;font-weight:700">Lenguajes</h3>
+            <span id="odn-tech-count-lang" style="font-size:12px;color:var(--text-muted)">—</span>
+          </div>
+          <div id="odn-tech-list-language" style="max-height:480px;overflow-y:auto">
+            <p style="font-size:12.5px;color:var(--text-muted)">Cargando…</p>
+          </div>
+        </div>
+        <div class="card" style="padding:18px 20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px">
+            <h3 style="font-size:15px;font-weight:700">Herramientas</h3>
+            <span id="odn-tech-count-tool" style="font-size:12px;color:var(--text-muted)">—</span>
+          </div>
+          <div id="odn-tech-list-tool" style="max-height:480px;overflow-y:auto">
+            <p style="font-size:12.5px;color:var(--text-muted)">Cargando…</p>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ═══ CONTRATOS: CREAR CONTRATO ═══ -->
@@ -1805,6 +1846,29 @@
   </div>
 </div>
 
+<!-- ═══ MODAL: HERRAMIENTAS COSTO (solo lectura) ═══ -->
+<div class="modal-overlay" id="tech-cost-modal">
+  <div class="modal" style="max-width:960px">
+    <div class="modal-header">
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Costo por Herramientas</div>
+        <div style="font-size:18px;font-weight:700">Herramientas Costo</div>
+      </div>
+      <button class="close-btn" onclick="closeTechCostModal()"><svg class="icon"><use href="#icon-x"></use></svg></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12.5px;color:var(--text-muted);margin-bottom:14px">
+        Costo de referencia y margen (S/) que se suma al costo para armar el rango de precio de propuesta de
+        cada lenguaje/herramienta. Solo lectura — lo administran ADG y OPP.
+      </p>
+      <div id="tech-cost-body"><p style="color:var(--text-muted);font-size:13px">Cargando…</p></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeTechCostModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
@@ -1913,6 +1977,7 @@ const PAGE_META = {
   dashboard: { title:'Dashboard', sub:'Resumen de los productos disponibles para venta o alquiler' },
   calendario: { title:'Calendario', sub:'Reuniones de ODN e interconexión con otras áreas' },
   catalogo:  { title:'Catálogo de Productos', sub:'Productos que ADG habilitó para que ODN los ofrezca' },
+  'costo-herramientas': { title:'Costo por OPP HERRAMIENTAS', sub:'Costo y margen de propuesta por lenguaje/herramienta del catálogo (solo lectura)' },
   'crear-contrato': { title:'Crear Contrato', sub:'Generación y redacción de contratos comerciales oficiales' },
   'revisar-contrato': { title:'Revisar Contratos', sub:'Control de cartera, estado de firmas e impresión de contratos' },
   'crear-proforma': { title:'Crear Proforma', sub:'Emisión de cotizaciones, propuestas económicas y presupuestos oficiales' },
@@ -1946,6 +2011,7 @@ async function navigate(page) {
   if (page === 'dashboard') renderDashboard();
   if (page === 'calendario') calRender();
   if (page === 'catalogo')  renderCatalogo();
+  if (page === 'costo-herramientas') renderCostoHerramientas();
   if (page === 'crear-contrato') renderCrearContrato();
   if (page === 'revisar-contrato') renderRevisarContrato();
   if (page === 'crear-proforma') renderCrearProforma();
@@ -1999,6 +2065,134 @@ async function ensureProducts() {
     if (err.message !== 'SESSION_EXPIRED') console.error(err);
   }
   return _products;
+}
+
+// ══════════════════════════════════════════════════════
+// COSTO POR HERRAMIENTAS (solo lectura — lo fijan ADG u OPP)
+// ══════════════════════════════════════════════════════
+let _techCatalogCache = { language: [], tool: [] };
+
+async function renderCostoHerramientas() {
+  const langEl = document.getElementById('odn-tech-list-language');
+  const toolEl = document.getElementById('odn-tech-list-tool');
+  if (!langEl || !toolEl) return;
+  try {
+    const rows = await qcApiFetch('/api/comercial/tech-catalog');
+    _techCatalogCache = {
+      language: rows.filter(r => r.category === 'language'),
+      tool: rows.filter(r => r.category === 'tool'),
+    };
+    renderOdnTechCatalogLists();
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') {
+      langEl.innerHTML = `<p style="font-size:12px;color:var(--danger)">${esc(err.message || 'Error al cargar')}</p>`;
+      toolEl.innerHTML = `<p style="font-size:12px;color:var(--danger)">${esc(err.message || 'Error al cargar')}</p>`;
+    }
+  }
+}
+
+function renderOdnTechCatalogLists() {
+  const renderList = (items, targetId, countId) => {
+    const el = document.getElementById(targetId);
+    const cnt = document.getElementById(countId);
+    if (cnt) cnt.textContent = `${items.length} registrado${items.length === 1 ? '' : 's'}`;
+    if (!el) return;
+    if (!items.length) {
+      el.innerHTML = '<p style="font-size:12px;color:var(--text-muted);padding:12px 0;text-align:center">Sin registrar</p>';
+      return;
+    }
+    el.innerHTML = items.map(t => {
+      const avatar = t.image_url
+        ? `<img src="${esc(t.image_url)}" style="width:26px;height:26px;border-radius:6px;object-fit:cover;flex-shrink:0" alt="">`
+        : `<span style="width:26px;height:26px;border-radius:6px;background:var(--bg-light,#eef2ff);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--primary);flex-shrink:0">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
+      const costBadge = t.costo != null && t.costo !== ''
+        ? `<span class="badge" style="background:#ecfdf5;color:#059669;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px">S/ ${Number(t.costo).toFixed(2)}</span>`
+        : '';
+      return `
+      <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border)">
+        ${avatar}
+        <span style="font-size:13.5px;font-weight:600;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.name)}</span>
+        ${costBadge}
+      </div>`;
+    }).join('');
+  };
+  renderList(_techCatalogCache.language, 'odn-tech-list-language', 'odn-tech-count-lang');
+  renderList(_techCatalogCache.tool, 'odn-tech-list-tool', 'odn-tech-count-tool');
+}
+
+async function openTechCostModal() {
+  document.getElementById('tech-cost-modal').classList.add('open');
+  const body = document.getElementById('tech-cost-body');
+  body.innerHTML = '<p style="color:var(--text-muted);font-size:13px">Cargando…</p>';
+  try {
+    const rows = await qcApiFetch('/api/comercial/tech-catalog');
+    _techCatalogCache = {
+      language: rows.filter(r => r.category === 'language'),
+      tool: rows.filter(r => r.category === 'tool'),
+    };
+    renderOdnTechCatalogLists();
+    body.innerHTML = techCostSection('Lenguajes', 'language') + techCostSection('Herramientas', 'tool');
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') {
+      body.innerHTML = `<p style="color:var(--danger)">${esc(err.message || 'Error al cargar')}</p>`;
+    }
+  }
+}
+
+function closeTechCostModal() {
+  document.getElementById('tech-cost-modal').classList.remove('open');
+}
+
+function fmtTechS(v) {
+  return v == null || v === '' ? '—' : `S/ ${Number(v).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function techPropuestaLabel(t) {
+  if (t.costo == null || t.costo === '') return '—';
+  const costo = Number(t.costo) || 0;
+  const min = costo + (Number(t.margen_min) || 0);
+  const max = costo + (Number(t.margen_max) || 0);
+  return `${fmtTechS(min)} – ${fmtTechS(max)}`;
+}
+
+function techCostSection(label, category) {
+  const items = _techCatalogCache[category] || [];
+  return `
+  <div style="margin-bottom:18px">
+    <h4 style="font-size:13.5px;font-weight:700;margin-bottom:8px">${label}</h4>
+    ${items.length === 0 ? '<p style="font-size:12px;color:var(--text-muted)">Sin registrar</p>' : `
+    <div style="overflow-x:auto;border:1px solid var(--border);border-radius:10px">
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+        <thead>
+          <tr style="background:var(--bg-light,#f8fafc);color:var(--text-muted);text-transform:uppercase;font-size:10.5px">
+            <th style="text-align:left;padding:8px 10px" colspan="2">Herramienta</th>
+            <th style="text-align:left;padding:8px 10px">Costo (S/)</th>
+            <th style="text-align:left;padding:8px 10px">Margen mín (S/)</th>
+            <th style="text-align:left;padding:8px 10px">Margen máx (S/)</th>
+            <th style="text-align:left;padding:8px 10px">Propuesta (S/)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map(techCostRow).join('')}
+        </tbody>
+      </table>
+    </div>`}
+  </div>`;
+}
+
+function techCostRow(t) {
+  const avatar = t.image_url
+    ? `<img src="${esc(t.image_url)}" style="width:22px;height:22px;border-radius:5px;object-fit:cover" alt="">`
+    : `<span style="width:22px;height:22px;border-radius:5px;background:var(--bg-light,#eef2ff);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--primary)">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
+  return `
+  <tr style="border-top:1px solid var(--border)">
+    <td style="padding:7px 10px;width:30px">${avatar}</td>
+    <td style="padding:7px 10px;white-space:nowrap">${esc(t.name)}</td>
+    <td style="padding:7px 10px;color:var(--text-muted)">${fmtTechS(t.costo)}</td>
+    <td style="padding:7px 10px;color:var(--text-muted)">${fmtTechS(t.margen_min)}</td>
+    <td style="padding:7px 10px;color:var(--text-muted)">${fmtTechS(t.margen_max)}</td>
+    <td style="padding:7px 10px;white-space:nowrap;font-weight:600">${techPropuestaLabel(t)}</td>
+  </tr>`;
 }
 
 /* ADG habilita el producto para Comercial apenas lo marca visible — no
