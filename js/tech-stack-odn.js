@@ -129,7 +129,7 @@
         top: 50%;
         transform: translateY(-50%);
         box-shadow: 0 1px 2px rgba(0,0,0,0.12);
-        z-index: 20;
+        z-index: 30;
       }
       .ts-odn-port-in { left: -7px; border: 2.5px solid #0f766e; }
       .ts-odn-port-out { right: -7px; border: 2.5px solid #10b981; }
@@ -323,10 +323,12 @@
     `;
 
     setupEvents();
+    updateSvg();
     requestAnimationFrame(() => updateSvg());
-    setTimeout(() => updateSvg(), 60);
-    setTimeout(() => updateSvg(), 200);
-    setTimeout(() => updateSvg(), 600);
+    setTimeout(() => updateSvg(), 50);
+    setTimeout(() => updateSvg(), 150);
+    setTimeout(() => updateSvg(), 400);
+    setTimeout(() => updateSvg(), 1000);
   }
 
   function renderStageColumn(stage, sIdx) {
@@ -472,8 +474,25 @@
 
   function updateSvg() {
     const svgGroup = document.getElementById('ts-odn-paths');
-    const wrapper = document.getElementById('ts-odn-content-wrap') || document.getElementById('ts-odn-canvas');
-    if (!svgGroup || !wrapper || !_activeStack) return;
+    const svgLayer = document.getElementById('ts-odn-svg');
+    const colsWrapper = document.getElementById('ts-odn-cols-wrapper');
+    const wrapper = document.getElementById('ts-odn-content-wrap') || colsWrapper || document.getElementById('ts-odn-canvas');
+    if (!svgGroup || !svgLayer || !colsWrapper || !wrapper || !_activeStack) return;
+
+    // Sincronizar dimensiones explícitas del SVG en píxeles (para que nunca colapse a 0)
+    const w = Math.max(colsWrapper.scrollWidth, colsWrapper.offsetWidth, 1200);
+    const h = Math.max(colsWrapper.scrollHeight, colsWrapper.offsetHeight, 650);
+    svgLayer.setAttribute('width', w);
+    svgLayer.setAttribute('height', h);
+    svgLayer.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svgLayer.style.width = w + 'px';
+    svgLayer.style.height = h + 'px';
+    svgLayer.style.position = 'absolute';
+    svgLayer.style.top = '0px';
+    svgLayer.style.left = '0px';
+    svgLayer.style.zIndex = '20';
+    svgLayer.style.pointerEvents = 'none';
+    svgLayer.style.overflow = 'visible';
 
     svgGroup.innerHTML = '';
     const wrapperRect = wrapper.getBoundingClientRect();
@@ -492,7 +511,7 @@
         const srcEl = document.getElementById(srcItem.id);
         if (!srcEl) return;
         const outPort = srcEl.querySelector('.ts-odn-port-out');
-        const sRect = (outPort && outPort.offsetParent !== null) ? outPort.getBoundingClientRect() : srcEl.getBoundingClientRect();
+        const sRect = outPort ? outPort.getBoundingClientRect() : srcEl.getBoundingClientRect();
 
         const x1 = (outPort ? sRect.left + sRect.width / 2 : sRect.right) - wrapperRect.left;
         const y1 = (sRect.top + sRect.height / 2) - wrapperRect.top;
@@ -508,7 +527,7 @@
           const tgtEl = document.getElementById(tId);
           if (!tgtEl) return;
           const inPort = tgtEl.querySelector('.ts-odn-port-in');
-          const tRect = (inPort && inPort.offsetParent !== null) ? inPort.getBoundingClientRect() : tgtEl.getBoundingClientRect();
+          const tRect = inPort ? inPort.getBoundingClientRect() : tgtEl.getBoundingClientRect();
 
           const x2 = (inPort ? tRect.left + tPort.width / 2 : tRect.left) - wrapperRect.left;
           const y2 = (tRect.top + tRect.height / 2) - wrapperRect.top;
@@ -522,22 +541,19 @@
           path.setAttribute('d', d);
           path.setAttribute('fill', 'none');
           path.setAttribute('stroke', lineColor);
-          path.setAttribute('stroke-width', '2.5');
+          path.setAttribute('stroke-width', '3');
           path.setAttribute('stroke-linecap', 'round');
-          path.setAttribute('opacity', '0.85');
+          path.setAttribute('opacity', '0.95');
           path.setAttribute('data-source', srcItem.id);
           path.setAttribute('data-target', tId);
-          path.style.filter = `drop-shadow(0 1px 3px ${lineColor}50)`;
-          path.style.transition = 'stroke-width 0.2s, opacity 0.2s, stroke 0.2s';
           svgGroup.appendChild(path);
 
           const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-          arrow.setAttribute('points', `${x2 - 8},${y2 - 3.5} ${x2 - 1},${y2} ${x2 - 8},${y2 + 3.5}`);
+          arrow.setAttribute('points', `${x2 - 9},${y2 - 4} ${x2 - 1},${y2} ${x2 - 9},${y2 + 4}`);
           arrow.setAttribute('fill', lineColor);
-          arrow.setAttribute('opacity', '0.9');
+          arrow.setAttribute('opacity', '1');
           arrow.setAttribute('data-source', srcItem.id);
           arrow.setAttribute('data-target', tId);
-          arrow.style.transition = 'opacity 0.2s, fill 0.2s';
           svgGroup.appendChild(arrow);
         });
       });
