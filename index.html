@@ -1848,22 +1848,18 @@
 
 <!-- ═══ MODAL: HERRAMIENTAS COSTO (solo lectura) ═══ -->
 <div class="modal-overlay" id="tech-cost-modal">
-  <div class="modal" style="max-width:960px">
-    <div class="modal-header">
+  <div class="modal" style="max-width:960px;display:flex;flex-direction:column;max-height:90vh;overflow:hidden">
+    <div class="modal-header" style="flex-shrink:0">
       <div>
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Costo por Herramientas</div>
         <div style="font-size:18px;font-weight:700">Herramientas Costo</div>
       </div>
       <button class="close-btn" onclick="closeTechCostModal()"><svg class="icon"><use href="#icon-x"></use></svg></button>
     </div>
-    <div class="modal-body">
-      <p style="font-size:12.5px;color:var(--text-muted);margin-bottom:14px">
-        Costo de referencia y margen (S/) que se suma al costo para armar el rango de precio de propuesta de
-        cada lenguaje/herramienta. Solo lectura — lo administran ADG y OPP.
-      </p>
-      <div id="tech-cost-body"><p style="color:var(--text-muted);font-size:13px">Cargando…</p></div>
+    <div class="modal-body" style="overflow-y:auto;flex:1;padding:0 26px 20px 26px">
+      <div id="tech-cost-body"><p style="color:var(--text-muted);font-size:13px;padding:24px 0">Cargando…</p></div>
     </div>
-    <div class="modal-footer">
+    <div class="modal-footer" style="flex-shrink:0">
       <button class="btn btn-outline" onclick="closeTechCostModal()">Cerrar</button>
     </div>
   </div>
@@ -2130,30 +2126,91 @@ function renderOdnTechCatalogLists() {
   renderList(_techCatalogCache.tool, 'odn-tech-list-tool', 'odn-tech-count-tool');
 }
 
-function setOdnTechCostTab(filter) {
-  _odnTechCostFilter = filter;
+let _odnTechSearchQuery = '';
+
+function clearOdnTechCostSearch() {
+  const inp = document.getElementById('odn-tc-search');
+  if (inp) { inp.value = ''; inp.focus(); }
+  filterOdnTechCost();
+}
+
+function filterOdnTechCost() {
+  const inp = document.getElementById('odn-tc-search');
+  const clearBtn = document.getElementById('odn-tc-search-clear');
+  _odnTechSearchQuery = (inp ? inp.value : '').trim().toLowerCase();
+  if (clearBtn) clearBtn.style.display = _odnTechSearchQuery ? 'block' : 'none';
+
+  let totalVisible = 0;
+  let langVisible = 0;
+  let toolVisible = 0;
+
+  const rows = document.querySelectorAll('#tech-cost-body [data-tc-row]');
+  rows.forEach(row => {
+    const name = row.dataset.name || '';
+    const cat = row.dataset.category;
+    const matchesQ = !_odnTechSearchQuery || name.includes(_odnTechSearchQuery);
+    const matchesTab = (_odnTechCostFilter === 'all' || cat === _odnTechCostFilter);
+
+    if (matchesQ) {
+      if (cat === 'language') langVisible++;
+      if (cat === 'tool') toolVisible++;
+      totalVisible++;
+    }
+
+    row.style.display = (matchesQ && matchesTab) ? '' : 'none';
+  });
+
+  const cntAll = document.getElementById('odn-tc-cnt-all');
+  const cntLang = document.getElementById('odn-tc-cnt-lang');
+  const cntTool = document.getElementById('odn-tc-cnt-tool');
+  const origLang = (_techCatalogCache.language || []).length;
+  const origTool = (_techCatalogCache.tool || []).length;
+
+  if (cntAll) cntAll.textContent = _odnTechSearchQuery ? totalVisible : (origLang + origTool);
+  if (cntLang) cntLang.textContent = _odnTechSearchQuery ? langVisible : origLang;
+  if (cntTool) cntTool.textContent = _odnTechSearchQuery ? toolVisible : origTool;
+
   const lSec = document.getElementById('odn-tc-sec-lang');
   const tSec = document.getElementById('odn-tc-sec-tool');
+  const emptyLang = document.getElementById('odn-tc-empty-language');
+  const emptyTool = document.getElementById('odn-tc-empty-tool');
+  const emptyAll = document.getElementById('odn-tc-empty-all');
+  const wrapLang = document.getElementById('odn-tc-wrap-language');
+  const wrapTool = document.getElementById('odn-tc-wrap-tool');
+
+  if (lSec) lSec.style.display = (_odnTechCostFilter === 'all' || _odnTechCostFilter === 'language') ? 'block' : 'none';
+  if (tSec) tSec.style.display = (_odnTechCostFilter === 'all' || _odnTechCostFilter === 'tool') ? 'block' : 'none';
+
+  if (wrapLang) wrapLang.style.display = langVisible > 0 ? '' : 'none';
+  if (emptyLang) emptyLang.style.display = (_odnTechSearchQuery && langVisible === 0) ? 'block' : 'none';
+
+  if (wrapTool) wrapTool.style.display = toolVisible > 0 ? '' : 'none';
+  if (emptyTool) emptyTool.style.display = (_odnTechSearchQuery && toolVisible === 0) ? 'block' : 'none';
+
+  if (emptyAll) {
+    const tabTotal = _odnTechCostFilter === 'language' ? langVisible : (_odnTechCostFilter === 'tool' ? toolVisible : totalVisible);
+    emptyAll.style.display = (_odnTechSearchQuery && tabTotal === 0) ? 'block' : 'none';
+  }
+}
+
+function setOdnTechCostTab(filter) {
+  _odnTechCostFilter = filter;
   const btnAll = document.getElementById('odn-tc-tab-all');
   const btnLang = document.getElementById('odn-tc-tab-lang');
   const btnTool = document.getElementById('odn-tc-tab-tool');
 
-  if (lSec) lSec.style.display = (filter === 'all' || filter === 'language') ? 'block' : 'none';
-  if (tSec) tSec.style.display = (filter === 'all' || filter === 'tool') ? 'block' : 'none';
-
   [btnAll, btnLang, btnTool].forEach(btn => {
     if (btn) {
       btn.style.background = 'transparent';
-      btn.style.borderColor = 'var(--border)';
       btn.style.color = 'var(--text-muted)';
     }
   });
   const activeBtn = filter === 'language' ? btnLang : (filter === 'tool' ? btnTool : btnAll);
   if (activeBtn) {
     activeBtn.style.background = 'var(--primary)';
-    activeBtn.style.borderColor = 'var(--primary)';
     activeBtn.style.color = '#fff';
   }
+  filterOdnTechCost();
 }
 
 function renderOdnTechCostBody() {
@@ -2163,13 +2220,33 @@ function renderOdnTechCostBody() {
   const total = langs.length + tools.length;
 
   body.innerHTML = `
-    <div style="display:flex;gap:8px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px">
-      <button type="button" id="odn-tc-tab-all" onclick="setOdnTechCostTab('all')" class="btn" style="padding:4px 12px;font-size:12px;border-radius:6px;background:var(--primary);color:#fff;border:1px solid var(--primary);cursor:pointer">Todos (${total})</button>
-      <button type="button" id="odn-tc-tab-lang" onclick="setOdnTechCostTab('language')" class="btn" style="padding:4px 12px;font-size:12px;border-radius:6px;background:transparent;color:var(--text-muted);border:1px solid var(--border);cursor:pointer">Lenguajes (${langs.length})</button>
-      <button type="button" id="odn-tc-tab-tool" onclick="setOdnTechCostTab('tool')" class="btn" style="padding:4px 12px;font-size:12px;border-radius:6px;background:transparent;color:var(--text-muted);border:1px solid var(--border);cursor:pointer">Herramientas (${tools.length})</button>
+    <!-- Encabezado fijo con descripción, pestañas y búsqueda inteligente -->
+    <div style="position:sticky;top:0;background:var(--bg-card,#fff);z-index:20;padding-top:18px;padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:16px;box-shadow:0 4px 12px -4px rgba(0,0,0,0.04)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+        <p style="font-size:12.5px;color:var(--text-muted);margin:0;max-width:540px;line-height:1.4">
+          Costo de referencia y margen (S/) que se suma al costo para armar el rango de precio de propuesta de cada lenguaje/herramienta. Solo lectura — lo administran ADG y OPP.
+        </p>
+        <div style="display:flex;gap:6px;background:var(--bg-card2,#f3f4f6);padding:3px;border-radius:8px">
+          <button type="button" id="odn-tc-tab-all" onclick="setOdnTechCostTab('all')" class="btn" style="padding:4px 12px;font-size:12px;border-radius:6px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-weight:600">Todos (<span id="odn-tc-cnt-all">${total}</span>)</button>
+          <button type="button" id="odn-tc-tab-lang" onclick="setOdnTechCostTab('language')" class="btn" style="padding:4px 12px;font-size:12px;border-radius:6px;background:transparent;color:var(--text-muted);border:none;cursor:pointer;font-weight:600">Lenguajes (<span id="odn-tc-cnt-lang">${langs.length}</span>)</button>
+          <button type="button" id="odn-tc-tab-tool" onclick="setOdnTechCostTab('tool')" class="btn" style="padding:4px 12px;font-size:12px;border-radius:6px;background:transparent;color:var(--text-muted);border:none;cursor:pointer;font-weight:600">Herramientas (<span id="odn-tc-cnt-tool">${tools.length}</span>)</button>
+        </div>
+      </div>
+      <!-- Búsqueda inteligente -->
+      <div style="position:relative">
+        <svg class="icon" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text-muted);pointer-events:none"><use href="#icon-search"></use></svg>
+        <input type="text" id="odn-tc-search" autocomplete="off" oninput="filterOdnTechCost()" onkeydown="if(event.key==='Escape'){this.value='';filterOdnTechCost();}"
+          placeholder="Búsqueda inteligente: escribe el nombre de un lenguaje o herramienta (ej: React, Python, Docker, .NET...)"
+          style="width:100%;padding:10px 36px;font-size:12.5px;background:var(--bg-card2,#f9fafb);border:1px solid var(--border);border-radius:8px;outline:none">
+        <button type="button" id="odn-tc-search-clear" onclick="clearOdnTechCostSearch()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px;font-size:16px;line-height:1" title="Limpiar">✕</button>
+      </div>
     </div>
+
     <div id="odn-tc-sec-lang">${techCostSection('Lenguajes', 'language')}</div>
     <div id="odn-tc-sec-tool">${techCostSection('Herramientas', 'tool')}</div>
+    <div id="odn-tc-empty-all" style="display:none;padding:32px 20px;text-align:center;color:var(--text-muted);font-size:13px;background:var(--bg-card2,#f9fafb);border-radius:10px;border:1px dashed var(--border)">
+      No se encontraron tecnologías que coincidan con la búsqueda.
+    </div>
   `;
   setOdnTechCostTab(_odnTechCostFilter);
 }
@@ -2177,7 +2254,7 @@ function renderOdnTechCostBody() {
 async function openTechCostModal() {
   document.getElementById('tech-cost-modal').classList.add('open');
   const body = document.getElementById('tech-cost-body');
-  body.innerHTML = '<p style="color:var(--text-muted);font-size:13px">Cargando…</p>';
+  body.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:24px 0">Cargando…</p>';
   try {
     const rows = await qcApiFetch('/api/comercial/tech-catalog');
     _techCatalogCache = {
@@ -2215,7 +2292,7 @@ function techCostSection(label, category) {
   <div style="margin-bottom:18px">
     <h4 style="font-size:13.5px;font-weight:700;margin-bottom:8px">${label}</h4>
     ${items.length === 0 ? '<p style="font-size:12px;color:var(--text-muted)">Sin registrar</p>' : `
-    <div style="overflow-x:auto;border:1px solid var(--border);border-radius:10px">
+    <div style="overflow-x:auto;border:1px solid var(--border);border-radius:10px" id="odn-tc-wrap-${category}">
       <table style="width:100%;border-collapse:collapse;font-size:12.5px">
         <thead>
           <tr style="background:var(--bg-light,#f8fafc);color:var(--text-muted);text-transform:uppercase;font-size:10.5px">
@@ -2227,19 +2304,22 @@ function techCostSection(label, category) {
           </tr>
         </thead>
         <tbody>
-          ${items.map(techCostRow).join('')}
+          ${items.map(t => techCostRow(t, category)).join('')}
         </tbody>
       </table>
+    </div>
+    <div id="odn-tc-empty-${category}" style="display:none;padding:16px;text-align:center;font-size:12px;color:var(--text-muted);background:var(--bg-card2,#f9fafb);border-radius:8px;border:1px dashed var(--border);margin-top:8px">
+      No se encontraron ${label.toLowerCase()} que coincidan con la búsqueda.
     </div>`}
   </div>`;
 }
 
-function techCostRow(t) {
+function techCostRow(t, category) {
   const avatar = t.image_url
     ? `<div style="width:26px;height:26px;border-radius:6px;background:#fff;border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;padding:2px;flex-shrink:0"><img src="${thumbUrl(t.image_url, 64)}" width="22" height="22" loading="lazy" decoding="async" style="max-width:100%;max-height:100%;object-fit:contain" alt="${esc(t.name)}"></div>`
     : `<span style="width:26px;height:26px;border-radius:6px;background:var(--bg-light,#eef2ff);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--primary)">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
   return `
-  <tr style="border-top:1px solid var(--border)">
+  <tr data-tc-row="${esc(t.id)}" data-category="${category}" data-name="${esc((t.name || '').toLowerCase())}" style="border-top:1px solid var(--border)">
     <td style="padding:7px 10px">
       <div style="display:flex;align-items:center;gap:10px">
         ${avatar}
