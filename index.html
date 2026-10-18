@@ -1885,7 +1885,7 @@
 
 <div class="toast-wrap" id="toast-wrap"></div>
 
-<script src="js/tech-stack-odn.js?v=3"></script>
+<script src="js/tech-stack-odn.js?v=4"></script>
 <script>
 'use strict';
 
@@ -2370,13 +2370,22 @@ function techPropuestaLabel(t) {
 
   const moneda = t.moneda || 'PEN';
   const periodo = t.periodo || 'mes';
-  const min = Number(t.margen_min) || 0;
-  const max = Number(t.margen_max) || 0;
-  const diff = Math.abs(max - min);
   const sym = TC_CURRENCY_SYMBOLS[moneda] || 'S/';
   const periodoStr = periodo === 'año' ? ' / año' : ' / mes';
-  const fDiff = Number(diff).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return `${sym} ${fDiff}${periodoStr}`;
+  const min = Number(t.margen_min) || 0;
+  const max = Number(t.margen_max) || 0;
+  const costo = Number(t.costo) || 0;
+
+  // Precio Máximo para debatir precios con clientes
+  const pMax = max > 0 ? max : costo;
+  if (pMax === 0 && min === 0 && costo === 0) return 'Gratis';
+
+  const fMax = Number(pMax).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (min > 0 && min < pMax) {
+    const fMin = Number(min).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return `${sym} ${fMax}${periodoStr} (Mín: ${sym} ${fMin})`;
+  }
+  return `${sym} ${fMax}${periodoStr}`;
 }
 
 function renderOdnTechCostBody() {

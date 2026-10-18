@@ -369,12 +369,27 @@
     const catalogMatch = (_techCatalog.tool || []).concat(_techCatalog.language || []).find(c => c.name.toLowerCase() === (item.name || '').toLowerCase());
     const plans = (catalogMatch && Array.isArray(catalogMatch.plans) && catalogMatch.plans.length)
       ? catalogMatch.plans
-      : [{ name: 'Free / Gratis', costo: 0, moneda: 'USD', periodo: 'mes' }];
+      : [{ name: 'Free / Gratis', costo: 0, margen_min: 0, margen_max: 0, moneda: 'USD', periodo: 'mes' }];
 
     const currentPlan = item.plan_name || 'Free';
     const sym = getSym(item.moneda || 'USD');
-    const costNum = Number(item.costo) || 0;
-    const costLabel = costNum === 0 ? 'Gratis' : `${sym} ${costNum.toFixed(2)} / ${item.periodo === 'año' ? 'año' : 'mes'}`;
+
+    // Buscar plan activo
+    const matchedPlan = plans.find(p => (p.name || '').toLowerCase() === (currentPlan || '').toLowerCase()) || plans[0];
+
+    // PRECIO MÁXIMO para debatir precios con clientes
+    const maxPriceNum = (matchedPlan && matchedPlan.margen_max !== null && matchedPlan.margen_max !== undefined && Number(matchedPlan.margen_max) > 0)
+      ? Number(matchedPlan.margen_max)
+      : (item.margen_max !== null && item.margen_max !== undefined && Number(item.margen_max) > 0)
+        ? Number(item.margen_max)
+        : (Number(item.costo) || 0);
+
+    const costBaseNum = (matchedPlan && matchedPlan.costo !== null && matchedPlan.costo !== undefined)
+      ? Number(matchedPlan.costo)
+      : (Number(item.costo) || 0);
+
+    const periodoStr = item.periodo === 'año' ? 'año' : 'mes';
+    const costLabel = maxPriceNum === 0 ? 'Gratis' : `${sym} ${maxPriceNum.toFixed(2)} / ${periodoStr}`;
 
     const nextStage = _activeStack.stages[sIdx + 1];
     const nextItems = nextStage ? (nextStage.items || []) : [];
@@ -398,15 +413,26 @@
         <!-- Plan selector y costo -->
         <div style="padding-top:6px;border-top:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;gap:6px">
           <select class="ts-odn-plan-sel" data-stage-index="${sIdx}" data-item-index="${itIdx}" style="font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:#f8fafc;flex:1;min-width:0;cursor:pointer">
-            ${plans.map(p => `
-              <option value="${esc(p.name)}" ${p.name === currentPlan ? 'selected' : ''}>
-                ${esc(p.name)} (${getSym(p.moneda || 'USD')} ${Number(p.costo || 0).toFixed(2)})
-              </option>
-            `).join('')}
+            ${plans.map(p => {
+              const pMax = (p.margen_max !== null && p.margen_max !== undefined && Number(p.margen_max) > 0)
+                ? Number(p.margen_max)
+                : (Number(p.costo) || 0);
+              const pLabel = pMax === 0 ? 'Gratis' : `${getSym(p.moneda || 'USD')} ${pMax.toFixed(2)}`;
+              const isSelected = (p.name || '').toLowerCase() === (currentPlan || '').toLowerCase();
+              return `<option value="${esc(p.name)}" ${isSelected ? 'selected' : ''}>
+                ${esc(p.name)} (${pLabel})
+              </option>`;
+            }).join('')}
           </select>
-          <span style="font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:4px;${costNum === 0 ? 'background:#ecfdf5;color:#059669' : 'background:#f1f5f9;color:#1e293b'};white-space:nowrap">
-            ${costLabel}
-          </span>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0">
+            <span style="font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:4px;${maxPriceNum === 0 ? 'background:#ecfdf5;color:#059669' : 'background:#0f172a;color:#ffffff'};white-space:nowrap" title="Precio Máximo de propuesta al cliente para negociación">
+              ${costLabel}
+            </span>
+            ${costBaseNum > 0 && costBaseNum < maxPriceNum ? `
+            <span style="font-size:9px;color:#94a3b8;font-weight:600;margin-right:2px" title="Costo base real">
+              Base: ${sym} ${costBaseNum.toFixed(2)}
+            </span>` : ''}
+          </div>
         </div>
 
         <!-- Conexiones -->
@@ -421,43 +447,67 @@
   }
 
   function renderInvestmentFooter() {
-    const totals = { USD: 0, PEN: 0, EUR: 0 };
+    const totalsMax = { USD: 0, PEN: 0, EUR: 0 };
+    const totalsBase = { USD: 0, PEN: 0, EUR: 0 };
     let itemCount = 0;
 
     (_activeStack.stages || []).forEach(stage => {
       (stage.items || []).forEach(it => {
         itemCount++;
-        const c = Number(it.costo) || 0;
         const m = it.moneda || 'USD';
-        if (totals[m] !== undefined) totals[m] += c;
-        else totals.USD += c;
+
+        const catalogMatch = (_techCatalog.tool || []).concat(_techCatalog.language || []).find(c => c.name.toLowerCase() === (it.name || '').toLowerCase());
+        const plans = (catalogMatch && Array.isArray(catalogMatch.plans)) ? catalogMatch.plans : [];
+        const matchedPlan = plans.find(p => (p.name || '').toLowerCase() === (it.plan_name || '').toLowerCase());
+
+        const maxPrice = (matchedPlan && matchedPlan.margen_max !== null && matchedPlan.margen_max !== undefined && Number(matchedPlan.margen_max) > 0)
+          ? Number(matchedPlan.margen_max)
+          : (it.margen_max !== null && it.margen_max !== undefined && Number(it.margen_max) > 0)
+            ? Number(it.margen_max)
+            : (Number(it.costo) || 0);
+
+        const baseCost = (matchedPlan && matchedPlan.costo !== null && matchedPlan.costo !== undefined)
+          ? Number(matchedPlan.costo)
+          : (Number(it.costo) || 0);
+
+        if (totalsMax[m] !== undefined) totalsMax[m] += maxPrice;
+        else totalsMax.USD += maxPrice;
+
+        if (totalsBase[m] !== undefined) totalsBase[m] += baseCost;
+        else totalsBase.USD += baseCost;
       });
     });
 
     return `
       <div class="ts-odn-footer">
         <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:34px;height:34px;border-radius:8px;background:rgba(16,185,129,0.15);color:#34d399;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(16,185,129,0.18);color:#34d399;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold">
             💰
           </div>
           <div>
-            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#e2e8f0">Costo Total de Inversión</div>
-            <div style="font-size:11px;color:#94a3b8">${itemCount} tecnologías en este Tech Stack</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#34d399">Precio Máximo de Propuesta (Cliente)</span>
+              <span style="font-size:10px;background:rgba(16,185,129,0.2);color:#6ee7b7;padding:1px 6px;border-radius:999px;font-weight:600">Para Negociación</span>
+            </div>
+            <div style="font-size:11px;color:#94a3b8">${itemCount} tecnologías · Precio tope con margen máximo para debatir con clientes</div>
           </div>
         </div>
 
         <div style="display:flex;align-items:center;flex-wrap:wrap;gap:12px">
-          <div class="ts-odn-badge-curr">
-            <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase">Dólares:</span>
-            <span style="font-size:14px;font-weight:800;color:#34d399;font-family:monospace">$ ${totals.USD.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <div class="ts-odn-badge-curr" style="border:1px solid rgba(16,185,129,0.3)">
+            <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase">Dólares Máx:</span>
+            <span style="font-size:13.5px;font-weight:800;color:#34d399;font-family:monospace">$ ${totalsMax.USD.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            ${totalsBase.USD > 0 && totalsBase.USD < totalsMax.USD ? `<span style="font-size:10px;color:#94a3b8;border-left:1px solid #334155;padding-left:6px" title="Costo base total">Base: $ ${totalsBase.USD.toFixed(2)}</span>` : ''}
           </div>
-          <div class="ts-odn-badge-curr">
-            <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase">Soles:</span>
-            <span style="font-size:14px;font-weight:800;color:#38bdf8;font-family:monospace">S/ ${totals.PEN.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <div class="ts-odn-badge-curr" style="border:1px solid rgba(56,189,248,0.3)">
+            <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase">Soles Máx:</span>
+            <span style="font-size:13.5px;font-weight:800;color:#38bdf8;font-family:monospace">S/ ${totalsMax.PEN.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            ${totalsBase.PEN > 0 && totalsBase.PEN < totalsMax.PEN ? `<span style="font-size:10px;color:#94a3b8;border-left:1px solid #334155;padding-left:6px" title="Costo base total">Base: S/ ${totalsBase.PEN.toFixed(2)}</span>` : ''}
           </div>
-          <div class="ts-odn-badge-curr">
-            <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase">Euros:</span>
-            <span style="font-size:14px;font-weight:800;color:#fbbf24;font-family:monospace">€ ${totals.EUR.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <div class="ts-odn-badge-curr" style="border:1px solid rgba(251,191,36,0.3)">
+            <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase">Euros Máx:</span>
+            <span style="font-size:13.5px;font-weight:800;color:#fbbf24;font-family:monospace">€ ${totalsMax.EUR.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            ${totalsBase.EUR > 0 && totalsBase.EUR < totalsMax.EUR ? `<span style="font-size:10px;color:#94a3b8;border-left:1px solid #334155;padding-left:6px" title="Costo base total">Base: € ${totalsBase.EUR.toFixed(2)}</span>` : ''}
           </div>
         </div>
       </div>
@@ -711,11 +761,17 @@
 
         const catalogMatch = (_techCatalog.tool || []).concat(_techCatalog.language || []).find(c => c.name.toLowerCase() === (item.name || '').toLowerCase());
         const plans = (catalogMatch && Array.isArray(catalogMatch.plans)) ? catalogMatch.plans : [];
-        const chosen = plans.find(p => p.name === e.target.value);
+        const chosen = plans.find(p => (p.name || '').toLowerCase() === (e.target.value || '').toLowerCase());
 
         if (chosen) {
           item.plan_name = chosen.name;
           item.costo = Number(chosen.costo) || 0;
+          item.margen_min = chosen.margen_min ?? null;
+          item.margen_max = chosen.margen_max ?? null;
+          const pMax = (chosen.margen_max !== null && chosen.margen_max !== undefined && Number(chosen.margen_max) > 0)
+            ? Number(chosen.margen_max)
+            : (Number(chosen.costo) || 0);
+          item.precio_max = pMax;
           item.moneda = chosen.moneda || 'USD';
           item.periodo = chosen.periodo || 'mes';
         } else {
@@ -821,8 +877,14 @@
           const tName = btn.dataset.name;
           const match = all.find(x => x.name === tName);
           if (match) {
-            const plans = Array.isArray(match.plans) && match.plans.length ? match.plans : [{ name: 'Free / Gratis', costo: 0, moneda: 'USD', periodo: 'mes' }];
+            const plans = Array.isArray(match.plans) && match.plans.length ? match.plans : [{ name: 'Free / Gratis', costo: 0, margen_min: 0, margen_max: 0, moneda: 'USD', periodo: 'mes' }];
             const defaultPlan = plans[0] || {};
+            const pMax = (defaultPlan.margen_max !== null && defaultPlan.margen_max !== undefined && Number(defaultPlan.margen_max) > 0)
+              ? Number(defaultPlan.margen_max)
+              : (match.margen_max !== null && match.margen_max !== undefined && Number(match.margen_max) > 0)
+                ? Number(match.margen_max)
+                : (Number(defaultPlan.costo) || Number(match.costo) || 0);
+
             _activeStack.stages[sIdx].items.push({
               id: 'node_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
               tech_id: match.id,
@@ -831,8 +893,11 @@
               image_url: match.image_url || '',
               plan_name: defaultPlan.name || 'Free',
               costo: Number(defaultPlan.costo) || 0,
-              moneda: defaultPlan.moneda || 'USD',
-              periodo: defaultPlan.periodo || 'mes',
+              margen_min: defaultPlan.margen_min ?? match.margen_min ?? null,
+              margen_max: defaultPlan.margen_max ?? match.margen_max ?? null,
+              precio_max: pMax,
+              moneda: defaultPlan.moneda || match.moneda || 'USD',
+              periodo: defaultPlan.periodo || match.periodo || 'mes',
               targets: [],
             });
             close();
