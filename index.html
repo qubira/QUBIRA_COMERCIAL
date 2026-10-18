@@ -486,7 +486,7 @@
       <svg class="icon"><use href="#icon-package"></use></svg> Catálogo de Productos
     </div>
     <div class="nav-item" data-page="costo-herramientas" onclick="navigate('costo-herramientas')">
-      <svg class="icon"><use href="#icon-tag"></use></svg> Costo por OPP HERRAMIENTAS
+      <svg class="icon"><use href="#icon-tag"></use></svg> Tech Stack & Costos
     </div>
 
     <div class="nav-section">Contratos</div>
@@ -629,39 +629,57 @@
       <div id="catalogo-content"></div>
     </div>
 
-    <!-- ═══ COSTO POR HERRAMIENTAS (solo lectura) ═══ -->
+    <!-- ═══ COSTO POR HERRAMIENTAS & TECH STACK ═══ -->
     <div class="page" id="page-costo-herramientas">
-      <div class="card" style="padding:18px 20px;margin-bottom:20px">
+      <div class="card" style="padding:18px 20px;margin-bottom:18px">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
           <div>
-            <h2 style="font-size:16px;font-weight:700;margin-bottom:4px">Costo por OPP HERRAMIENTAS</h2>
+            <h2 style="font-size:16px;font-weight:700;margin-bottom:4px">Herramientas & Tech Stack</h2>
             <p style="font-size:12.5px;color:var(--text-muted);margin:0">
-              Lista reutilizable de lenguajes y herramientas con costos y márgenes de propuesta definidos por ADG y OPP — solo lectura para ODN.
+              Ramificaciones de tecnologías (Tech Stack), cotizaciones para clientes y matriz de costos OPP.
             </p>
           </div>
           <button type="button" class="btn btn-primary" onclick="openTechCostModal()">
-            <svg class="icon"><use href="#icon-tag"></use></svg> Herramientas Costo
+            <svg class="icon"><use href="#icon-tag"></use></svg> Matriz de Costos OPP
           </button>
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:20px">
-        <div class="card" style="padding:18px 20px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px">
-            <h3 style="font-size:15px;font-weight:700">Lenguajes</h3>
-            <span id="odn-tech-count-lang" style="font-size:12px;color:var(--text-muted)">—</span>
+      <!-- Pestañas -->
+      <div style="display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);margin-bottom:20px;padding-bottom:2px">
+        <button type="button" id="odn-tab-btn-stack" onclick="switchOdnTechTab('stack')" style="padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;border:none;background:none;border-bottom:2px solid var(--primary);color:var(--primary);display:flex;align-items:center;gap:6px">
+          <span>🌳</span> Tech Stack (Ramificaciones & Cotizaciones)
+        </button>
+        <button type="button" id="odn-tab-btn-catalog" onclick="switchOdnTechTab('catalog')" style="padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;color:var(--text-muted);display:flex;align-items:center;gap:6px">
+          <span>📋</span> Catálogo de Costos
+        </button>
+      </div>
+
+      <!-- Tab 1: Tech Stack Builder -->
+      <div id="odn-tech-tab-stack" style="display:block">
+        <div id="odn-tech-stack-mount"></div>
+      </div>
+
+      <!-- Tab 2: Catálogo de Costos -->
+      <div id="odn-tech-tab-catalog" style="display:none">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:20px">
+          <div class="card" style="padding:18px 20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px">
+              <h3 style="font-size:15px;font-weight:700">Lenguajes</h3>
+              <span id="odn-tech-count-lang" style="font-size:12px;color:var(--text-muted)">—</span>
+            </div>
+            <div id="odn-tech-list-language" style="max-height:480px;overflow-y:auto">
+              <p style="font-size:12.5px;color:var(--text-muted)">Cargando…</p>
+            </div>
           </div>
-          <div id="odn-tech-list-language" style="max-height:480px;overflow-y:auto">
-            <p style="font-size:12.5px;color:var(--text-muted)">Cargando…</p>
-          </div>
-        </div>
-        <div class="card" style="padding:18px 20px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px">
-            <h3 style="font-size:15px;font-weight:700">Herramientas</h3>
-            <span id="odn-tech-count-tool" style="font-size:12px;color:var(--text-muted)">—</span>
-          </div>
-          <div id="odn-tech-list-tool" style="max-height:480px;overflow-y:auto">
-            <p style="font-size:12.5px;color:var(--text-muted)">Cargando…</p>
+          <div class="card" style="padding:18px 20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px">
+              <h3 style="font-size:15px;font-weight:700">Herramientas</h3>
+              <span id="odn-tech-count-tool" style="font-size:12px;color:var(--text-muted)">—</span>
+            </div>
+            <div id="odn-tech-list-tool" style="max-height:480px;overflow-y:auto">
+              <p style="font-size:12.5px;color:var(--text-muted)">Cargando…</p>
+            </div>
           </div>
         </div>
       </div>
@@ -1867,6 +1885,7 @@
 
 <div class="toast-wrap" id="toast-wrap"></div>
 
+<script src="js/tech-stack-odn.js"></script>
 <script>
 'use strict';
 
@@ -1973,7 +1992,7 @@ const PAGE_META = {
   dashboard: { title:'Dashboard', sub:'Resumen de los productos disponibles para venta o alquiler' },
   calendario: { title:'Calendario', sub:'Reuniones de ODN e interconexión con otras áreas' },
   catalogo:  { title:'Catálogo de Productos', sub:'Productos que ADG habilitó para que ODN los ofrezca' },
-  'costo-herramientas': { title:'Costo por OPP HERRAMIENTAS', sub:'Costo y margen de propuesta por lenguaje/herramienta del catálogo (solo lectura)' },
+  'costo-herramientas': { title:'Herramientas & Tech Stack', sub:'Ramificaciones de tecnologías (Tech Stack), cotizaciones para clientes y matriz de costos OPP' },
   'crear-contrato': { title:'Crear Contrato', sub:'Generación y redacción de contratos comerciales oficiales' },
   'revisar-contrato': { title:'Revisar Contratos', sub:'Control de cartera, estado de firmas e impresión de contratos' },
   'crear-proforma': { title:'Crear Proforma', sub:'Emisión de cotizaciones, propuestas económicas y presupuestos oficiales' },
@@ -2066,9 +2085,54 @@ async function ensureProducts() {
 // ══════════════════════════════════════════════════════
 // COSTO POR HERRAMIENTAS (solo lectura — lo fijan ADG u OPP)
 // ══════════════════════════════════════════════════════
-let _techCatalogCache = { language: [], tool: [] };
+let _odnTechCurrentTab = 'stack';
+
+function switchOdnTechTab(tab) {
+  _odnTechCurrentTab = tab;
+  const btnStack = document.getElementById('odn-tab-btn-stack');
+  const btnCat = document.getElementById('odn-tab-btn-catalog');
+  const secStack = document.getElementById('odn-tech-tab-stack');
+  const secCat = document.getElementById('odn-tech-tab-catalog');
+
+  if (tab === 'stack') {
+    if (btnStack) {
+      btnStack.style.borderBottomColor = 'var(--primary)';
+      btnStack.style.color = 'var(--primary)';
+      btnStack.style.fontWeight = '700';
+    }
+    if (btnCat) {
+      btnCat.style.borderBottomColor = 'transparent';
+      btnCat.style.color = 'var(--text-muted)';
+      btnCat.style.fontWeight = '600';
+    }
+    if (secStack) secStack.style.display = 'block';
+    if (secCat) secCat.style.display = 'none';
+    const mount = document.getElementById('odn-tech-stack-mount');
+    if (mount && typeof window.initTechStackOdn === 'function') {
+      window.initTechStackOdn(mount);
+    }
+  } else {
+    if (btnCat) {
+      btnCat.style.borderBottomColor = 'var(--primary)';
+      btnCat.style.color = 'var(--primary)';
+      btnCat.style.fontWeight = '700';
+    }
+    if (btnStack) {
+      btnStack.style.borderBottomColor = 'transparent';
+      btnStack.style.color = 'var(--text-muted)';
+      btnStack.style.fontWeight = '600';
+    }
+    if (secCat) secCat.style.display = 'block';
+    if (secStack) secStack.style.display = 'none';
+  }
+}
 
 async function renderCostoHerramientas() {
+  const mount = document.getElementById('odn-tech-stack-mount');
+  if (mount && typeof window.initTechStackOdn === 'function') {
+    window.initTechStackOdn(mount);
+  }
+
   const langEl = document.getElementById('odn-tech-list-language');
   const toolEl = document.getElementById('odn-tech-list-tool');
   if (!langEl || !toolEl) return;
