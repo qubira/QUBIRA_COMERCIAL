@@ -331,21 +331,47 @@
     setTimeout(() => updateSvg(), 1000);
   }
 
+  function cleanStaleTargets() {
+    if (!_activeStack || !Array.isArray(_activeStack.stages)) return;
+    _activeStack.stages.forEach((stage, sIdx) => {
+      const nextStage = _activeStack.stages[sIdx + 1];
+      const nextIds = new Set(nextStage ? (nextStage.items || []).map(it => it.id) : []);
+      (stage.items || []).forEach(it => {
+        if (Array.isArray(it.targets) && it.targets.length) {
+          it.targets = it.targets.filter(tid => nextIds.has(tid));
+        }
+      });
+    });
+  }
+
   function renderStageColumn(stage, sIdx) {
     const items = stage.items || [];
     const isLast = sIdx === (_activeStack.stages.length - 1);
 
     return `
       <div class="ts-odn-column" data-stage-index="${sIdx}">
-        <div class="ts-odn-col-header">
-          <div style="display:flex;align-items:center;gap:6px;overflow:hidden;flex:1">
-            <span style="font-size:10px;font-weight:700;color:var(--text-muted);background:#e2e8f0;padding:2px 5px;border-radius:4px">C${sIdx + 1}</span>
-            <input type="text" class="ts-odn-col-title" value="${esc(stage.title)}" data-stage-index="${sIdx}" style="font-size:12px;font-weight:700;color:#1e293b;border:none;background:transparent;width:100%;outline:none;cursor:pointer" title="Clic para renombrar">
+        <div class="ts-odn-col-header" style="flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:6px">
+            <div style="display:flex;align-items:center;gap:6px;overflow:hidden;flex:1">
+              <span style="font-size:10px;font-weight:700;color:var(--text-muted);background:#e2e8f0;padding:2px 5px;border-radius:4px">C${sIdx + 1}</span>
+              <input type="text" class="ts-odn-col-title" value="${esc(stage.title)}" data-stage-index="${sIdx}" style="font-size:12px;font-weight:700;color:#1e293b;border:none;background:transparent;width:100%;outline:none;cursor:pointer" title="Clic para renombrar">
+            </div>
+            <div style="display:flex;align-items:center;gap:2px">
+              <button type="button" class="ts-odn-btn-move-left" data-stage-index="${sIdx}" ${sIdx === 0 ? 'disabled' : ''} style="background:none;border:none;color:${sIdx === 0 ? '#cbd5e1' : '#64748b'};cursor:${sIdx === 0 ? 'not-allowed' : 'pointer'};font-size:13px;padding:2px 4px;font-weight:700" title="${sIdx === 0 ? 'Primera columna' : 'Mover columna a la izquierda (←)'}">←</button>
+              <button type="button" class="ts-odn-btn-move-right" data-stage-index="${sIdx}" ${isLast ? 'disabled' : ''} style="background:none;border:none;color:${isLast ? '#cbd5e1' : '#64748b'};cursor:${isLast ? 'not-allowed' : 'pointer'};font-size:13px;padding:2px 4px;font-weight:700" title="${isLast ? 'Última columna' : 'Mover columna a la derecha (→)'}">→</button>
+              <button type="button" class="ts-odn-btn-add-item" data-stage-index="${sIdx}" style="background:none;border:none;color:#059669;cursor:pointer;font-size:15px;padding:2px 4px;font-weight:700" title="Añadir tecnología">+</button>
+              ${_activeStack.stages.length > 2 ? `
+              <button type="button" class="ts-odn-btn-del-col" data-stage-index="${sIdx}" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:13px;padding:2px 4px" title="Eliminar columna">&times;</button>` : ''}
+            </div>
           </div>
-          <div style="display:flex;align-items:center;gap:2px">
-            <button type="button" class="ts-odn-btn-add-item" data-stage-index="${sIdx}" style="background:none;border:none;color:#059669;cursor:pointer;font-size:15px;padding:2px 4px;font-weight:700" title="Añadir tecnología">+</button>
-            ${_activeStack.stages.length > 2 ? `
-            <button type="button" class="ts-odn-btn-del-col" data-stage-index="${sIdx}" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:13px;padding:2px 4px" title="Eliminar columna">&times;</button>` : ''}
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%;font-size:10px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:4px">
+            <div style="display:flex;align-items:center;gap:6px">
+              ${sIdx === 0 ? `
+              <button type="button" class="ts-odn-btn-insert-col-before" data-stage-index="${sIdx}" style="background:none;border:none;color:#0f766e;font-weight:700;cursor:pointer;font-size:10.5px;padding:0" title="Insertar columna al inicio (antes de C1)">+ Antes</button>
+              <span style="color:#cbd5e1">|</span>` : ''}
+              <button type="button" class="ts-odn-btn-insert-col" data-stage-index="${sIdx}" style="background:none;border:none;color:#0f766e;font-weight:700;cursor:pointer;font-size:10.5px;padding:0" title="Insertar una nueva columna después de C${sIdx + 1}">+ Columna aquí</button>
+            </div>
+            <span style="font-weight:700;background:#f1f5f9;padding:1px 4px;border-radius:3px">C${sIdx + 1}/${_activeStack.stages.length}</span>
           </div>
         </div>
 
@@ -688,14 +714,71 @@
     });
 
     document.getElementById('ts-odn-btn-add-col')?.addEventListener('click', () => {
-      const num = (_activeStack.stages || []).length + 1;
       _activeStack.stages.push({
         id: 'stg_' + Date.now(),
         title: 'HERRAMIENTA',
         category: 'tool',
         items: []
       });
+      cleanStaleTargets();
       renderBuilder();
+    });
+
+    // Move column left (←)
+    document.querySelectorAll('.ts-odn-btn-move-left').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const sIdx = Number(e.currentTarget.dataset.stageIndex);
+        if (sIdx > 0 && _activeStack.stages.length > 1) {
+          const temp = _activeStack.stages[sIdx];
+          _activeStack.stages[sIdx] = _activeStack.stages[sIdx - 1];
+          _activeStack.stages[sIdx - 1] = temp;
+          cleanStaleTargets();
+          renderBuilder();
+        }
+      });
+    });
+
+    // Move column right (→)
+    document.querySelectorAll('.ts-odn-btn-move-right').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const sIdx = Number(e.currentTarget.dataset.stageIndex);
+        if (sIdx < _activeStack.stages.length - 1) {
+          const temp = _activeStack.stages[sIdx];
+          _activeStack.stages[sIdx] = _activeStack.stages[sIdx + 1];
+          _activeStack.stages[sIdx + 1] = temp;
+          cleanStaleTargets();
+          renderBuilder();
+        }
+      });
+    });
+
+    // Insert column after
+    document.querySelectorAll('.ts-odn-btn-insert-col').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const sIdx = Number(e.currentTarget.dataset.stageIndex);
+        _activeStack.stages.splice(sIdx + 1, 0, {
+          id: 'stg_' + Date.now(),
+          title: 'HERRAMIENTA',
+          category: 'tool',
+          items: []
+        });
+        cleanStaleTargets();
+        renderBuilder();
+      });
+    });
+
+    // Insert column before C1
+    document.querySelectorAll('.ts-odn-btn-insert-col-before').forEach(btn => {
+      btn.addEventListener('click', () => {
+        _activeStack.stages.unshift({
+          id: 'stg_' + Date.now(),
+          title: 'HERRAMIENTA',
+          category: 'tool',
+          items: []
+        });
+        cleanStaleTargets();
+        renderBuilder();
+      });
     });
 
     document.getElementById('ts-odn-btn-save')?.addEventListener('click', async () => {
@@ -777,6 +860,7 @@
         const sIdx = Number(e.currentTarget.dataset.stageIndex);
         if (_activeStack.stages.length <= 2) return;
         _activeStack.stages.splice(sIdx, 1);
+        cleanStaleTargets();
         renderBuilder();
       });
     });
