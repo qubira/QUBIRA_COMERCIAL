@@ -2102,6 +2102,7 @@ function normalizeTechPlans(t) {
     return t.plans.map(p => ({
       name: p.name ?? '',
       costo: p.costo ?? null,
+      moneda: p.moneda || t.moneda || 'PEN',
       margen_min: p.margen_min ?? null,
       margen_max: p.margen_max ?? null,
     }));
@@ -2109,9 +2110,22 @@ function normalizeTechPlans(t) {
   return [{
     name: '',
     costo: t.costo ?? null,
+    moneda: t.moneda || 'PEN',
     margen_min: t.margen_min ?? null,
     margen_max: t.margen_max ?? null,
   }];
+}
+
+const TC_CURRENCY_SYMBOLS = {
+  PEN: 'S/',
+  USD: '$',
+  EUR: '€'
+};
+
+function fmtTechCurrency(v, moneda = 'PEN') {
+  if (v == null || v === '') return '—';
+  const sym = TC_CURRENCY_SYMBOLS[moneda] || 'S/';
+  return `${sym} ${Number(v).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function renderOdnTechCatalogLists() {
@@ -2134,9 +2148,11 @@ function renderOdnTechCatalogLists() {
       if (t.category === 'tool' && plans.length > 1) {
         costBadge = `<span class="badge" style="background:#eef2ff;color:#4f46e5;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px">${plans.length} planes</span>`;
       } else if (plans[0]?.costo != null && plans[0]?.costo !== '') {
-        costBadge = `<span class="badge" style="background:#ecfdf5;color:#059669;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px">S/ ${Number(plans[0].costo).toFixed(2)}</span>`;
+        const sym = TC_CURRENCY_SYMBOLS[plans[0].moneda || t.moneda || 'PEN'] || 'S/';
+        costBadge = `<span class="badge" style="background:#ecfdf5;color:#059669;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px">${sym} ${Number(plans[0].costo).toFixed(2)}</span>`;
       } else if (t.costo != null && t.costo !== '') {
-        costBadge = `<span class="badge" style="background:#ecfdf5;color:#059669;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px">S/ ${Number(t.costo).toFixed(2)}</span>`;
+        const sym = TC_CURRENCY_SYMBOLS[t.moneda || 'PEN'] || 'S/';
+        costBadge = `<span class="badge" style="background:#ecfdf5;color:#059669;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px">${sym} ${Number(t.costo).toFixed(2)}</span>`;
       }
       return `
       <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border)">
@@ -2275,16 +2291,13 @@ function closeTechCostModal() {
   document.getElementById('tech-cost-modal').classList.remove('open');
 }
 
-function fmtTechS(v) {
-  return v == null || v === '' ? '—' : `S/ ${Number(v).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
 function techPropuestaLabel(t) {
   if (t.costo == null || t.costo === '') return '—';
+  const moneda = t.moneda || 'PEN';
   const costo = Number(t.costo) || 0;
   const min = costo + (Number(t.margen_min) || 0);
   const max = costo + (Number(t.margen_max) || 0);
-  return `${fmtTechS(min)} – ${fmtTechS(max)}`;
+  return `${fmtTechCurrency(min, moneda)} – ${fmtTechCurrency(max, moneda)}`;
 }
 
 function renderOdnTechCostBody() {
@@ -2298,7 +2311,7 @@ function renderOdnTechCostBody() {
     <div style="position:sticky;top:0;background:var(--bg-card,#fff);z-index:20;padding-top:18px;padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:16px;box-shadow:0 4px 12px -4px rgba(0,0,0,0.04)">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap">
         <p style="font-size:12.5px;color:var(--text-muted);margin:0;max-width:540px;line-height:1.4">
-          Costo de referencia y margen (S/) que se suma al costo para armar el rango de precio de propuesta de cada lenguaje/herramienta. Solo lectura — lo administran ADG y OPP.
+          Costo de referencia y margen que se suma al costo para armar el rango de precio de propuesta de cada lenguaje/herramienta (PEN, USD o EUR). Solo lectura — lo administran ADG y OPP.
         </p>
         <div style="display:flex;gap:6px;background:var(--bg-card2,#f3f4f6);padding:3px;border-radius:8px">
           <button type="button" id="odn-tc-tab-all" onclick="setOdnTechCostTab('all')" class="btn" style="padding:4px 12px;font-size:12px;border-radius:6px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-weight:600">Todos (<span id="odn-tc-cnt-all">${total}</span>)</button>
@@ -2328,30 +2341,39 @@ function renderOdnTechCostBody() {
 function techCostSection(label, category) {
   const items = _techCatalogCache[category] || [];
   const isTool = category === 'tool';
+  const colSpan = isTool ? 6 : 5;
   return `
   <div style="margin-bottom:18px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <h4 style="font-size:13.5px;font-weight:700;margin:0">${label}</h4>
-      ${isTool ? '<span style="font-size:11.5px;color:var(--text-muted)">Planes y propuestas por herramienta</span>' : ''}
-    </div>
-    ${items.length === 0 ? '<p style="font-size:12px;color:var(--text-muted)">Sin registrar</p>' : `
-    <div style="overflow-x:auto;border:1px solid var(--border);border-radius:10px" id="odn-tc-wrap-${category}">
-      <table style="width:100%;border-collapse:collapse;font-size:12.5px">
-        <thead>
-          <tr style="background:var(--bg-light,#f8fafc);color:var(--text-muted);text-transform:uppercase;font-size:10.5px">
-            <th style="text-align:left;padding:8px 10px">Herramienta</th>
-            ${isTool ? '<th style="text-align:left;padding:8px 10px">Plan</th>' : ''}
-            <th style="text-align:left;padding:8px 10px">Costo (S/)</th>
-            <th style="text-align:left;padding:8px 10px">Margen mín (S/)</th>
-            <th style="text-align:left;padding:8px 10px">Margen máx (S/)</th>
-            <th style="text-align:left;padding:8px 10px">Propuesta (S/)</th>
-          </tr>
-        </thead>
-        ${isTool ? items.map(t => toolGroupOdnHtml(t)).join('') : `
-        <tbody>
-          ${items.map(t => techCostLanguageRow(t)).join('')}
-        </tbody>`}
-      </table>
+    ${items.length === 0 ? `
+      <div style="margin-bottom:8px"><h4 style="font-size:13.5px;font-weight:700;margin:0">${label}</h4></div>
+      <p style="font-size:12px;color:var(--text-muted)">Sin registrar</p>` : `
+    <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04)" id="odn-tc-wrap-${category}">
+      <div style="max-height:56vh;overflow-y:auto;overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+          <thead style="position:sticky;top:0;z-index:10;background:var(--bg-card,#fff);box-shadow:0 2px 6px -1px rgba(0,0,0,0.06)">
+            <tr style="background:var(--bg-card,#fff);border-bottom:1px solid var(--border)">
+              <th colspan="${colSpan}" style="padding:9px 12px;text-align:left;background:var(--bg-card,#fff)">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <span style="font-size:13.5px;font-weight:700;color:var(--text)">${label}</span>
+                  ${isTool ? '<span style="font-size:11.5px;color:var(--text-muted);font-weight:normal">Hasta 5 planes por herramienta con denominación personalizada</span>' : ''}
+                </div>
+              </th>
+            </tr>
+            <tr style="background:var(--bg-card2,#f9fafb);color:var(--text-muted);text-transform:uppercase;font-size:10.5px;border-bottom:1px solid var(--border)">
+              <th style="text-align:left;padding:8px 10px;background:var(--bg-card2,#f9fafb)">Herramienta</th>
+              ${isTool ? '<th style="text-align:left;padding:8px 10px;background:var(--bg-card2,#f9fafb)">Plan</th>' : ''}
+              <th style="text-align:left;padding:8px 10px;background:var(--bg-card2,#f9fafb)">Costo</th>
+              <th style="text-align:left;padding:8px 10px;background:var(--bg-card2,#f9fafb)">Margen mín</th>
+              <th style="text-align:left;padding:8px 10px;background:var(--bg-card2,#f9fafb)">Margen máx</th>
+              <th style="text-align:left;padding:8px 10px;background:var(--bg-card2,#f9fafb)">Propuesta</th>
+            </tr>
+          </thead>
+          ${isTool ? items.map(t => toolGroupOdnHtml(t)).join('') : `
+          <tbody>
+            ${items.map(t => techCostLanguageRow(t)).join('')}
+          </tbody>`}
+        </table>
+      </div>
     </div>
     <div id="odn-tc-empty-${category}" style="display:none;padding:16px;text-align:center;font-size:12px;color:var(--text-muted);background:var(--bg-card2,#f9fafb);border-radius:8px;border:1px dashed var(--border);margin-top:8px">
       No se encontraron ${label.toLowerCase()} que coincidan con la búsqueda.
@@ -2376,6 +2398,7 @@ function toolRowsOdnHtml(t, plans) {
   return plans.map((p, idx) => {
     const isFirst = idx === 0;
     const planName = p.name ? esc(p.name) : (plans.length > 1 ? `Plan ${idx + 1}` : '—');
+    const moneda = p.moneda || t.moneda || 'PEN';
     return `
     <tr data-tc-plan-row data-plan-index="${idx}">
       ${isFirst ? `
@@ -2389,9 +2412,9 @@ function toolRowsOdnHtml(t, plans) {
         </div>
       </td>` : ''}
       <td style="padding:7px 10px;border-bottom:1px solid var(--border);font-weight:500;color:${p.name ? 'var(--text)' : 'var(--text-muted)'}">${planName}</td>
-      <td style="padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text-muted)">${fmtTechS(p.costo)}</td>
-      <td style="padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text-muted)">${fmtTechS(p.margen_min)}</td>
-      <td style="padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text-muted)">${fmtTechS(p.margen_max)}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text-muted);white-space:nowrap">${fmtTechCurrency(p.costo, moneda)}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text-muted);white-space:nowrap">${fmtTechCurrency(p.margen_min, moneda)}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text-muted);white-space:nowrap">${fmtTechCurrency(p.margen_max, moneda)}</td>
       <td style="padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap;font-weight:600">${techPropuestaLabel(p)}</td>
     </tr>`;
   }).join('');
@@ -2401,6 +2424,7 @@ function techCostLanguageRow(t) {
   const avatar = t.image_url
     ? `<div style="width:26px;height:26px;border-radius:6px;background:#fff;border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;padding:2px;flex-shrink:0"><img src="${thumbUrl(t.image_url, 64)}" width="22" height="22" loading="lazy" decoding="async" style="max-width:100%;max-height:100%;object-fit:contain" alt="${esc(t.name)}"></div>`
     : `<span style="width:26px;height:26px;border-radius:6px;background:var(--bg-light,#eef2ff);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--primary)">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
+  const moneda = t.moneda || 'PEN';
   return `
   <tr data-tc-row="${esc(t.id)}" data-category="language" data-name="${esc((t.name || '').toLowerCase())}" style="border-top:1px solid var(--border)">
     <td style="padding:7px 10px">
@@ -2409,9 +2433,9 @@ function techCostLanguageRow(t) {
         <span style="white-space:nowrap;font-weight:500">${esc(t.name)}</span>
       </div>
     </td>
-    <td style="padding:7px 10px;color:var(--text-muted)">${fmtTechS(t.costo)}</td>
-    <td style="padding:7px 10px;color:var(--text-muted)">${fmtTechS(t.margen_min)}</td>
-    <td style="padding:7px 10px;color:var(--text-muted)">${fmtTechS(t.margen_max)}</td>
+    <td style="padding:7px 10px;color:var(--text-muted);white-space:nowrap">${fmtTechCurrency(t.costo, moneda)}</td>
+    <td style="padding:7px 10px;color:var(--text-muted);white-space:nowrap">${fmtTechCurrency(t.margen_min, moneda)}</td>
+    <td style="padding:7px 10px;color:var(--text-muted);white-space:nowrap">${fmtTechCurrency(t.margen_max, moneda)}</td>
     <td style="padding:7px 10px;white-space:nowrap;font-weight:600">${techPropuestaLabel(t)}</td>
   </tr>`;
 }
