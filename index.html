@@ -102,20 +102,46 @@
     .mob-overlay { display: none; }
 
     /* ── MAIN ── */
-    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      min-width: 0;
+      width: calc(100vw - var(--sidebar-w));
+      max-width: calc(100vw - var(--sidebar-w));
+      overflow-x: hidden;
+      box-sizing: border-box;
+    }
 
     /* ── TOPBAR ── */
     .topbar {
       background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 0 28px; height: 64px;
       display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50;
+      width: 100%; max-width: 100%; box-sizing: border-box;
     }
     .topbar-left h1 { font-size: 18px; font-weight: 600; }
     .topbar-left p  { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
     .hamburger { display: none; background: none; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; color: var(--text); cursor: pointer; font-size: 16px; }
 
     /* ── CONTENT ── */
-    .content { padding: 28px; flex: 1; }
-    .page { display: none; }
+    .content {
+      padding: 24px 28px;
+      flex: 1;
+      min-width: 0;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow-x: hidden;
+    }
+    .page {
+      display: none;
+      min-width: 0;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
     .page.active { display: block; }
 
     /* ── STATS GRID ── */
@@ -315,7 +341,8 @@
     @media(max-width:768px) {
       .sidebar { transform:translateX(-100%); }
       .sidebar.open { transform:translateX(0); }
-      .main { margin-left:0; }
+      .main { margin-left:0; width: 100vw; max-width: 100vw; }
+      .content { padding: 14px; }
       .hamburger { display:flex; }
       .stats-grid { grid-template-columns:repeat(2,1fr); }
       .product-grid { grid-template-columns: 1fr; }
@@ -656,8 +683,8 @@
       </div>
 
       <!-- Tab 1: Tech Stack Builder -->
-      <div id="odn-tech-tab-stack" style="display:block">
-        <div id="odn-tech-stack-mount"></div>
+      <div id="odn-tech-tab-stack" style="display:block;min-width:0;width:100%;max-width:100%">
+        <div id="odn-tech-stack-mount" style="min-width:0;width:100%;max-width:100%"></div>
       </div>
 
       <!-- Tab 2: Catálogo de Costos -->
@@ -1885,7 +1912,7 @@
 
 <div class="toast-wrap" id="toast-wrap"></div>
 
-<script src="js/tech-stack-odn.js?v=10"></script>
+<script src="js/tech-stack-odn.js?v=11"></script>
 <script>
 'use strict';
 

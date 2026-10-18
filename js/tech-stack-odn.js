@@ -43,6 +43,10 @@
         min-height: 640px;
         font-family: inherit;
         overflow: hidden;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
       }
       .ts-odn-toolbar {
         padding: 12px 18px;
@@ -53,6 +57,9 @@
         align-items: center;
         justify-content: space-between;
         gap: 12px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
       }
       .ts-odn-meta-bar {
         padding: 10px 18px;
@@ -63,10 +70,27 @@
         align-items: center;
         gap: 14px;
         font-size: 12px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+      .ts-odn-canvas-wrapper {
+        position: relative;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+        box-sizing: border-box;
       }
       .ts-odn-canvas {
         flex: 1;
-        overflow-x: auto;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow-x: auto !important;
         overflow-y: visible;
         padding: 24px 24px 36px 24px;
         background: radial-gradient(#e5e7eb 1px, transparent 1px) 0 0 / 22px 22px, #f8fafc;
@@ -74,6 +98,7 @@
         min-height: 520px;
         scroll-behavior: smooth;
         cursor: grab;
+        box-sizing: border-box;
       }
       .ts-odn-canvas.is-dragging {
         cursor: grabbing !important;
@@ -168,6 +193,9 @@
         align-items: center;
         justify-content: space-between;
         gap: 14px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
       }
       .ts-odn-badge-curr {
         background: #1f2937;
@@ -366,7 +394,7 @@
         </div>
 
         <!-- Canvas horizontal con ramificaciones SVG -->
-        <div style="position:relative;flex:1;display:flex;flex-direction:column">
+        <div class="ts-odn-canvas-wrapper">
           <div class="ts-odn-canvas" id="ts-odn-canvas">
             <div id="ts-odn-content-wrap" style="position:relative;min-width:max-content;display:inline-block;min-height:100%">
               <svg id="ts-odn-svg" style="position:absolute;inset:0;pointer-events:none;width:100%;height:100%;min-width:100%;min-height:100%;z-index:10;overflow:visible">
