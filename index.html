@@ -1885,7 +1885,7 @@
 
 <div class="toast-wrap" id="toast-wrap"></div>
 
-<script src="js/tech-stack-odn.js?v=4"></script>
+<script src="js/tech-stack-odn.js?v=5"></script>
 <script>
 'use strict';
 
@@ -2366,7 +2366,7 @@ function techPropuestaLabel(t) {
   const hasCost = t.costo !== null && t.costo !== '' && t.costo !== undefined;
   const hasMin = t.margen_min !== null && t.margen_min !== '' && t.margen_min !== undefined;
   const hasMax = t.margen_max !== null && t.margen_max !== '' && t.margen_max !== undefined;
-  if (!hasMin && !hasMax && !hasCost) return '—';
+  if (!hasMin && !hasMax && !hasCost) return 'Indefinido';
 
   const moneda = t.moneda || 'PEN';
   const periodo = t.periodo || 'mes';
