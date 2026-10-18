@@ -1885,7 +1885,7 @@
 
 <div class="toast-wrap" id="toast-wrap"></div>
 
-<script src="js/tech-stack-odn.js?v=9"></script>
+<script src="js/tech-stack-odn.js?v=10"></script>
 <script>
 'use strict';
 
@@ -2067,6 +2067,7 @@ const CURRENCY_SYMBOL = { PEN:'S/', USD:'$', EUR:'€' };
 
 let _products = [];
 let _loaded = false;
+let _techCatalogCache = { language: [], tool: [] };
 
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -2124,6 +2125,11 @@ function switchOdnTechTab(tab) {
     }
     if (secCat) secCat.style.display = 'block';
     if (secStack) secStack.style.display = 'none';
+    if (!_techCatalogCache.language.length && !_techCatalogCache.tool.length) {
+      renderCostoHerramientas();
+    } else {
+      renderOdnTechCatalogLists();
+    }
   }
 }
 

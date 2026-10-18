@@ -67,12 +67,11 @@
       .ts-odn-canvas {
         flex: 1;
         overflow-x: auto;
-        overflow-y: auto;
-        padding: 24px;
+        overflow-y: visible;
+        padding: 24px 24px 36px 24px;
         background: radial-gradient(#e5e7eb 1px, transparent 1px) 0 0 / 22px 22px, #f8fafc;
         position: relative;
-        min-height: 480px;
-        max-height: 75vh;
+        min-height: 520px;
         scroll-behavior: smooth;
         cursor: grab;
       }
@@ -98,38 +97,6 @@
       .ts-odn-canvas::-webkit-scrollbar-thumb:hover {
         background: #0d5f58;
       }
-      .ts-odn-nav-arrow {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(8px);
-        border: 1.5px solid #94a3b8;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
-        color: #0f766e;
-        font-size: 28px;
-        font-weight: 700;
-        line-height: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        z-index: 40;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        user-select: none;
-      }
-      .ts-odn-nav-arrow:hover {
-        background: #0f766e;
-        color: #ffffff;
-        border-color: #0f766e;
-        box-shadow: 0 6px 20px rgba(15, 118, 110, 0.45);
-        transform: translateY(-50%) scale(1.15);
-      }
-      .ts-odn-nav-left { left: 14px; }
-      .ts-odn-nav-right { right: 14px; }
       .ts-odn-columns {
         display: flex;
         align-items: flex-start;
@@ -357,15 +324,6 @@
           </div>
 
           <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px">
-            <!-- Navegación rápida horizontal -->
-            <div style="display:flex;align-items:center;gap:3px;border:1px solid #cbd5e1;border-radius:8px;padding:2px 4px;background:#ffffff">
-              <span style="font-size:10px;font-weight:700;color:var(--text-muted);padding:0 3px">ÁRBOL:</span>
-              <button type="button" id="ts-odn-btn-scroll-start" class="btn btn-outline" style="padding:3px 7px;font-size:11px;font-weight:600" title="Ver inicio (C1)">⏮ C1</button>
-              <button type="button" id="ts-odn-btn-scroll-prev" class="btn btn-outline" style="padding:3px 8px;font-size:11px;font-weight:700" title="Desplazar a la izquierda">‹</button>
-              <button type="button" id="ts-odn-btn-scroll-next" class="btn btn-outline" style="padding:3px 8px;font-size:11px;font-weight:700" title="Desplazar a la derecha">›</button>
-              <button type="button" id="ts-odn-btn-scroll-end" class="btn btn-outline" style="padding:3px 7px;font-size:11px;font-weight:600" title="Ver final">Fin ⏭</button>
-            </div>
-
             <button type="button" id="ts-odn-btn-new" class="btn btn-outline" style="padding:5px 12px;font-size:12px">
               + Nueva Ramificación
             </button>
@@ -384,7 +342,7 @@
           </div>
         </div>
 
-        <!-- Barra de Metadatos -->
+        <!-- Barra de Metadatos y Navegación del Árbol -->
         <div class="ts-odn-meta-bar">
           <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:240px">
             <span style="color:var(--text-muted);font-weight:600">Nombre:</span>
@@ -396,21 +354,19 @@
               ${renderProjectTypeOptions(_activeStack.project_type || 'Web')}
             </select>
           </div>
-          <div style="font-size:11.5px;color:var(--primary);margin-left:auto;font-weight:600;display:flex;align-items:center;gap:4px">
-            <span>💼</span> ODN Cotizaciones: Puedes ajustar planes y calcular costos de inversión en vivo.
+
+          <!-- Navegación rápida horizontal del árbol (desplazamiento suave) -->
+          <div style="display:flex;align-items:center;gap:4px;margin-left:auto;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:3px 8px">
+            <span style="font-size:11px;font-weight:700;color:#0f766e;margin-right:2px">🌳 Navegar árbol:</span>
+            <button type="button" id="ts-odn-btn-scroll-start" class="btn btn-outline" style="padding:3px 8px;font-size:11px;font-weight:700;background:#fff" title="Ir al inicio (Columna C1)">⏮ C1</button>
+            <button type="button" id="ts-odn-btn-scroll-prev" class="btn btn-outline" style="padding:3px 10px;font-size:12px;font-weight:800;background:#fff" title="Desplazar a la izquierda">◀</button>
+            <button type="button" id="ts-odn-btn-scroll-next" class="btn btn-outline" style="padding:3px 10px;font-size:12px;font-weight:800;background:#fff" title="Desplazar a la derecha">▶</button>
+            <button type="button" id="ts-odn-btn-scroll-end" class="btn btn-outline" style="padding:3px 8px;font-size:11px;font-weight:700;background:#fff" title="Ir al final del árbol">Fin ⏭</button>
           </div>
         </div>
 
         <!-- Canvas horizontal con ramificaciones SVG -->
-        <div style="position:relative;overflow:hidden;flex:1;display:flex;flex-direction:column">
-          <!-- Botones flotantes de desplazamiento rápido -->
-          <button type="button" id="ts-odn-scroll-left" class="ts-odn-nav-arrow ts-odn-nav-left" title="Desplazar a la izquierda (←)">
-            ‹
-          </button>
-          <button type="button" id="ts-odn-scroll-right" class="ts-odn-nav-arrow ts-odn-nav-right" title="Desplazar a la derecha (→)">
-            ›
-          </button>
-
+        <div style="position:relative;flex:1;display:flex;flex-direction:column">
           <div class="ts-odn-canvas" id="ts-odn-canvas">
             <div id="ts-odn-content-wrap" style="position:relative;min-width:max-content;display:inline-block;min-height:100%">
               <svg id="ts-odn-svg" style="position:absolute;inset:0;pointer-events:none;width:100%;height:100%;min-width:100%;min-height:100%;z-index:10;overflow:visible">
@@ -1075,14 +1031,6 @@
     });
 
     // Botones de navegación horizontal del árbol
-    document.getElementById('ts-odn-scroll-left')?.addEventListener('click', () => {
-      const c = document.getElementById('ts-odn-canvas');
-      if (c) c.scrollBy({ left: -380, behavior: 'smooth' });
-    });
-    document.getElementById('ts-odn-scroll-right')?.addEventListener('click', () => {
-      const c = document.getElementById('ts-odn-canvas');
-      if (c) c.scrollBy({ left: 380, behavior: 'smooth' });
-    });
     document.getElementById('ts-odn-btn-scroll-prev')?.addEventListener('click', () => {
       const c = document.getElementById('ts-odn-canvas');
       if (c) c.scrollBy({ left: -380, behavior: 'smooth' });
