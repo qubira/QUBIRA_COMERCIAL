@@ -211,6 +211,36 @@
     }
   }
 
+  const PROJECT_TYPE_OPTIONS = [
+    { value: 'Web', label: 'Web' },
+    { value: 'Móvil', label: 'Móvil (App)' },
+    { value: 'API / Backend', label: 'API / Backend' },
+    { value: 'Escritorio', label: 'Escritorio' },
+    { value: 'E-Commerce', label: 'E-Commerce' },
+    { value: 'Full-Stack', label: 'Full-Stack' },
+    { value: 'Multi-Plataforma', label: 'Multi-Plataforma' },
+    { value: 'SaaS / Cloud', label: 'SaaS / Cloud (Suscripción)' },
+    { value: 'Software a Medida', label: 'Software a Medida' },
+    { value: 'ERP / CRM', label: 'ERP / CRM Empresarial' },
+    { value: 'Inteligencia Artificial', label: 'Inteligencia Artificial / ML' },
+    { value: 'Automatización / Bot', label: 'Automatización / Bots / RPA' },
+    { value: 'Infraestructura', label: 'Infraestructura & DevOps' },
+    { value: 'Otro', label: 'Otro (Personalizado)' },
+  ];
+
+  function renderProjectTypeOptions(selectedValue) {
+    let found = false;
+    const opts = PROJECT_TYPE_OPTIONS.map(opt => {
+      const isSel = (opt.value === selectedValue);
+      if (isSel) found = true;
+      return `<option value="${esc(opt.value)}" ${isSel ? 'selected' : ''}>${esc(opt.label)}</option>`;
+    });
+    if (selectedValue && !found) {
+      opts.unshift(`<option value="${esc(selectedValue)}" selected>${esc(selectedValue)}</option>`);
+    }
+    return opts.join('');
+  }
+
   function createEmptyStack(name, type = 'Web', isQuotation = false) {
     return {
       id: 'stack_' + Date.now(),
@@ -296,14 +326,7 @@
           <div style="display:flex;align-items:center;gap:8px">
             <span style="color:var(--text-muted);font-weight:600">Tipo:</span>
             <select id="ts-odn-type" style="padding:4px 10px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:#fff">
-              <option value="Web" ${_activeStack.project_type === 'Web' ? 'selected' : ''}>Web</option>
-              <option value="Móvil" ${_activeStack.project_type === 'Móvil' ? 'selected' : ''}>Móvil (App)</option>
-              <option value="API / Backend" ${_activeStack.project_type === 'API / Backend' ? 'selected' : ''}>API / Backend</option>
-              <option value="Escritorio" ${_activeStack.project_type === 'Escritorio' ? 'selected' : ''}>Escritorio</option>
-              <option value="E-Commerce" ${_activeStack.project_type === 'E-Commerce' ? 'selected' : ''}>E-Commerce</option>
-              <option value="Full-Stack" ${_activeStack.project_type === 'Full-Stack' ? 'selected' : ''}>Full-Stack</option>
-              <option value="Multi-Plataforma" ${_activeStack.project_type === 'Multi-Plataforma' ? 'selected' : ''}>Multi-Plataforma</option>
-              <option value="Otro" ${_activeStack.project_type === 'Otro' ? 'selected' : ''}>Otro</option>
+              ${renderProjectTypeOptions(_activeStack.project_type || 'Web')}
             </select>
           </div>
           <div style="font-size:11.5px;color:var(--primary);margin-left:auto;font-weight:600;display:flex;align-items:center;gap:4px">
@@ -732,7 +755,18 @@
     });
 
     document.getElementById('ts-odn-type')?.addEventListener('change', e => {
-      _activeStack.project_type = e.target.value;
+      let val = e.target.value;
+      if (val === 'Otro') {
+        const custom = prompt('Escribe el tipo de proyecto / solución personalizado:', _activeStack.project_type || '');
+        if (custom && custom.trim()) {
+          val = custom.trim();
+        } else {
+          renderBuilder();
+          return;
+        }
+      }
+      _activeStack.project_type = val;
+      renderBuilder();
     });
 
     document.getElementById('ts-odn-btn-new')?.addEventListener('click', () => {
