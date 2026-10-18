@@ -129,7 +129,7 @@
         top: 50%;
         transform: translateY(-50%);
         box-shadow: 0 1px 2px rgba(0,0,0,0.12);
-        z-index: 10;
+        z-index: 20;
       }
       .ts-odn-port-in { left: -7px; border: 2.5px solid #0f766e; }
       .ts-odn-port-out { right: -7px; border: 2.5px solid #10b981; }
@@ -232,6 +232,14 @@
   function renderBuilder() {
     if (!_container || !_activeStack) return;
 
+    (_activeStack.stages || []).forEach((st, sI) => {
+      (st.items || []).forEach((it, itI) => {
+        if (!it.id) {
+          it.id = `node_odn_s${sI}_i${itI}_${Date.now()}`;
+        }
+      });
+    });
+
     const stackOptions = _stacks.map(s => `
       <option value="${esc(s.id)}" ${s.id === _activeStack.id ? 'selected' : ''}>
         [${esc(s.project_type || 'Web')}] ${esc(s.name)}${s.is_quotation ? ' 🏷️ (Cotización ODN)' : ''}
@@ -298,22 +306,14 @@
 
         <!-- Canvas horizontal con ramificaciones SVG -->
         <div class="ts-odn-canvas" id="ts-odn-canvas">
-          <svg id="ts-odn-svg" style="position:absolute;inset:0;pointer-events:none;width:100%;height:100%;min-width:100%;min-height:100%;z-index:5">
-            <defs>
-              <linearGradient id="ts-odn-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#0f766e" />
-                <stop offset="50%" stop-color="#059669" />
-                <stop offset="100%" stop-color="#10b981" />
-              </linearGradient>
-              <marker id="ts-odn-arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-                <path d="M 0 1 L 8 5 L 0 9 z" fill="#059669" />
-              </marker>
-            </defs>
-            <g id="ts-odn-paths"></g>
-          </svg>
+          <div id="ts-odn-content-wrap" style="position:relative;min-width:max-content;display:inline-block;min-height:100%">
+            <svg id="ts-odn-svg" style="position:absolute;inset:0;pointer-events:none;width:100%;height:100%;min-width:100%;min-height:100%;z-index:5;overflow:visible">
+              <g id="ts-odn-paths"></g>
+            </svg>
 
-          <div class="ts-odn-columns" id="ts-odn-cols-wrapper">
-            ${(_activeStack.stages || []).map((stage, sIdx) => renderStageColumn(stage, sIdx)).join('')}
+            <div class="ts-odn-columns" id="ts-odn-cols-wrapper" style="position:relative;z-index:10">
+              ${(_activeStack.stages || []).map((stage, sIdx) => renderStageColumn(stage, sIdx)).join('')}
+            </div>
           </div>
         </div>
 
@@ -324,6 +324,9 @@
 
     setupEvents();
     requestAnimationFrame(() => updateSvg());
+    setTimeout(() => updateSvg(), 60);
+    setTimeout(() => updateSvg(), 200);
+    setTimeout(() => updateSvg(), 600);
   }
 
   function renderStageColumn(stage, sIdx) {
@@ -459,13 +462,21 @@
     `;
   }
 
+  const ODN_LINE_COLORS = [
+    '#0f766e', // Teal dark (C1 -> C2)
+    '#0d9488', // Teal
+    '#059669', // Emerald
+    '#10b981', // Green
+    '#3b82f6', // Blue
+  ];
+
   function updateSvg() {
     const svgGroup = document.getElementById('ts-odn-paths');
-    const canvas = document.getElementById('ts-odn-canvas');
-    if (!svgGroup || !canvas || !_activeStack) return;
+    const wrapper = document.getElementById('ts-odn-content-wrap') || document.getElementById('ts-odn-canvas');
+    if (!svgGroup || !wrapper || !_activeStack) return;
 
     svgGroup.innerHTML = '';
-    const canvasRect = canvas.getBoundingClientRect();
+    const wrapperRect = wrapper.getBoundingClientRect();
     const stages = _activeStack.stages || [];
 
     for (let s = 0; s < stages.length - 1; s++) {
@@ -474,40 +485,60 @@
       const nextItems = nextStage.items || [];
       if (!nextItems.length) continue;
 
+      const lineColor = ODN_LINE_COLORS[s % ODN_LINE_COLORS.length];
+      const nextItemIds = new Set(nextItems.map(it => it.id));
+
       (currentStage.items || []).forEach(srcItem => {
         const srcEl = document.getElementById(srcItem.id);
         if (!srcEl) return;
         const outPort = srcEl.querySelector('.ts-odn-port-out');
-        if (!outPort) return;
-        const outRect = outPort.getBoundingClientRect();
+        const sRect = (outPort && outPort.offsetParent !== null) ? outPort.getBoundingClientRect() : srcEl.getBoundingClientRect();
 
-        const x1 = outRect.left + outRect.width / 2 - canvasRect.left + canvas.scrollLeft;
-        const y1 = outRect.top + outRect.height / 2 - canvasRect.top + canvas.scrollTop;
+        const x1 = (outPort ? sRect.left + sRect.width / 2 : sRect.right) - wrapperRect.left;
+        const y1 = (sRect.top + sRect.height / 2) - wrapperRect.top;
 
-        let targetIds = Array.isArray(srcItem.targets) && srcItem.targets.length ? srcItem.targets : nextItems.map(n => n.id);
+        let validTargets = (Array.isArray(srcItem.targets) && srcItem.targets.length)
+          ? srcItem.targets.filter(tid => nextItemIds.has(tid))
+          : [];
+        if (validTargets.length === 0 && nextItems.length > 0) {
+          validTargets = nextItems.map(it => it.id);
+        }
 
-        targetIds.forEach(tId => {
+        validTargets.forEach(tId => {
           const tgtEl = document.getElementById(tId);
           if (!tgtEl) return;
           const inPort = tgtEl.querySelector('.ts-odn-port-in');
-          if (!inPort) return;
-          const inRect = inPort.getBoundingClientRect();
+          const tRect = (inPort && inPort.offsetParent !== null) ? inPort.getBoundingClientRect() : tgtEl.getBoundingClientRect();
 
-          const x2 = inRect.left + inRect.width / 2 - canvasRect.left + canvas.scrollLeft;
-          const y2 = inRect.top + inRect.height / 2 - canvasRect.top + canvas.scrollTop;
+          const x2 = (inPort ? tRect.left + tPort.width / 2 : tRect.left) - wrapperRect.left;
+          const y2 = (tRect.top + tRect.height / 2) - wrapperRect.top;
 
-          const dx = Math.max(30, (x2 - x1) * 0.45);
+          if (x1 === 0 && y1 === 0 && x2 === 0 && y2 === 0) return;
+
+          const dx = Math.max(35, (x2 - x1) * 0.45);
           const d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
 
           const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
           path.setAttribute('d', d);
           path.setAttribute('fill', 'none');
-          path.setAttribute('stroke', 'url(#ts-odn-grad)');
+          path.setAttribute('stroke', lineColor);
           path.setAttribute('stroke-width', '2.5');
-          path.setAttribute('stroke-dasharray', 'none');
+          path.setAttribute('stroke-linecap', 'round');
           path.setAttribute('opacity', '0.85');
-          path.setAttribute('marker-end', 'url(#ts-odn-arrow)');
+          path.setAttribute('data-source', srcItem.id);
+          path.setAttribute('data-target', tId);
+          path.style.filter = `drop-shadow(0 1px 3px ${lineColor}50)`;
+          path.style.transition = 'stroke-width 0.2s, opacity 0.2s, stroke 0.2s';
           svgGroup.appendChild(path);
+
+          const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+          arrow.setAttribute('points', `${x2 - 8},${y2 - 3.5} ${x2 - 1},${y2} ${x2 - 8},${y2 + 3.5}`);
+          arrow.setAttribute('fill', lineColor);
+          arrow.setAttribute('opacity', '0.9');
+          arrow.setAttribute('data-source', srcItem.id);
+          arrow.setAttribute('data-target', tId);
+          arrow.style.transition = 'opacity 0.2s, fill 0.2s';
+          svgGroup.appendChild(arrow);
         });
       });
     }
@@ -693,15 +724,57 @@
       });
     });
 
-    // Canvas scroll updates SVG
+    // Canvas scroll & window resize
     const canvas = document.getElementById('ts-odn-canvas');
     if (canvas) {
-      canvas.addEventListener('scroll', () => updateSvg());
+      canvas.addEventListener('scroll', () => updateSvg(), { passive: true });
+    }
+    window.addEventListener('resize', () => updateSvg(), { passive: true });
+
+    const colsWrapper = document.getElementById('ts-odn-cols-wrapper');
+    if (window.ResizeObserver && colsWrapper) {
+      if (_resizeObserver) _resizeObserver.disconnect();
+      _resizeObserver = new ResizeObserver(() => updateSvg());
+      _resizeObserver.observe(colsWrapper);
     }
 
-    if (_resizeObserver) _resizeObserver.disconnect();
-    _resizeObserver = new ResizeObserver(() => updateSvg());
-    if (canvas) _resizeObserver.observe(canvas);
+    // Hover interaction
+    document.querySelectorAll('.ts-odn-node').forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        const nodeId = card.id;
+        const paths = document.querySelectorAll('#ts-odn-paths [data-source], #ts-odn-paths [data-target]');
+        paths.forEach(el => {
+          const isConnected = (el.getAttribute('data-source') === nodeId || el.getAttribute('data-target') === nodeId);
+          if (isConnected) {
+            if (el.tagName === 'path') {
+              el.setAttribute('stroke-width', '3.5');
+              el.setAttribute('opacity', '1');
+            } else {
+              el.setAttribute('opacity', '1');
+            }
+          } else {
+            el.setAttribute('opacity', '0.2');
+          }
+        });
+      });
+      card.addEventListener('mouseleave', () => {
+        const paths = document.querySelectorAll('#ts-odn-paths [data-source], #ts-odn-paths [data-target]');
+        paths.forEach(el => {
+          if (el.tagName === 'path') {
+            el.setAttribute('stroke-width', '2.5');
+            el.setAttribute('opacity', '0.85');
+          } else {
+            el.setAttribute('opacity', '0.9');
+          }
+        });
+      });
+    });
+
+    document.querySelectorAll('#ts-odn-canvas img').forEach(img => {
+      if (!img.complete) {
+        img.addEventListener('load', () => updateSvg(), { once: true });
+      }
+    });
   }
 
   function openAddItemModal(sIdx) {
