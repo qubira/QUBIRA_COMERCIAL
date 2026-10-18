@@ -2098,11 +2098,14 @@ function thumbUrl(url, size = 64) {
 }
 
 function normalizeTechPlans(t) {
+  const defaultMoneda = t.moneda || 'PEN';
+  const defaultPeriodo = t.periodo || 'mes';
   if (Array.isArray(t.plans) && t.plans.length > 0) {
     return t.plans.map(p => ({
       name: p.name ?? '',
       costo: p.costo ?? null,
-      moneda: p.moneda || t.moneda || 'PEN',
+      moneda: p.moneda || defaultMoneda,
+      periodo: p.periodo || defaultPeriodo,
       margen_min: p.margen_min ?? null,
       margen_max: p.margen_max ?? null,
     }));
@@ -2110,7 +2113,8 @@ function normalizeTechPlans(t) {
   return [{
     name: '',
     costo: t.costo ?? null,
-    moneda: t.moneda || 'PEN',
+    moneda: defaultMoneda,
+    periodo: defaultPeriodo,
     margen_min: t.margen_min ?? null,
     margen_max: t.margen_max ?? null,
   }];
@@ -2122,10 +2126,11 @@ const TC_CURRENCY_SYMBOLS = {
   EUR: '€'
 };
 
-function fmtTechCurrency(v, moneda = 'PEN') {
+function fmtTechCurrency(v, moneda = 'PEN', periodo = null) {
   if (v == null || v === '') return '—';
   const sym = TC_CURRENCY_SYMBOLS[moneda] || 'S/';
-  return `${sym} ${Number(v).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const perStr = periodo ? (periodo === 'año' ? ' / año' : ' / mes') : '';
+  return `${sym} ${Number(v).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${perStr}`;
 }
 
 function renderOdnTechCatalogLists() {
@@ -2149,10 +2154,12 @@ function renderOdnTechCatalogLists() {
         costBadge = `<span class="badge" style="background:#eef2ff;color:#4f46e5;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px">${plans.length} planes</span>`;
       } else if (plans[0]?.costo != null && plans[0]?.costo !== '') {
         const sym = TC_CURRENCY_SYMBOLS[plans[0].moneda || t.moneda || 'PEN'] || 'S/';
-        costBadge = `<span class="badge" style="background:#ecfdf5;color:#059669;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px">${sym} ${Number(plans[0].costo).toFixed(2)}</span>`;
+        const per = (plans[0].periodo || t.periodo) === 'año' ? '/año' : '/mes';
+        costBadge = `<span class="badge" style="background:#ecfdf5;color:#059669;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px">${sym} ${Number(plans[0].costo).toFixed(2)} ${per}</span>`;
       } else if (t.costo != null && t.costo !== '') {
         const sym = TC_CURRENCY_SYMBOLS[t.moneda || 'PEN'] || 'S/';
-        costBadge = `<span class="badge" style="background:#ecfdf5;color:#059669;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px">${sym} ${Number(t.costo).toFixed(2)}</span>`;
+        const per = t.periodo === 'año' ? '/año' : '/mes';
+        costBadge = `<span class="badge" style="background:#ecfdf5;color:#059669;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px">${sym} ${Number(t.costo).toFixed(2)} ${per}</span>`;
       }
       return `
       <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border)">
@@ -2292,12 +2299,20 @@ function closeTechCostModal() {
 }
 
 function techPropuestaLabel(t) {
-  if (t.costo == null || t.costo === '') return '—';
+  const hasCost = t.costo !== null && t.costo !== '' && t.costo !== undefined;
+  const hasMin = t.margen_min !== null && t.margen_min !== '' && t.margen_min !== undefined;
+  const hasMax = t.margen_max !== null && t.margen_max !== '' && t.margen_max !== undefined;
+  if (!hasMin && !hasMax && !hasCost) return '—';
+
   const moneda = t.moneda || 'PEN';
-  const costo = Number(t.costo) || 0;
-  const min = costo + (Number(t.margen_min) || 0);
-  const max = costo + (Number(t.margen_max) || 0);
-  return `${fmtTechCurrency(min, moneda)} – ${fmtTechCurrency(max, moneda)}`;
+  const periodo = t.periodo || 'mes';
+  const min = Number(t.margen_min) || 0;
+  const max = Number(t.margen_max) || 0;
+  const diff = Math.abs(max - min);
+  const sym = TC_CURRENCY_SYMBOLS[moneda] || 'S/';
+  const periodoStr = periodo === 'año' ? ' / año' : ' / mes';
+  const fDiff = Number(diff).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `${sym} ${fDiff}${periodoStr}`;
 }
 
 function renderOdnTechCostBody() {
@@ -2399,6 +2414,7 @@ function toolRowsOdnHtml(t, plans) {
     const isFirst = idx === 0;
     const planName = p.name ? esc(p.name) : (plans.length > 1 ? `Plan ${idx + 1}` : '—');
     const moneda = p.moneda || t.moneda || 'PEN';
+    const periodo = p.periodo || t.periodo || 'mes';
     return `
     <tr data-tc-plan-row data-plan-index="${idx}">
       ${isFirst ? `
@@ -2412,7 +2428,7 @@ function toolRowsOdnHtml(t, plans) {
         </div>
       </td>` : ''}
       <td style="padding:7px 10px;border-bottom:1px solid var(--border);font-weight:500;color:${p.name ? 'var(--text)' : 'var(--text-muted)'}">${planName}</td>
-      <td style="padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text-muted);white-space:nowrap">${fmtTechCurrency(p.costo, moneda)}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text-muted);white-space:nowrap">${fmtTechCurrency(p.costo, moneda, periodo)}</td>
       <td style="padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text-muted);white-space:nowrap">${fmtTechCurrency(p.margen_min, moneda)}</td>
       <td style="padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text-muted);white-space:nowrap">${fmtTechCurrency(p.margen_max, moneda)}</td>
       <td style="padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap;font-weight:600">${techPropuestaLabel(p)}</td>
@@ -2425,6 +2441,7 @@ function techCostLanguageRow(t) {
     ? `<div style="width:26px;height:26px;border-radius:6px;background:#fff;border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;padding:2px;flex-shrink:0"><img src="${thumbUrl(t.image_url, 64)}" width="22" height="22" loading="lazy" decoding="async" style="max-width:100%;max-height:100%;object-fit:contain" alt="${esc(t.name)}"></div>`
     : `<span style="width:26px;height:26px;border-radius:6px;background:var(--bg-light,#eef2ff);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--primary)">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
   const moneda = t.moneda || 'PEN';
+  const periodo = t.periodo || 'mes';
   return `
   <tr data-tc-row="${esc(t.id)}" data-category="language" data-name="${esc((t.name || '').toLowerCase())}" style="border-top:1px solid var(--border)">
     <td style="padding:7px 10px">
@@ -2433,7 +2450,7 @@ function techCostLanguageRow(t) {
         <span style="white-space:nowrap;font-weight:500">${esc(t.name)}</span>
       </div>
     </td>
-    <td style="padding:7px 10px;color:var(--text-muted);white-space:nowrap">${fmtTechCurrency(t.costo, moneda)}</td>
+    <td style="padding:7px 10px;color:var(--text-muted);white-space:nowrap">${fmtTechCurrency(t.costo, moneda, periodo)}</td>
     <td style="padding:7px 10px;color:var(--text-muted);white-space:nowrap">${fmtTechCurrency(t.margen_min, moneda)}</td>
     <td style="padding:7px 10px;color:var(--text-muted);white-space:nowrap">${fmtTechCurrency(t.margen_max, moneda)}</td>
     <td style="padding:7px 10px;white-space:nowrap;font-weight:600">${techPropuestaLabel(t)}</td>
