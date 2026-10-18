@@ -66,12 +66,70 @@
       }
       .ts-odn-canvas {
         flex: 1;
-        overflow: auto;
+        overflow-x: auto;
+        overflow-y: auto;
         padding: 24px;
         background: radial-gradient(#e5e7eb 1px, transparent 1px) 0 0 / 22px 22px, #f8fafc;
         position: relative;
         min-height: 480px;
+        max-height: 75vh;
+        scroll-behavior: smooth;
+        cursor: grab;
       }
+      .ts-odn-canvas.is-dragging {
+        cursor: grabbing !important;
+        scroll-behavior: auto;
+      }
+      /* Barra de scroll horizontal SIEMPRE VISIBLE y fácil de manipular */
+      .ts-odn-canvas::-webkit-scrollbar {
+        width: 14px;
+        height: 14px;
+      }
+      .ts-odn-canvas::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+      }
+      .ts-odn-canvas::-webkit-scrollbar-thumb {
+        background: #0f766e;
+        border-radius: 8px;
+        border: 2px solid #f1f5f9;
+      }
+      .ts-odn-canvas::-webkit-scrollbar-thumb:hover {
+        background: #0d5f58;
+      }
+      .ts-odn-nav-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(8px);
+        border: 1.5px solid #94a3b8;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+        color: #0f766e;
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 40;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
+      }
+      .ts-odn-nav-arrow:hover {
+        background: #0f766e;
+        color: #ffffff;
+        border-color: #0f766e;
+        box-shadow: 0 6px 20px rgba(15, 118, 110, 0.45);
+        transform: translateY(-50%) scale(1.15);
+      }
+      .ts-odn-nav-left { left: 14px; }
+      .ts-odn-nav-right { right: 14px; }
       .ts-odn-columns {
         display: flex;
         align-items: flex-start;
@@ -299,6 +357,15 @@
           </div>
 
           <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px">
+            <!-- Navegación rápida horizontal -->
+            <div style="display:flex;align-items:center;gap:3px;border:1px solid #cbd5e1;border-radius:8px;padding:2px 4px;background:#ffffff">
+              <span style="font-size:10px;font-weight:700;color:var(--text-muted);padding:0 3px">ÁRBOL:</span>
+              <button type="button" id="ts-odn-btn-scroll-start" class="btn btn-outline" style="padding:3px 7px;font-size:11px;font-weight:600" title="Ver inicio (C1)">⏮ C1</button>
+              <button type="button" id="ts-odn-btn-scroll-prev" class="btn btn-outline" style="padding:3px 8px;font-size:11px;font-weight:700" title="Desplazar a la izquierda">‹</button>
+              <button type="button" id="ts-odn-btn-scroll-next" class="btn btn-outline" style="padding:3px 8px;font-size:11px;font-weight:700" title="Desplazar a la derecha">›</button>
+              <button type="button" id="ts-odn-btn-scroll-end" class="btn btn-outline" style="padding:3px 7px;font-size:11px;font-weight:600" title="Ver final">Fin ⏭</button>
+            </div>
+
             <button type="button" id="ts-odn-btn-new" class="btn btn-outline" style="padding:5px 12px;font-size:12px">
               + Nueva Ramificación
             </button>
@@ -335,14 +402,24 @@
         </div>
 
         <!-- Canvas horizontal con ramificaciones SVG -->
-        <div class="ts-odn-canvas" id="ts-odn-canvas">
-          <div id="ts-odn-content-wrap" style="position:relative;min-width:max-content;display:inline-block;min-height:100%">
-            <svg id="ts-odn-svg" style="position:absolute;inset:0;pointer-events:none;width:100%;height:100%;min-width:100%;min-height:100%;z-index:10;overflow:visible">
-              <g id="ts-odn-paths"></g>
-            </svg>
+        <div style="position:relative;overflow:hidden;flex:1;display:flex;flex-direction:column">
+          <!-- Botones flotantes de desplazamiento rápido -->
+          <button type="button" id="ts-odn-scroll-left" class="ts-odn-nav-arrow ts-odn-nav-left" title="Desplazar a la izquierda (←)">
+            ‹
+          </button>
+          <button type="button" id="ts-odn-scroll-right" class="ts-odn-nav-arrow ts-odn-nav-right" title="Desplazar a la derecha (→)">
+            ›
+          </button>
 
-            <div class="ts-odn-columns" id="ts-odn-cols-wrapper" style="position:relative">
-              ${(_activeStack.stages || []).map((stage, sIdx) => renderStageColumn(stage, sIdx)).join('')}
+          <div class="ts-odn-canvas" id="ts-odn-canvas">
+            <div id="ts-odn-content-wrap" style="position:relative;min-width:max-content;display:inline-block;min-height:100%">
+              <svg id="ts-odn-svg" style="position:absolute;inset:0;pointer-events:none;width:100%;height:100%;min-width:100%;min-height:100%;z-index:10;overflow:visible">
+                <g id="ts-odn-paths"></g>
+              </svg>
+
+              <div class="ts-odn-columns" id="ts-odn-cols-wrapper" style="position:relative">
+                ${(_activeStack.stages || []).map((stage, sIdx) => renderStageColumn(stage, sIdx)).join('')}
+              </div>
             </div>
           </div>
         </div>
@@ -996,6 +1073,82 @@
         openTargetsModal(sIdx, itIdx);
       });
     });
+
+    // Botones de navegación horizontal del árbol
+    document.getElementById('ts-odn-scroll-left')?.addEventListener('click', () => {
+      const c = document.getElementById('ts-odn-canvas');
+      if (c) c.scrollBy({ left: -380, behavior: 'smooth' });
+    });
+    document.getElementById('ts-odn-scroll-right')?.addEventListener('click', () => {
+      const c = document.getElementById('ts-odn-canvas');
+      if (c) c.scrollBy({ left: 380, behavior: 'smooth' });
+    });
+    document.getElementById('ts-odn-btn-scroll-prev')?.addEventListener('click', () => {
+      const c = document.getElementById('ts-odn-canvas');
+      if (c) c.scrollBy({ left: -380, behavior: 'smooth' });
+    });
+    document.getElementById('ts-odn-btn-scroll-next')?.addEventListener('click', () => {
+      const c = document.getElementById('ts-odn-canvas');
+      if (c) c.scrollBy({ left: 380, behavior: 'smooth' });
+    });
+    document.getElementById('ts-odn-btn-scroll-start')?.addEventListener('click', () => {
+      const c = document.getElementById('ts-odn-canvas');
+      if (c) c.scrollTo({ left: 0, behavior: 'smooth' });
+    });
+    document.getElementById('ts-odn-btn-scroll-end')?.addEventListener('click', () => {
+      const c = document.getElementById('ts-odn-canvas');
+      if (c) c.scrollTo({ left: c.scrollWidth, behavior: 'smooth' });
+    });
+
+    // Arrastre con el ratón (Drag to pan) y desplazamiento con rueda
+    const cEl = document.getElementById('ts-odn-canvas');
+    if (cEl) {
+      let isDown = false;
+      let startX = 0;
+      let startY = 0;
+      let sLeft = 0;
+      let sTop = 0;
+
+      cEl.addEventListener('mousedown', e => {
+        if (e.target.closest('button, input, select, textarea, a, .ts-odn-node, .ts-odn-port-in, .ts-odn-port-out, .ts-odn-col-header, .ts-odn-nav-arrow')) return;
+        isDown = true;
+        startX = e.pageX - cEl.offsetLeft;
+        startY = e.pageY - cEl.offsetTop;
+        sLeft = cEl.scrollLeft;
+        sTop = cEl.scrollTop;
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isDown) {
+          isDown = false;
+          cEl.classList.remove('is-dragging');
+        }
+      });
+
+      window.addEventListener('mousemove', e => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - cEl.offsetLeft;
+        const y = e.pageY - cEl.offsetTop;
+        const walkX = (x - startX) * 1.5;
+        const walkY = (y - startY) * 1.5;
+        if (Math.abs(walkX) > 3 || Math.abs(walkY) > 3) {
+          cEl.classList.add('is-dragging');
+        }
+        cEl.scrollLeft = sLeft - walkX;
+        cEl.scrollTop = sTop - walkY;
+      });
+
+      cEl.addEventListener('wheel', e => {
+        if (!e.ctrlKey) {
+          if (Math.abs(e.deltaX) > 0) {
+            cEl.scrollLeft += e.deltaX;
+          } else if (e.shiftKey) {
+            cEl.scrollLeft += e.deltaY;
+          }
+        }
+      }, { passive: true });
+    }
 
     // Canvas scroll & window resize
     const canvas = document.getElementById('ts-odn-canvas');
