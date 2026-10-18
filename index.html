@@ -2091,6 +2091,16 @@ async function renderCostoHerramientas() {
   }
 }
 
+let _odnTechCostFilter = 'all';
+
+function thumbUrl(url, size = 64) {
+  if (!url) return '';
+  if (url.includes('res.cloudinary.com') && url.includes('/image/upload/')) {
+    return url.replace('/image/upload/', `/image/upload/w_${size},h_${size},c_fit,f_auto,q_auto/`);
+  }
+  return url;
+}
+
 function renderOdnTechCatalogLists() {
   const renderList = (items, targetId, countId) => {
     const el = document.getElementById(targetId);
@@ -2103,7 +2113,7 @@ function renderOdnTechCatalogLists() {
     }
     el.innerHTML = items.map(t => {
       const avatar = t.image_url
-        ? `<img src="${esc(t.image_url)}" style="width:26px;height:26px;border-radius:6px;object-fit:cover;flex-shrink:0" alt="">`
+        ? `<img src="${thumbUrl(t.image_url, 64)}" width="26" height="26" loading="lazy" decoding="async" style="width:26px;height:26px;border-radius:6px;object-fit:contain;flex-shrink:0" alt="${esc(t.name)}">`
         : `<span style="width:26px;height:26px;border-radius:6px;background:var(--bg-light,#eef2ff);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--primary);flex-shrink:0">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
       const costBadge = t.costo != null && t.costo !== ''
         ? `<span class="badge" style="background:#ecfdf5;color:#059669;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px">S/ ${Number(t.costo).toFixed(2)}</span>`
@@ -2120,6 +2130,50 @@ function renderOdnTechCatalogLists() {
   renderList(_techCatalogCache.tool, 'odn-tech-list-tool', 'odn-tech-count-tool');
 }
 
+function setOdnTechCostTab(filter) {
+  _odnTechCostFilter = filter;
+  const lSec = document.getElementById('odn-tc-sec-lang');
+  const tSec = document.getElementById('odn-tc-sec-tool');
+  const btnAll = document.getElementById('odn-tc-tab-all');
+  const btnLang = document.getElementById('odn-tc-tab-lang');
+  const btnTool = document.getElementById('odn-tc-tab-tool');
+
+  if (lSec) lSec.style.display = (filter === 'all' || filter === 'language') ? 'block' : 'none';
+  if (tSec) tSec.style.display = (filter === 'all' || filter === 'tool') ? 'block' : 'none';
+
+  [btnAll, btnLang, btnTool].forEach(btn => {
+    if (btn) {
+      btn.style.background = 'transparent';
+      btn.style.borderColor = 'var(--border)';
+      btn.style.color = 'var(--text-muted)';
+    }
+  });
+  const activeBtn = filter === 'language' ? btnLang : (filter === 'tool' ? btnTool : btnAll);
+  if (activeBtn) {
+    activeBtn.style.background = 'var(--primary)';
+    activeBtn.style.borderColor = 'var(--primary)';
+    activeBtn.style.color = '#fff';
+  }
+}
+
+function renderOdnTechCostBody() {
+  const body = document.getElementById('tech-cost-body');
+  const langs = _techCatalogCache.language || [];
+  const tools = _techCatalogCache.tool || [];
+  const total = langs.length + tools.length;
+
+  body.innerHTML = `
+    <div style="display:flex;gap:8px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px">
+      <button type="button" id="odn-tc-tab-all" onclick="setOdnTechCostTab('all')" class="btn" style="padding:4px 12px;font-size:12px;border-radius:6px;background:var(--primary);color:#fff;border:1px solid var(--primary);cursor:pointer">Todos (${total})</button>
+      <button type="button" id="odn-tc-tab-lang" onclick="setOdnTechCostTab('language')" class="btn" style="padding:4px 12px;font-size:12px;border-radius:6px;background:transparent;color:var(--text-muted);border:1px solid var(--border);cursor:pointer">Lenguajes (${langs.length})</button>
+      <button type="button" id="odn-tc-tab-tool" onclick="setOdnTechCostTab('tool')" class="btn" style="padding:4px 12px;font-size:12px;border-radius:6px;background:transparent;color:var(--text-muted);border:1px solid var(--border);cursor:pointer">Herramientas (${tools.length})</button>
+    </div>
+    <div id="odn-tc-sec-lang">${techCostSection('Lenguajes', 'language')}</div>
+    <div id="odn-tc-sec-tool">${techCostSection('Herramientas', 'tool')}</div>
+  `;
+  setOdnTechCostTab(_odnTechCostFilter);
+}
+
 async function openTechCostModal() {
   document.getElementById('tech-cost-modal').classList.add('open');
   const body = document.getElementById('tech-cost-body');
@@ -2131,7 +2185,7 @@ async function openTechCostModal() {
       tool: rows.filter(r => r.category === 'tool'),
     };
     renderOdnTechCatalogLists();
-    body.innerHTML = techCostSection('Lenguajes', 'language') + techCostSection('Herramientas', 'tool');
+    renderOdnTechCostBody();
   } catch (err) {
     if (err.message !== 'SESSION_EXPIRED') {
       body.innerHTML = `<p style="color:var(--danger)">${esc(err.message || 'Error al cargar')}</p>`;
@@ -2182,7 +2236,7 @@ function techCostSection(label, category) {
 
 function techCostRow(t) {
   const avatar = t.image_url
-    ? `<img src="${esc(t.image_url)}" style="width:22px;height:22px;border-radius:5px;object-fit:cover" alt="">`
+    ? `<img src="${thumbUrl(t.image_url, 64)}" width="22" height="22" loading="lazy" decoding="async" style="width:22px;height:22px;border-radius:5px;object-fit:contain" alt="${esc(t.name)}">`
     : `<span style="width:22px;height:22px;border-radius:5px;background:var(--bg-light,#eef2ff);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--primary)">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
   return `
   <tr style="border-top:1px solid var(--border)">
