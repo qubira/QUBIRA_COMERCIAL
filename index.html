@@ -2097,6 +2097,23 @@ function thumbUrl(url, size = 64) {
   return url;
 }
 
+function normalizeTechPlans(t) {
+  if (Array.isArray(t.plans) && t.plans.length > 0) {
+    return t.plans.map(p => ({
+      name: p.name ?? '',
+      costo: p.costo ?? null,
+      margen_min: p.margen_min ?? null,
+      margen_max: p.margen_max ?? null,
+    }));
+  }
+  return [{
+    name: '',
+    costo: t.costo ?? null,
+    margen_min: t.margen_min ?? null,
+    margen_max: t.margen_max ?? null,
+  }];
+}
+
 function renderOdnTechCatalogLists() {
   const renderList = (items, targetId, countId) => {
     const el = document.getElementById(targetId);
@@ -2111,9 +2128,16 @@ function renderOdnTechCatalogLists() {
       const avatar = t.image_url
         ? `<div style="width:28px;height:28px;border-radius:6px;background:#fff;border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;padding:2px;flex-shrink:0"><img src="${thumbUrl(t.image_url, 64)}" width="24" height="24" loading="lazy" decoding="async" style="max-width:100%;max-height:100%;object-fit:contain" alt="${esc(t.name)}"></div>`
         : `<span style="width:28px;height:28px;border-radius:6px;background:var(--bg-light,#eef2ff);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--primary);flex-shrink:0">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
-      const costBadge = t.costo != null && t.costo !== ''
-        ? `<span class="badge" style="background:#ecfdf5;color:#059669;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px">S/ ${Number(t.costo).toFixed(2)}</span>`
-        : '';
+      
+      const plans = normalizeTechPlans(t);
+      let costBadge = '';
+      if (t.category === 'tool' && plans.length > 1) {
+        costBadge = `<span class="badge" style="background:#eef2ff;color:#4f46e5;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px">${plans.length} planes</span>`;
+      } else if (plans[0]?.costo != null && plans[0]?.costo !== '') {
+        costBadge = `<span class="badge" style="background:#ecfdf5;color:#059669;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px">S/ ${Number(plans[0].costo).toFixed(2)}</span>`;
+      } else if (t.costo != null && t.costo !== '') {
+        costBadge = `<span class="badge" style="background:#ecfdf5;color:#059669;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px">S/ ${Number(t.costo).toFixed(2)}</span>`;
+      }
       return `
       <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border)">
         ${avatar}
@@ -2144,20 +2168,35 @@ function filterOdnTechCost() {
   let langVisible = 0;
   let toolVisible = 0;
 
-  const rows = document.querySelectorAll('#tech-cost-body [data-tc-row]');
-  rows.forEach(row => {
+  // 1. Lenguajes
+  const langRows = document.querySelectorAll('#tech-cost-body [data-tc-row]');
+  langRows.forEach(row => {
     const name = row.dataset.name || '';
-    const cat = row.dataset.category;
     const matchesQ = !_odnTechSearchQuery || name.includes(_odnTechSearchQuery);
-    const matchesTab = (_odnTechCostFilter === 'all' || cat === _odnTechCostFilter);
+    const matchesTab = (_odnTechCostFilter === 'all' || _odnTechCostFilter === 'language');
 
     if (matchesQ) {
-      if (cat === 'language') langVisible++;
-      if (cat === 'tool') toolVisible++;
+      langVisible++;
       totalVisible++;
     }
-
     row.style.display = (matchesQ && matchesTab) ? '' : 'none';
+  });
+
+  // 2. Herramientas
+  const toolGroups = document.querySelectorAll('#tech-cost-body [data-tc-group]');
+  toolGroups.forEach(group => {
+    const name = group.dataset.name || '';
+    const toolId = group.dataset.tcGroup;
+    const toolItem = (_techCatalogCache.tool || []).find(x => x.id === toolId);
+    const plansNames = (toolItem?.plans || []).map(p => (p.name || '').toLowerCase()).join(' ');
+    const matchesQ = !_odnTechSearchQuery || name.includes(_odnTechSearchQuery) || plansNames.includes(_odnTechSearchQuery);
+    const matchesTab = (_odnTechCostFilter === 'all' || _odnTechCostFilter === 'tool');
+
+    if (matchesQ) {
+      toolVisible++;
+      totalVisible++;
+    }
+    group.style.display = (matchesQ && matchesTab) ? '' : 'none';
   });
 
   const cntAll = document.getElementById('odn-tc-cnt-all');
@@ -2213,6 +2252,41 @@ function setOdnTechCostTab(filter) {
   filterOdnTechCost();
 }
 
+async function openTechCostModal() {
+  document.getElementById('tech-cost-modal').classList.add('open');
+  const body = document.getElementById('tech-cost-body');
+  body.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:24px 0">Cargando…</p>';
+  try {
+    const rows = await qcApiFetch('/api/comercial/tech-catalog');
+    _techCatalogCache = {
+      language: rows.filter(r => r.category === 'language'),
+      tool: rows.filter(r => r.category === 'tool'),
+    };
+    renderOdnTechCatalogLists();
+    renderOdnTechCostBody();
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') {
+      body.innerHTML = `<p style="color:var(--danger)">${esc(err.message || 'Error al cargar')}</p>`;
+    }
+  }
+}
+
+function closeTechCostModal() {
+  document.getElementById('tech-cost-modal').classList.remove('open');
+}
+
+function fmtTechS(v) {
+  return v == null || v === '' ? '—' : `S/ ${Number(v).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function techPropuestaLabel(t) {
+  if (t.costo == null || t.costo === '') return '—';
+  const costo = Number(t.costo) || 0;
+  const min = costo + (Number(t.margen_min) || 0);
+  const max = costo + (Number(t.margen_max) || 0);
+  return `${fmtTechS(min)} – ${fmtTechS(max)}`;
+}
+
 function renderOdnTechCostBody() {
   const body = document.getElementById('tech-cost-body');
   const langs = _techCatalogCache.language || [];
@@ -2251,61 +2325,32 @@ function renderOdnTechCostBody() {
   setOdnTechCostTab(_odnTechCostFilter);
 }
 
-async function openTechCostModal() {
-  document.getElementById('tech-cost-modal').classList.add('open');
-  const body = document.getElementById('tech-cost-body');
-  body.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:24px 0">Cargando…</p>';
-  try {
-    const rows = await qcApiFetch('/api/comercial/tech-catalog');
-    _techCatalogCache = {
-      language: rows.filter(r => r.category === 'language'),
-      tool: rows.filter(r => r.category === 'tool'),
-    };
-    renderOdnTechCatalogLists();
-    renderOdnTechCostBody();
-  } catch (err) {
-    if (err.message !== 'SESSION_EXPIRED') {
-      body.innerHTML = `<p style="color:var(--danger)">${esc(err.message || 'Error al cargar')}</p>`;
-    }
-  }
-}
-
-function closeTechCostModal() {
-  document.getElementById('tech-cost-modal').classList.remove('open');
-}
-
-function fmtTechS(v) {
-  return v == null || v === '' ? '—' : `S/ ${Number(v).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-function techPropuestaLabel(t) {
-  if (t.costo == null || t.costo === '') return '—';
-  const costo = Number(t.costo) || 0;
-  const min = costo + (Number(t.margen_min) || 0);
-  const max = costo + (Number(t.margen_max) || 0);
-  return `${fmtTechS(min)} – ${fmtTechS(max)}`;
-}
-
 function techCostSection(label, category) {
   const items = _techCatalogCache[category] || [];
+  const isTool = category === 'tool';
   return `
   <div style="margin-bottom:18px">
-    <h4 style="font-size:13.5px;font-weight:700;margin-bottom:8px">${label}</h4>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <h4 style="font-size:13.5px;font-weight:700;margin:0">${label}</h4>
+      ${isTool ? '<span style="font-size:11.5px;color:var(--text-muted)">Planes y propuestas por herramienta</span>' : ''}
+    </div>
     ${items.length === 0 ? '<p style="font-size:12px;color:var(--text-muted)">Sin registrar</p>' : `
     <div style="overflow-x:auto;border:1px solid var(--border);border-radius:10px" id="odn-tc-wrap-${category}">
       <table style="width:100%;border-collapse:collapse;font-size:12.5px">
         <thead>
           <tr style="background:var(--bg-light,#f8fafc);color:var(--text-muted);text-transform:uppercase;font-size:10.5px">
             <th style="text-align:left;padding:8px 10px">Herramienta</th>
+            ${isTool ? '<th style="text-align:left;padding:8px 10px">Plan</th>' : ''}
             <th style="text-align:left;padding:8px 10px">Costo (S/)</th>
             <th style="text-align:left;padding:8px 10px">Margen mín (S/)</th>
             <th style="text-align:left;padding:8px 10px">Margen máx (S/)</th>
             <th style="text-align:left;padding:8px 10px">Propuesta (S/)</th>
           </tr>
         </thead>
+        ${isTool ? items.map(t => toolGroupOdnHtml(t)).join('') : `
         <tbody>
-          ${items.map(t => techCostRow(t, category)).join('')}
-        </tbody>
+          ${items.map(t => techCostLanguageRow(t)).join('')}
+        </tbody>`}
       </table>
     </div>
     <div id="odn-tc-empty-${category}" style="display:none;padding:16px;text-align:center;font-size:12px;color:var(--text-muted);background:var(--bg-card2,#f9fafb);border-radius:8px;border:1px dashed var(--border);margin-top:8px">
@@ -2314,12 +2359,50 @@ function techCostSection(label, category) {
   </div>`;
 }
 
-function techCostRow(t, category) {
+function toolGroupOdnHtml(t) {
+  const plans = normalizeTechPlans(t);
+  t.plans = plans;
+  return `
+  <tbody data-tc-group="${esc(t.id)}" data-category="tool" data-name="${esc((t.name || '').toLowerCase())}" style="border-top:1px solid var(--border)">
+    ${toolRowsOdnHtml(t, plans)}
+  </tbody>`;
+}
+
+function toolRowsOdnHtml(t, plans) {
+  const avatar = t.image_url
+    ? `<div style="width:26px;height:26px;border-radius:6px;background:#fff;border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;padding:2px;flex-shrink:0"><img src="${thumbUrl(t.image_url, 64)}" width="22" height="22" loading="lazy" decoding="async" style="max-width:100%;max-height:100%;object-fit:contain" alt="${esc(t.name)}"></div>`
+    : `<span style="width:26px;height:26px;border-radius:6px;background:var(--bg-light,#eef2ff);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--primary)">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
+
+  return plans.map((p, idx) => {
+    const isFirst = idx === 0;
+    const planName = p.name ? esc(p.name) : (plans.length > 1 ? `Plan ${idx + 1}` : '—');
+    return `
+    <tr data-tc-plan-row data-plan-index="${idx}">
+      ${isFirst ? `
+      <td rowspan="${plans.length}" style="padding:8px 10px;vertical-align:middle;background:#fff;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:10px">
+          ${avatar}
+          <div>
+            <span style="white-space:nowrap;font-weight:600;display:block">${esc(t.name)}</span>
+            ${plans.length > 1 ? `<span style="font-size:10.5px;color:var(--text-muted)">${plans.length} planes</span>` : ''}
+          </div>
+        </div>
+      </td>` : ''}
+      <td style="padding:7px 10px;border-bottom:1px solid var(--border);font-weight:500;color:${p.name ? 'var(--text)' : 'var(--text-muted)'}">${planName}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text-muted)">${fmtTechS(p.costo)}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text-muted)">${fmtTechS(p.margen_min)}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text-muted)">${fmtTechS(p.margen_max)}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap;font-weight:600">${techPropuestaLabel(p)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function techCostLanguageRow(t) {
   const avatar = t.image_url
     ? `<div style="width:26px;height:26px;border-radius:6px;background:#fff;border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;padding:2px;flex-shrink:0"><img src="${thumbUrl(t.image_url, 64)}" width="22" height="22" loading="lazy" decoding="async" style="max-width:100%;max-height:100%;object-fit:contain" alt="${esc(t.name)}"></div>`
     : `<span style="width:26px;height:26px;border-radius:6px;background:var(--bg-light,#eef2ff);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--primary)">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
   return `
-  <tr data-tc-row="${esc(t.id)}" data-category="${category}" data-name="${esc((t.name || '').toLowerCase())}" style="border-top:1px solid var(--border)">
+  <tr data-tc-row="${esc(t.id)}" data-category="language" data-name="${esc((t.name || '').toLowerCase())}" style="border-top:1px solid var(--border)">
     <td style="padding:7px 10px">
       <div style="display:flex;align-items:center;gap:10px">
         ${avatar}
