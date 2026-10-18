@@ -229,8 +229,15 @@
     };
   }
 
-  function renderBuilder() {
+  function renderBuilder(scrollOpts = {}) {
     if (!_container || !_activeStack) return;
+
+    // Preservar la posición de scroll del canvas horizontal y de la ventana vertical
+    const prevCanvas = document.getElementById('ts-odn-canvas');
+    const prevScrollLeft = prevCanvas ? prevCanvas.scrollLeft : 0;
+    const prevScrollTop = prevCanvas ? prevCanvas.scrollTop : 0;
+    const prevWinY = window.scrollY;
+    const prevWinX = window.scrollX;
 
     (_activeStack.stages || []).forEach((st, sI) => {
       (st.items || []).forEach((it, itI) => {
@@ -323,6 +330,41 @@
     `;
 
     setupEvents();
+
+    // Restaurar de inmediato y de forma resiliente la posición del canvas
+    const restoreCanvasScroll = () => {
+      const canvas = document.getElementById('ts-odn-canvas');
+      if (!canvas) return;
+      if (scrollOpts && scrollOpts.scrollToEnd) {
+        canvas.scrollLeft = canvas.scrollWidth;
+      } else if (scrollOpts && typeof scrollOpts.scrollToStage === 'number') {
+        const colEl = canvas.querySelector(`[data-stage-index="${scrollOpts.scrollToStage}"]`);
+        if (colEl) {
+          const colLeft = colEl.offsetLeft;
+          const colWidth = colEl.offsetWidth;
+          const canvasWidth = canvas.clientWidth;
+          const isAlreadyVisible = (colLeft >= prevScrollLeft && (colLeft + colWidth) <= (prevScrollLeft + canvasWidth));
+          if (isAlreadyVisible) {
+            canvas.scrollLeft = prevScrollLeft;
+          } else {
+            canvas.scrollLeft = Math.max(0, colLeft - (canvasWidth / 2) + (colWidth / 2));
+          }
+        } else {
+          canvas.scrollLeft = prevScrollLeft;
+        }
+        canvas.scrollTop = prevScrollTop;
+      } else {
+        canvas.scrollLeft = prevScrollLeft;
+        canvas.scrollTop = prevScrollTop;
+      }
+      if (window.scrollY !== prevWinY) window.scrollTo(prevWinX, prevWinY);
+    };
+
+    restoreCanvasScroll();
+    requestAnimationFrame(restoreCanvasScroll);
+    setTimeout(restoreCanvasScroll, 40);
+    setTimeout(restoreCanvasScroll, 120);
+
     updateSvg();
     requestAnimationFrame(() => updateSvg());
     setTimeout(() => updateSvg(), 50);
@@ -721,7 +763,7 @@
         items: []
       });
       cleanStaleTargets();
-      renderBuilder();
+      renderBuilder({ scrollToEnd: true });
     });
 
     // Move column left (←)
@@ -733,7 +775,7 @@
           _activeStack.stages[sIdx] = _activeStack.stages[sIdx - 1];
           _activeStack.stages[sIdx - 1] = temp;
           cleanStaleTargets();
-          renderBuilder();
+          renderBuilder({ scrollToStage: sIdx - 1 });
         }
       });
     });
@@ -747,7 +789,7 @@
           _activeStack.stages[sIdx] = _activeStack.stages[sIdx + 1];
           _activeStack.stages[sIdx + 1] = temp;
           cleanStaleTargets();
-          renderBuilder();
+          renderBuilder({ scrollToStage: sIdx + 1 });
         }
       });
     });
@@ -763,7 +805,7 @@
           items: []
         });
         cleanStaleTargets();
-        renderBuilder();
+        renderBuilder({ scrollToStage: sIdx + 1 });
       });
     });
 
@@ -777,7 +819,7 @@
           items: []
         });
         cleanStaleTargets();
-        renderBuilder();
+        renderBuilder({ scrollToStage: 0 });
       });
     });
 
@@ -837,11 +879,17 @@
 
     // Column titles
     document.querySelectorAll('.ts-odn-col-title').forEach(inp => {
+      inp.addEventListener('input', e => {
+        const sIdx = Number(e.target.dataset.stageIndex);
+        if (_activeStack.stages[sIdx]) {
+          _activeStack.stages[sIdx].title = e.target.value;
+        }
+      });
       inp.addEventListener('change', e => {
         const sIdx = Number(e.target.dataset.stageIndex);
         if (_activeStack.stages[sIdx]) {
           _activeStack.stages[sIdx].title = e.target.value.toUpperCase();
-          renderBuilder();
+          renderBuilder({ scrollToStage: sIdx });
         }
       });
     });
@@ -861,7 +909,7 @@
         if (_activeStack.stages.length <= 2) return;
         _activeStack.stages.splice(sIdx, 1);
         cleanStaleTargets();
-        renderBuilder();
+        renderBuilder({ scrollToStage: Math.max(0, sIdx - 1) });
       });
     });
 
@@ -872,7 +920,7 @@
         const itIdx = Number(e.currentTarget.dataset.itemIndex);
         if (_activeStack.stages[sIdx]) {
           _activeStack.stages[sIdx].items.splice(itIdx, 1);
-          renderBuilder();
+          renderBuilder({ scrollToStage: sIdx });
         }
       });
     });
@@ -902,7 +950,7 @@
           item.plan_name = e.target.value;
         }
 
-        renderBuilder();
+        renderBuilder({ scrollToStage: sIdx });
       });
     });
 
@@ -1030,7 +1078,7 @@
               targets: [],
             });
             close();
-            renderBuilder();
+            renderBuilder({ scrollToStage: sIdx });
           }
         });
       });
@@ -1110,7 +1158,7 @@
         item.targets = checked;
       }
       close();
-      renderBuilder();
+      renderBuilder({ scrollToStage: sIdx });
     });
   }
 
