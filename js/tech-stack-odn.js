@@ -307,11 +307,11 @@
         <!-- Canvas horizontal con ramificaciones SVG -->
         <div class="ts-odn-canvas" id="ts-odn-canvas">
           <div id="ts-odn-content-wrap" style="position:relative;min-width:max-content;display:inline-block;min-height:100%">
-            <svg id="ts-odn-svg" style="position:absolute;inset:0;pointer-events:none;width:100%;height:100%;min-width:100%;min-height:100%;z-index:5;overflow:visible">
+            <svg id="ts-odn-svg" style="position:absolute;inset:0;pointer-events:none;width:100%;height:100%;min-width:100%;min-height:100%;z-index:10;overflow:visible">
               <g id="ts-odn-paths"></g>
             </svg>
 
-            <div class="ts-odn-columns" id="ts-odn-cols-wrapper" style="position:relative;z-index:10">
+            <div class="ts-odn-columns" id="ts-odn-cols-wrapper" style="position:relative">
               ${(_activeStack.stages || []).map((stage, sIdx) => renderStageColumn(stage, sIdx)).join('')}
             </div>
           </div>
@@ -480,8 +480,8 @@
     if (!svgGroup || !svgLayer || !colsWrapper || !wrapper || !_activeStack) return;
 
     // Sincronizar dimensiones explícitas del SVG en píxeles (para que nunca colapse a 0)
-    const w = Math.max(colsWrapper.scrollWidth, colsWrapper.offsetWidth, 1200);
-    const h = Math.max(colsWrapper.scrollHeight, colsWrapper.offsetHeight, 650);
+    const w = Math.max(colsWrapper.scrollWidth, colsWrapper.offsetWidth, wrapper.scrollWidth || 0, 1200);
+    const h = Math.max(colsWrapper.scrollHeight, colsWrapper.offsetHeight, wrapper.scrollHeight || 0, 650);
     svgLayer.setAttribute('width', w);
     svgLayer.setAttribute('height', h);
     svgLayer.setAttribute('viewBox', `0 0 ${w} ${h}`);
@@ -490,7 +490,7 @@
     svgLayer.style.position = 'absolute';
     svgLayer.style.top = '0px';
     svgLayer.style.left = '0px';
-    svgLayer.style.zIndex = '20';
+    svgLayer.style.zIndex = '10';
     svgLayer.style.pointerEvents = 'none';
     svgLayer.style.overflow = 'visible';
 
@@ -511,9 +511,9 @@
         const srcEl = document.getElementById(srcItem.id);
         if (!srcEl) return;
         const outPort = srcEl.querySelector('.ts-odn-port-out');
-        const sRect = outPort ? outPort.getBoundingClientRect() : srcEl.getBoundingClientRect();
+        const sRect = (outPort || srcEl).getBoundingClientRect();
 
-        const x1 = (outPort ? sRect.left + sRect.width / 2 : sRect.right) - wrapperRect.left;
+        const x1 = (outPort ? (sRect.left + sRect.width / 2) : sRect.right) - wrapperRect.left;
         const y1 = (sRect.top + sRect.height / 2) - wrapperRect.top;
 
         let validTargets = (Array.isArray(srcItem.targets) && srcItem.targets.length)
@@ -527,34 +527,29 @@
           const tgtEl = document.getElementById(tId);
           if (!tgtEl) return;
           const inPort = tgtEl.querySelector('.ts-odn-port-in');
-          const tRect = inPort ? inPort.getBoundingClientRect() : tgtEl.getBoundingClientRect();
+          const tRect = (inPort || tgtEl).getBoundingClientRect();
 
-          const x2 = (inPort ? tRect.left + tPort.width / 2 : tRect.left) - wrapperRect.left;
+          const x2 = (inPort ? (tRect.left + tRect.width / 2) : tRect.left) - wrapperRect.left;
           const y2 = (tRect.top + tRect.height / 2) - wrapperRect.top;
 
+          if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2)) return;
           if (x1 === 0 && y1 === 0 && x2 === 0 && y2 === 0) return;
 
-          const dx = Math.max(35, (x2 - x1) * 0.45);
+          // Curva Bezier estética punto a punto
+          const dx = Math.max(20, (x2 - x1) * 0.5);
           const d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
 
           const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
           path.setAttribute('d', d);
           path.setAttribute('fill', 'none');
           path.setAttribute('stroke', lineColor);
-          path.setAttribute('stroke-width', '3');
+          path.setAttribute('stroke-width', '3.5');
           path.setAttribute('stroke-linecap', 'round');
           path.setAttribute('opacity', '0.95');
+          path.style.filter = 'drop-shadow(0 1.5px 2px rgba(0,0,0,0.12))';
           path.setAttribute('data-source', srcItem.id);
           path.setAttribute('data-target', tId);
           svgGroup.appendChild(path);
-
-          const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-          arrow.setAttribute('points', `${x2 - 9},${y2 - 4} ${x2 - 1},${y2} ${x2 - 9},${y2 + 4}`);
-          arrow.setAttribute('fill', lineColor);
-          arrow.setAttribute('opacity', '1');
-          arrow.setAttribute('data-source', srcItem.id);
-          arrow.setAttribute('data-target', tId);
-          svgGroup.appendChild(arrow);
         });
       });
     }
@@ -762,26 +757,18 @@
         paths.forEach(el => {
           const isConnected = (el.getAttribute('data-source') === nodeId || el.getAttribute('data-target') === nodeId);
           if (isConnected) {
-            if (el.tagName === 'path') {
-              el.setAttribute('stroke-width', '3.5');
-              el.setAttribute('opacity', '1');
-            } else {
-              el.setAttribute('opacity', '1');
-            }
+            el.setAttribute('stroke-width', '4.5');
+            el.setAttribute('opacity', '1');
           } else {
-            el.setAttribute('opacity', '0.2');
+            el.setAttribute('opacity', '0.15');
           }
         });
       });
       card.addEventListener('mouseleave', () => {
         const paths = document.querySelectorAll('#ts-odn-paths [data-source], #ts-odn-paths [data-target]');
         paths.forEach(el => {
-          if (el.tagName === 'path') {
-            el.setAttribute('stroke-width', '2.5');
-            el.setAttribute('opacity', '0.85');
-          } else {
-            el.setAttribute('opacity', '0.9');
-          }
+          el.setAttribute('stroke-width', '3.5');
+          el.setAttribute('opacity', '0.95');
         });
       });
     });
