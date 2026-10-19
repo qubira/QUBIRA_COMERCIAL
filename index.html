@@ -4169,6 +4169,8 @@ function onProformaProductChange(prodName) {
 }
 
 function onProformaCurrencyChange() {
+  renderProformaItemsTable();
+  renderProformaTechItemsTable();
   calcProformaTotals();
 }
 
@@ -4255,10 +4257,34 @@ function updateProformaItem(idx, field, value) {
 // ══════════════════════════════════════════════════════
 // TABLA 2: Ítems, Servicios, Costos Variables (Tech Stack)
 // ══════════════════════════════════════════════════════
+async function ensureTechCatalogLoaded() {
+  if (_techCatalogCache && _techCatalogCache.tool && _techCatalogCache.tool.length > 0) {
+    return _techCatalogCache;
+  }
+  try {
+    const raw = await qcApiFetch('/api/comercial/tech-catalog');
+    const rows = Array.isArray(raw) ? raw : ((raw.languages || []).concat(raw.tools || []));
+    _techCatalogCache = {
+      language: rows.filter(r => r.category === 'language'),
+      tool: rows.filter(r => r.category === 'tool' || r.category !== 'language'),
+    };
+  } catch(e) {
+    console.warn('Error cargando catalogo:', e);
+  }
+  return _techCatalogCache;
+}
+
 function renderProformaTechItemsTable() {
   const container = document.getElementById('proforma-tech-items-container');
   const countBadge = document.getElementById('prf-tech-count-badge');
   if (!container) return;
+
+  // Si el catálogo aún no está cargado en caché, cargarlo para tener todos los planes disponibles
+  if (!_techCatalogCache || !_techCatalogCache.tool || !_techCatalogCache.tool.length) {
+    ensureTechCatalogLoaded().then(() => {
+      renderProformaTechItemsTable();
+    });
+  }
 
   const totalCount = _currentProformaTechItems.length;
   if (countBadge) countBadge.textContent = `${totalCount} ítem${totalCount === 1 ? '' : 's'}`;
@@ -4284,7 +4310,7 @@ function renderProformaTechItemsTable() {
 
   let html = '';
 
-  // 1. Sub-tabla Herramientas: Herramienta | Plan | Costo | Margen mín | Margen máx | Propuesta
+  // 1. Sub-tabla Herramientas: Herramienta | Plan (Editable) | Costo | Margen mín | Margen máx | Propuesta
   if (tools.length > 0) {
     html += `
       <div style="margin-bottom:14px">
@@ -4297,7 +4323,7 @@ function renderProformaTechItemsTable() {
               <tr>
                 <th style="width:35px;text-align:center">#</th>
                 <th>Herramienta</th>
-                <th style="width:140px">Plan</th>
+                <th style="width:160px">Plan</th>
                 <th style="width:105px;text-align:right">Costo</th>
                 <th style="width:105px;text-align:right">Margen mín</th>
                 <th style="width:105px;text-align:right">Margen máx</th>
@@ -4312,12 +4338,56 @@ function renderProformaTechItemsTable() {
                   ? `<div style="width:24px;height:24px;border-radius:5px;background:#fff;border:1px solid #e2e8f0;display:inline-flex;align-items:center;justify-content:center;padding:2px;flex-shrink:0"><img src="${esc(thumbUrl(it.image_url, 64))}" style="max-width:100%;max-height:100%;object-fit:contain" alt=""></div>`
                   : `<span style="width:24px;height:24px;border-radius:5px;background:#ecfdf5;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#0f766e;flex-shrink:0">${esc((it.name || '?').charAt(0).toUpperCase())}</span>`;
 
-                const plans = Array.isArray(it.plans) && it.plans.length ? it.plans : [{ name: it.plan_name || 'Free', costo: it.costo, margen_min: it.margen_min, margen_max: it.margen_max }];
-                const planSelect = plans.length > 1
-                  ? `<select onchange="onProformaTechPlanChange(${globalIdx}, this.value)" style="padding:4px 6px;font-size:11.5px;border-radius:5px;border:1px solid var(--border);width:100%">
-                      ${plans.map(p => `<option value="${esc(p.name)}" ${(p.name || '').toLowerCase() === (it.plan_name || '').toLowerCase() ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
-                    </select>`
-                  : `<span style="font-size:11.5px;color:#334155;font-weight:600">${esc(it.plan_name || 'Free')}</span>`;
+                // Resolver todos los planes disponibles desde el catálogo si el ítem no los tiene
+                let plans = Array.isArray(it.plans) && it.plans.length ? it.plans : [];
+                if (plans.length <= 1 && _techCatalogCache) {
+                  const allCat = (_techCatalogCache.tool || []).concat(_techCatalogCache.language || []);
+                  const catMatch = allCat.find(c => 
+                    (c.name || '').trim().toLowerCase() === (it.name || '').trim().toLowerCase() ||
+                    (it.tech_id && c.id === it.tech_id)
+                  );
+                  if (catMatch && Array.isArray(catMatch.plans) && catMatch.plans.length > 0) {
+                    plans = catMatch.plans;
+                    it.plans = plans;
+                  }
+                }
+                if (!plans.length) {
+                  plans = [{ name: it.plan_name || 'FREE', costo: it.costo, margen_min: it.margen_min, margen_max: it.margen_max, periodo: it.periodo || 'mes' }];
+                  it.plans = plans;
+                }
+
+                // Determinar el plan seleccionado actualmente de forma precisa
+                let selectedIdx = -1;
+                if (it.plan_name) {
+                  selectedIdx = plans.findIndex(p => 
+                    (p.name || '').trim().toLowerCase() === (it.plan_name || '').trim().toLowerCase() &&
+                    (it.costo !== null && it.costo !== undefined && p.costo !== null && p.costo !== undefined
+                      ? Math.abs(Number(p.costo) - Number(it.costo)) < 0.01
+                      : true)
+                  );
+                  if (selectedIdx === -1) {
+                    selectedIdx = plans.findIndex(p => (p.name || '').trim().toLowerCase() === (it.plan_name || '').trim().toLowerCase());
+                  }
+                }
+                if (selectedIdx === -1) selectedIdx = 0;
+
+                // Generar select interactivo de cambio de plan
+                const planOptionsHtml = plans.map((p, pIdx) => {
+                  const isSelected = pIdx === selectedIdx;
+                  const periodLabel = p.periodo ? ` / ${p.periodo}` : '';
+                  const costNum = (p.costo !== null && p.costo !== undefined && p.costo !== '') ? Number(p.costo) : 0;
+                  const costLabel = costNum > 0 ? ` (${sym} ${costNum.toFixed(0)}${periodLabel})` : ' (Gratis)';
+                  return `<option value="${pIdx}" ${isSelected ? 'selected' : ''}>${esc(p.name)}${costLabel}</option>`;
+                }).join('');
+
+                const planSelect = `
+                  <select class="prf-plan-select" onchange="onProformaTechPlanSelect(${globalIdx}, this.value)"
+                    style="padding:4px 8px;font-size:11.5px;font-weight:700;border:1.5px solid #cbd5e1;border-radius:6px;background:#fff;color:#0f766e;cursor:pointer;width:100%;max-width:160px;outline:none;transition:border-color .15s, box-shadow .15s"
+                    title="Cambiar plan de ${esc(it.name)}">
+                    ${planOptionsHtml}
+                    <option value="__custom__">✏️ Personalizado...</option>
+                  </select>
+                `;
 
                 const costoStr = (it.costo !== null && it.costo !== undefined && it.costo !== '') ? `${sym} ${Number(it.costo).toFixed(2)}` : '—';
                 const minStr = (it.margen_min !== null && it.margen_min !== undefined && it.margen_min !== '') ? `${sym} ${Number(it.margen_min).toFixed(2)}` : '—';
@@ -4443,20 +4513,82 @@ function removeProformaTechItem(idx) {
   calcProformaTotals();
 }
 
+function onProformaTechPlanSelect(idx, planVal) {
+  const item = _currentProformaTechItems[idx];
+  if (!item) return;
+
+  const moneda = document.getElementById('prf-moneda')?.value || 'USD';
+  const sym = moneda === 'PEN' ? 'S/' : '$';
+
+  if (planVal === '__custom__') {
+    const customName = prompt(`Ingrese el nombre del plan para "${item.name}":`, item.plan_name || 'Personalizado');
+    if (!customName || !customName.trim()) {
+      renderProformaTechItemsTable();
+      return;
+    }
+    const customCostStr = prompt(`Costo de referencia del plan (${sym}):`, item.costo !== null && item.costo !== undefined ? String(item.costo) : '0');
+    if (customCostStr === null) {
+      renderProformaTechItemsTable();
+      return;
+    }
+    const customCost = Math.max(0, parseFloat(customCostStr) || 0);
+
+    const customPropStr = prompt(`Propuesta para la cotización (${sym}):`, item.propuesta !== null && item.propuesta !== undefined ? String(item.propuesta) : String(customCost));
+    if (customPropStr === null) {
+      renderProformaTechItemsTable();
+      return;
+    }
+    const customProp = Math.max(0, parseFloat(customPropStr) || customCost);
+
+    item.plan_name = customName.trim();
+    item.costo = customCost;
+    item.margen_min = customCost;
+    item.margen_max = customProp;
+    item.propuesta = customProp;
+
+    if (!Array.isArray(item.plans)) item.plans = [];
+    item.plans.push({
+      name: item.plan_name,
+      costo: item.costo,
+      margen_min: item.margen_min,
+      margen_max: item.margen_max,
+      periodo: 'mes'
+    });
+
+    renderProformaTechItemsTable();
+    calcProformaTotals();
+    if (window.toast) window.toast('success', 'Plan Personalizado', `Se configuró el plan "${item.plan_name}" para ${item.name}.`);
+    return;
+  }
+
+  const pIdx = Number(planVal);
+  const plans = Array.isArray(item.plans) ? item.plans : [];
+  const chosen = plans[pIdx];
+
+  if (chosen) {
+    item.plan_name = chosen.name;
+    item.periodo = chosen.periodo || item.periodo || 'mes';
+    item.costo = (chosen.costo !== null && chosen.costo !== undefined && chosen.costo !== '') ? Number(chosen.costo) : 0;
+    item.margen_min = (chosen.margen_min !== null && chosen.margen_min !== undefined && chosen.margen_min !== '') ? Number(chosen.margen_min) : 0;
+    item.margen_max = (chosen.margen_max !== null && chosen.margen_max !== undefined && chosen.margen_max !== '') ? Number(chosen.margen_max) : 0;
+    
+    // Al cambiar de plan, la propuesta toma el margen_max sugerido del plan
+    item.propuesta = item.margen_max > 0 ? item.margen_max : (item.costo || 0);
+
+    renderProformaTechItemsTable();
+    calcProformaTotals();
+    if (window.toast) window.toast('info', 'Plan Cambiado', `Se actualizó a "${chosen.name}" en ${item.name}. Costos y totales recalculados.`);
+  }
+}
+
 function onProformaTechPlanChange(idx, planName) {
   const item = _currentProformaTechItems[idx];
   if (!item) return;
   const plans = Array.isArray(item.plans) ? item.plans : [];
-  const chosen = plans.find(p => (p.name || '').toLowerCase() === (planName || '').toLowerCase());
-  if (chosen) {
-    item.plan_name = chosen.name;
-    item.costo = (chosen.costo !== null && chosen.costo !== undefined && chosen.costo !== '') ? Number(chosen.costo) : null;
-    item.margen_min = (chosen.margen_min !== null && chosen.margen_min !== undefined && chosen.margen_min !== '') ? Number(chosen.margen_min) : null;
-    item.margen_max = (chosen.margen_max !== null && chosen.margen_max !== undefined && chosen.margen_max !== '') ? Number(chosen.margen_max) : null;
-    item.propuesta = item.margen_max !== null && item.margen_max > 0 ? item.margen_max : (item.costo || 0);
+  const pIdx = plans.findIndex(p => (p.name || '').trim().toLowerCase() === (planName || '').trim().toLowerCase());
+  if (pIdx >= 0) {
+    onProformaTechPlanSelect(idx, String(pIdx));
   }
-  renderProformaTechItemsTable();
-  calcProformaTotals();
 }
 
 // ══════════════════════════════════════════════════════
@@ -4464,15 +4596,7 @@ function onProformaTechPlanChange(idx, planName) {
 // ══════════════════════════════════════════════════════
 async function openTechStackModalForProforma(defaultTab = 'stack') {
   // Asegurar que el catálogo esté cargado
-  if (!_techCatalogCache || (!_techCatalogCache.tool.length && !_techCatalogCache.language.length)) {
-    try {
-      const data = await qcApiFetch('/api/comercial/tech-catalog');
-      _techCatalogCache = {
-        language: (data.languages || []).map(l => ({ ...l, category: 'language', isLang: true })),
-        tool: (data.tools || []).map(t => ({ ...t, category: 'tool', isLang: false }))
-      };
-    } catch(e) {}
-  }
+  await ensureTechCatalogLoaded();
 
   // Cargar tech stacks disponibles
   let stacks = [];
@@ -4948,12 +5072,19 @@ async function openTechStackModalForProforma(defaultTab = 'stack') {
         const it = stackItems[idx];
         if (!it) return;
 
-        const catMatch = (_techCatalogCache.tool || []).concat(_techCatalogCache.language || []).find(c => (c.name || '').toLowerCase() === (it.name || '').toLowerCase());
-        const catPlans = (catMatch && Array.isArray(catMatch.plans)) ? catPlans : [];
+        const allCat = (_techCatalogCache.tool || []).concat(_techCatalogCache.language || []);
+        const catMatch = allCat.find(c => 
+          (c.name || '').trim().toLowerCase() === (it.name || '').trim().toLowerCase() ||
+          (it.tech_id && c.id === it.tech_id)
+        );
+        const catPlans = (catMatch && Array.isArray(catMatch.plans) && catMatch.plans.length > 0) ? catMatch.plans : [];
 
-        const defaultPropuesta = (it.margen_max !== null && it.margen_max !== undefined && it.margen_max !== '')
-          ? Number(it.margen_max)
-          : (it.precio_max !== null && it.precio_max !== undefined ? Number(it.precio_max) : (it.costo || 0));
+        // Buscar si el plan_name del stack existe en los planes del catálogo
+        const planMatch = catPlans.find(p => (p.name || '').trim().toLowerCase() === (it.plan_name || '').trim().toLowerCase());
+        const pCost = planMatch && planMatch.costo !== null && planMatch.costo !== undefined ? Number(planMatch.costo) : (it.costo !== null && it.costo !== undefined ? Number(it.costo) : 0);
+        const pMin = planMatch && planMatch.margen_min !== null && planMatch.margen_min !== undefined ? Number(planMatch.margen_min) : (it.margen_min !== null && it.margen_min !== undefined ? Number(it.margen_min) : 0);
+        const pMax = planMatch && planMatch.margen_max !== null && planMatch.margen_max !== undefined ? Number(planMatch.margen_max) : (it.margen_max !== null && it.margen_max !== undefined ? Number(it.margen_max) : pCost);
+        const defaultPropuesta = pMax > 0 ? pMax : pCost;
 
         _currentProformaTechItems.push({
           id: 'tech_var_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
@@ -4961,14 +5092,14 @@ async function openTechStackModalForProforma(defaultTab = 'stack') {
           category: it.category || (catMatch ? catMatch.category : 'tool'),
           name: it.name,
           image_url: it.image_url || (catMatch ? catMatch.image_url : ''),
-          plan_name: it.plan_name || 'Free',
-          costo: it.costo !== null && it.costo !== undefined ? Number(it.costo) : null,
-          margen_min: it.margen_min !== null && it.margen_min !== undefined ? Number(it.margen_min) : null,
-          margen_max: it.margen_max !== null && it.margen_max !== undefined ? Number(it.margen_max) : null,
+          plan_name: it.plan_name || (planMatch ? planMatch.name : (catPlans[0]?.name || 'FREE')),
+          costo: pCost,
+          margen_min: pMin,
+          margen_max: pMax,
           propuesta: defaultPropuesta,
-          moneda: it.moneda || 'USD',
-          periodo: it.periodo || 'mes',
-          plans: catPlans.length ? catPlans : (it.plans || [])
+          moneda: it.moneda || (planMatch?.moneda) || 'USD',
+          periodo: it.periodo || (planMatch?.periodo) || 'mes',
+          plans: catPlans.length ? catPlans : (Array.isArray(it.plans) && it.plans.length ? it.plans : [])
         });
         added++;
       });
