@@ -7137,6 +7137,129 @@ function renderOdnCardsList() {
   });
 }
 
+function renderOdnRichContent(rawStr) {
+  if (!rawStr || !String(rawStr).trim()) return '<span style="color:#94a3b8;font-style:italic">Sin registrar</span>';
+  const text = String(rawStr).trim();
+
+  function formatInline(str) {
+    if (!str) return '';
+    let s = esc(str);
+    s = s.replace(/\[(?:rojo|red)\]([\s\S]*?)\[\/(?:rojo|red)\]/gi, '<span style="color:#e11d48;font-weight:700;background:#ffe4e6;padding:1px 5px;border-radius:4px;border:1px solid #fecdd3;display:inline-block">$1</span>');
+    s = s.replace(/&lt;(?:red|rojo)&gt;([\s\S]*?)&lt;\/(?:red|rojo)&gt;/gi, '<span style="color:#e11d48;font-weight:700;background:#ffe4e6;padding:1px 5px;border-radius:4px;border:1px solid #fecdd3;display:inline-block">$1</span>');
+    s = s.replace(/\{(?:rojo|red):([\s\S]*?)\}/gi, '<span style="color:#e11d48;font-weight:700;background:#ffe4e6;padding:1px 5px;border-radius:4px;border:1px solid #fecdd3;display:inline-block">$1</span>');
+    s = s.replace(/==([\s\S]*?)==/g, '<span style="color:#e11d48;font-weight:700;background:#ffe4e6;padding:1px 5px;border-radius:4px;border:1px solid #fecdd3;display:inline-block">$1</span>');
+    s = s.replace(/\*\*([\s\S]*?)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/`([^`]+)`/g, '<code style="background:#f1f5f9;color:#4338ca;padding:1px 4px;border-radius:4px;font-family:monospace;font-size:11px;border:1px solid #e2e8f0">$1</code>');
+    return s;
+  }
+
+  const lines = text.split(/\r?\n/);
+  const outputBlocks = [];
+  let inTable = false;
+  let tableRows = [];
+  let inList = false;
+  let listItems = [];
+
+  function flushList() {
+    if (inList && listItems.length > 0) {
+      outputBlocks.push(`
+        <ul style="margin:4px 0;padding-left:16px;list-style-type:disc;font-size:11.5px;color:#334155;line-height:1.5">
+          ${listItems.map(item => `<li>${formatInline(item)}</li>`).join('')}
+        </ul>
+      `);
+      listItems = [];
+      inList = false;
+    }
+  }
+
+  function flushTable() {
+    if (inTable && tableRows.length > 0) {
+      const cleanRows = tableRows.filter(r => !/^\s*\|?\s*:?-+:?\s*(\|:?-+:?\s*)+\|?\s*$/.test(r));
+      if (cleanRows.length > 0) {
+        const parsedRows = cleanRows.map(r => {
+          let cells = [];
+          if (r.includes('\t')) {
+            cells = r.split('\t').map(c => c.trim());
+          } else {
+            let rowStr = r.trim();
+            if (rowStr.startsWith('|')) rowStr = rowStr.slice(1);
+            if (rowStr.endsWith('|')) rowStr = rowStr.slice(0, -1);
+            cells = rowStr.split('|').map(c => c.trim());
+          }
+          return cells;
+        });
+
+        const headerCells = parsedRows[0] || [];
+        const bodyRows = parsedRows.slice(1);
+
+        outputBlocks.push(`
+          <div style="overflow-x:auto;margin:6px 0;border-radius:6px;border:1px solid #e2e8f0;background:#fff">
+            <table style="width:100%;font-size:11px;text-align:left;border-collapse:collapse">
+              <thead>
+                <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;color:#1e293b;font-weight:700">
+                  ${headerCells.map(c => `<th style="padding:6px 10px;background:#f8fafc;border-bottom:1px solid #cbd5e1">${formatInline(c)}</th>`).join('')}
+                </tr>
+              </thead>
+              <tbody>
+                ${bodyRows.map(row => `
+                  <tr style="border-bottom:1px solid #f1f5f9">
+                    ${row.map((cell, cIdx) => `
+                      <td style="padding:6px 10px;${cIdx === 0 ? 'font-weight:600;color:#0f172a;background:#f8fafc' : 'color:#334155'}">
+                        ${formatInline(cell)}
+                      </td>
+                    `).join('')}
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `);
+      }
+      tableRows = [];
+      inTable = false;
+    }
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    const line = rawLine.trim();
+
+    const isMarkdownTable = line.startsWith('|') && line.endsWith('|') && line.includes('|');
+    const isTabTable = rawLine.includes('\t') && (rawLine.split('\t').length >= 2);
+
+    if (isMarkdownTable || isTabTable) {
+      flushList();
+      inTable = true;
+      tableRows.push(rawLine);
+      continue;
+    } else if (inTable) {
+      flushTable();
+    }
+
+    const bulletMatch = line.match(/^([•\-\*]|\d+\.)\s+(.+)$/);
+    if (bulletMatch) {
+      inList = true;
+      listItems.push(bulletMatch[2]);
+      continue;
+    } else if (inList) {
+      flushList();
+    }
+
+    if (!line) continue;
+
+    outputBlocks.push(`
+      <p style="margin:0 0 4px;font-size:11.5px;color:#334155;line-height:1.45">
+        ${formatInline(line)}
+      </p>
+    `);
+  }
+
+  flushList();
+  flushTable();
+
+  return outputBlocks.join('');
+}
+
 function renderOdnPlanCard(it) {
   const extras = Array.isArray(it.campos_extra) ? it.campos_extra : [];
   const techName = it.tech_name || it.producto_nombre || '';
@@ -7164,9 +7287,9 @@ function renderOdnPlanCard(it) {
         </div>
 
         ${it.descripcion ? `
-          <p style="font-size:12px;color:#475569;margin:8px 0 0;line-height:1.4">
-            ${esc(it.descripcion)}
-          </p>
+          <div style="font-size:12px;color:#475569;margin:8px 0 0;line-height:1.4">
+            ${renderOdnRichContent(it.descripcion)}
+          </div>
         ` : ''}
       </div>
 
@@ -7177,11 +7300,16 @@ function renderOdnPlanCard(it) {
           <div style="font-weight:800;color:var(--primary);margin-bottom:6px;display:flex;align-items:center;gap:5px">
             <span>⚡</span> <span>Límites Técnicos & Cuotas</span>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:11.5px">
-            <div><span style="color:var(--text-muted);font-weight:600">Límites Técnicos:</span> <strong style="color:#1e293b">${esc(it.limites_tecnicos || '—')}</strong></div>
-            <div><span style="color:var(--text-muted);font-weight:600">Cuota Mensual:</span> <strong style="color:#1e293b">${esc(it.cuota_mensual || '—')}</strong></div>
-            <div><span style="color:var(--text-muted);font-weight:600">Límites Archivos:</span> <strong style="color:#1e293b">${esc(it.limites_archivos || '—')}</strong></div>
-            <div><span style="color:var(--text-muted);font-weight:600">Límites API:</span> <strong style="color:#1e293b">${esc(it.limites_api || '—')}</strong></div>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:11.5px">
+            <div>
+              <span style="color:var(--text-muted);font-weight:600;display:block;margin-bottom:2px">Límites Técnicos y Capacidades:</span>
+              <div style="color:#1e293b">${renderOdnRichContent(it.limites_tecnicos)}</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-top:4px">
+              <div><span style="color:var(--text-muted);font-weight:600">Cuota Mensual:</span> <strong style="color:#1e293b">${esc(it.cuota_mensual || '—')}</strong></div>
+              <div><span style="color:var(--text-muted);font-weight:600">Límites Archivos:</span> <strong style="color:#1e293b">${esc(it.limites_archivos || '—')}</strong></div>
+              <div><span style="color:var(--text-muted);font-weight:600">Límites API:</span> <strong style="color:#1e293b">${esc(it.limites_api || '—')}</strong></div>
+            </div>
           </div>
         </div>
 
@@ -7217,12 +7345,12 @@ function renderOdnPlanCard(it) {
             <span style="color:var(--text-muted)">▼</span>
           </summary>
           <div style="margin-top:8px;padding-top:8px;border-top:1px solid #e2e8f0;display:flex;flex-direction:column;gap:5px;font-size:11.5px">
-            ${it.agregados ? `<div><strong style="color:#059669">Agregados:</strong> <span style="color:#334155">${esc(it.agregados)}</span></div>` : ''}
-            ${it.que_no_incluye ? `<div><strong style="color:#dc2626">Qué No Incluye:</strong> <span style="color:#334155">${esc(it.que_no_incluye)}</span></div>` : ''}
-            ${it.ejemplo_consumo_mensual ? `<div><strong style="color:#2563eb">Ejemplo Consumo:</strong> <span style="color:#334155">${esc(it.ejemplo_consumo_mensual)}</span></div>` : ''}
-            ${it.pasa_si_te_pasas_del_limite ? `<div><strong style="color:#d97706">Si se pasa del límite:</strong> <span style="color:#334155">${esc(it.pasa_si_te_pasas_del_limite)}</span></div>` : ''}
-            ${it.cuando_subir ? `<div><strong style="color:#7c3aed">¿Cuándo subir de plan?:</strong> <span style="color:#334155">${esc(it.cuando_subir)}</span></div>` : ''}
-            ${it.plan_no_resuelve ? `<div><strong style="color:#475569">No resuelve:</strong> <span style="color:#334155">${esc(it.plan_no_resuelve)}</span></div>` : ''}
+            ${it.agregados ? `<div><strong style="color:#059669;display:block;margin-bottom:2px">Agregados & Beneficios:</strong> <div style="color:#334155">${renderOdnRichContent(it.agregados)}</div></div>` : ''}
+            ${it.que_no_incluye ? `<div><strong style="color:#dc2626;display:block;margin-bottom:2px">Qué No Incluye:</strong> <div style="color:#334155">${renderOdnRichContent(it.que_no_incluye)}</div></div>` : ''}
+            ${it.ejemplo_consumo_mensual ? `<div><strong style="color:#2563eb;display:block;margin-bottom:2px">Ejemplo Consumo:</strong> <div style="color:#334155">${renderOdnRichContent(it.ejemplo_consumo_mensual)}</div></div>` : ''}
+            ${it.pasa_si_te_pasas_del_limite ? `<div><strong style="color:#d97706;display:block;margin-bottom:2px">Si se pasa del límite:</strong> <div style="color:#334155">${renderOdnRichContent(it.pasa_si_te_pasas_del_limite)}</div></div>` : ''}
+            ${it.cuando_subir ? `<div><strong style="color:#7c3aed;display:block;margin-bottom:2px">¿Cuándo subir de plan?:</strong> <div style="color:#334155">${renderOdnRichContent(it.cuando_subir)}</div></div>` : ''}
+            ${it.plan_no_resuelve ? `<div><strong style="color:#475569;display:block;margin-bottom:2px">No resuelve:</strong> <div style="color:#334155">${renderOdnRichContent(it.plan_no_resuelve)}</div></div>` : ''}
           </div>
         </details>
 
@@ -7232,7 +7360,7 @@ function renderOdnPlanCard(it) {
             <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px">Campos Adicionales:</div>
             <div style="display:flex;flex-direction:column;gap:3px;font-size:11px">
               ${extras.map(f => `
-                <div><strong style="color:#1e293b">${esc(f.titulo)}:</strong> <span style="color:#475569">${esc(f.valor)}</span></div>
+                <div><strong style="color:#1e293b">${esc(f.titulo)}:</strong> <span style="color:#475569">${renderOdnRichContent(f.valor)}</span></div>
               `).join('')}
             </div>
           </div>
