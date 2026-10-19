@@ -235,12 +235,16 @@
     /* ── FORM ── */
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
-    input, select, textarea {
+    input:not([type="checkbox"]):not([type="radio"]), select, textarea {
       background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
       padding: 10px 14px; color: var(--text); font-size: 14px; outline: none;
       width: 100%; transition: border-color .2s, box-shadow .2s; font-family: inherit;
     }
-    input:focus, select:focus, textarea:focus {
+    input[type="checkbox"], input[type="radio"] {
+      width: 16px!important; height: 16px!important; min-width: 16px!important; min-height: 16px!important;
+      margin: 0!important; padding: 0!important; cursor: pointer; accent-color: var(--primary); flex-shrink: 0!important;
+    }
+    input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:focus {
       border-color: var(--accent); box-shadow: 0 0 0 3px var(--primary-light);
     }
     textarea { resize: vertical; min-height: 70px; }
@@ -4487,150 +4491,314 @@ async function openTechStackModalForProforma(defaultTab = 'stack') {
   const modal = document.createElement('div');
   modal.id = 'prf-tech-stack-modal';
   modal.className = 'ts-modal-back';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.55);backdrop-filter:blur(3px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
 
   let currentTab = defaultTab;
   let selectedStackId = stacks.length ? stacks[0].id : null;
+  let stackSearchQuery = '';
+  let selectedStageFilter = 'all';
+  let checkedIndices = new Set();
+  let initializedStackId = null;
+
   let catalogSearchQuery = '';
+  let catalogCategoryFilter = 'all'; // 'all' | 'tool' | 'language'
 
   const renderModalContent = () => {
     const selectedStack = stacks.find(s => s.id === selectedStackId) || stacks[0] || null;
     let stackItems = [];
     if (selectedStack && Array.isArray(selectedStack.stages)) {
-      selectedStack.stages.forEach(st => {
+      selectedStack.stages.forEach((st, sIdx) => {
         (st.items || []).forEach(it => {
           stackItems.push({
             ...it,
-            stageTitle: st.title || 'Etapa'
+            stageNum: sIdx + 1,
+            stageTitle: st.title || ('Columna ' + (sIdx + 1)),
+            stageIndex: sIdx,
+            globalIdx: stackItems.length
           });
         });
       });
     }
 
+    if (initializedStackId !== (selectedStack ? selectedStack.id : null)) {
+      initializedStackId = selectedStack ? selectedStack.id : null;
+      checkedIndices = new Set(stackItems.map((_, i) => i));
+    }
+
+    const filteredStackItems = stackItems.filter(item => {
+      if (selectedStageFilter !== 'all' && Number(selectedStageFilter) !== item.stageIndex) return false;
+      if (stackSearchQuery) {
+        const q = stackSearchQuery.toLowerCase();
+        const m1 = (item.name || '').toLowerCase().includes(q);
+        const m2 = (item.stageTitle || '').toLowerCase().includes(q);
+        const m3 = (item.plan_name || '').toLowerCase().includes(q);
+        if (!m1 && !m2 && !m3) return false;
+      }
+      return true;
+    });
+
     const langs = _techCatalogCache.language || [];
     const tools = _techCatalogCache.tool || [];
     const allCatalog = tools.concat(langs).filter(it => {
+      const isTool = it.category === 'tool' || !it.isLang;
+      if (catalogCategoryFilter === 'tool' && !isTool) return false;
+      if (catalogCategoryFilter === 'language' && isTool) return false;
       if (!catalogSearchQuery) return true;
       return (it.name || '').toLowerCase().includes(catalogSearchQuery);
     });
 
+    const checkedCount = checkedIndices.size;
+    const allFilteredChecked = filteredStackItems.length > 0 && filteredStackItems.every(it => checkedIndices.has(it.globalIdx));
+    const stagesList = selectedStack && Array.isArray(selectedStack.stages) ? selectedStack.stages : [];
+
+    // Agrupar ítems por columna para un orden visual estructurado
+    const groupedByStage = [];
+    let currentGroup = null;
+    filteredStackItems.forEach(item => {
+      if (!currentGroup || currentGroup.stageIndex !== item.stageIndex) {
+        currentGroup = {
+          stageIndex: item.stageIndex,
+          stageNum: item.stageNum,
+          stageTitle: item.stageTitle,
+          items: []
+        };
+        groupedByStage.push(currentGroup);
+      }
+      currentGroup.items.push(item);
+    });
+
     modal.innerHTML = `
-      <div class="ts-modal-box" style="background:#fff;border-radius:14px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);width:100%;max-width:680px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden">
+      <div class="ts-modal-box" style="background:#fff;border-radius:14px;box-shadow:0 25px 60px -15px rgba(0,0,0,0.35);width:100%;max-width:720px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
+        
         <!-- Header -->
-        <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;background:#f8fafc">
+        <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg, #0f766e 0%, #0d9488 100%);color:#fff">
           <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:20px">🌳</span>
+            <span style="font-size:22px;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.2);width:36px;height:36px;border-radius:8px">🌳</span>
             <div>
-              <h3 style="font-size:15px;font-weight:700;color:#0f172a;margin:0">Costos Variables & Tech Stack</h3>
-              <p style="font-size:11.5px;color:var(--text-muted);margin:2px 0 0">Agrega o importa herramientas y lenguajes a la cotización</p>
+              <h3 style="font-size:15px;font-weight:800;color:#fff;margin:0;letter-spacing:-0.2px">Costos Variables & Tech Stack</h3>
+              <p style="font-size:11.5px;color:rgba(255,255,255,0.9);margin:2px 0 0">Agrega o importa herramientas y lenguajes a la cotización</p>
             </div>
           </div>
-          <button type="button" id="prf-ts-close" style="background:none;border:none;font-size:20px;color:#94a3b8;cursor:pointer;padding:4px;line-height:1">&times;</button>
+          <button type="button" id="prf-ts-close" style="background:rgba(255,255,255,0.15);border:none;width:30px;height:30px;border-radius:6px;font-size:20px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:background .15s" title="Cerrar modal">&times;</button>
         </div>
 
         <!-- Pestañas -->
-        <div style="display:flex;border-bottom:1px solid #e2e8f0;background:#fff;padding:0 20px">
-          <button type="button" id="prf-tab-stack" style="padding:10px 16px;font-size:12.5px;font-weight:700;cursor:pointer;background:none;border:none;border-bottom:2px solid ${currentTab === 'stack' ? 'var(--primary)' : 'transparent'};color:${currentTab === 'stack' ? 'var(--primary)' : '#64748b'}">
-            📁 Ramificaciones Tech Stack (${stacks.length})
+        <div style="display:flex;border-bottom:1px solid #e2e8f0;background:#f8fafc;padding:0 20px;gap:6px">
+          <button type="button" id="prf-tab-stack" style="padding:11px 16px;font-size:12.5px;font-weight:700;cursor:pointer;background:${currentTab === 'stack' ? '#fff' : 'transparent'};border:none;border-bottom:3px solid ${currentTab === 'stack' ? 'var(--primary)' : 'transparent'};color:${currentTab === 'stack' ? 'var(--primary)' : '#64748b'};display:inline-flex;align-items:center;gap:8px;border-top-left-radius:6px;border-top-right-radius:6px">
+            <span>📁 Ramificaciones Tech Stack (${stacks.length})</span>
           </button>
-          <button type="button" id="prf-tab-catalog" style="padding:10px 16px;font-size:12.5px;font-weight:700;cursor:pointer;background:none;border:none;border-bottom:2px solid ${currentTab === 'catalog' ? 'var(--primary)' : 'transparent'};color:${currentTab === 'catalog' ? 'var(--primary)' : '#64748b'}">
-            🔍 Catálogo de Tecnologías
+          <button type="button" id="prf-tab-catalog" style="padding:11px 16px;font-size:12.5px;font-weight:700;cursor:pointer;background:${currentTab === 'catalog' ? '#fff' : 'transparent'};border:none;border-bottom:3px solid ${currentTab === 'catalog' ? 'var(--primary)' : 'transparent'};color:${currentTab === 'catalog' ? 'var(--primary)' : '#64748b'};display:inline-flex;align-items:center;gap:8px;border-top-left-radius:6px;border-top-right-radius:6px">
+            <span>🔍 Catálogo de Tecnologías (${tools.length + langs.length})</span>
           </button>
         </div>
 
-        <!-- Cuerpo -->
-        <div style="flex:1;overflow-y:auto;padding:18px 20px">
+        <!-- Contenido -->
+        <div style="flex:1;overflow-y:auto;padding:16px 20px;background:#f8fafc;display:flex;flex-direction:column">
           ${currentTab === 'stack' ? `
-            <div style="margin-bottom:14px">
-              <label style="font-size:11.5px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Selecciona la Ramificación a Importar:</label>
-              <select id="prf-stack-picker" style="width:100%;padding:8px 12px;font-size:12.5px;font-weight:600;border:1px solid #cbd5e1;border-radius:8px;background:#fff">
-                ${stacks.map(s => `
-                  <option value="${esc(s.id)}" ${selectedStack && s.id === selectedStack.id ? 'selected' : ''}>
-                    [${esc(s.project_type || 'Web')}] ${esc(s.name)} — ${(s.stages||[]).reduce((c, st) => c + (st.items||[]).length, 0)} tecnologías
-                  </option>
-                `).join('')}
-              </select>
-            </div>
-
-            ${selectedStack ? `
-              <div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px;background:#f8fafc;margin-bottom:14px">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                  <span style="font-size:11.5px;font-weight:700;color:#0f766e">Tecnologías en este Stack (${stackItems.length}):</span>
-                  <label style="font-size:11px;color:#475569;cursor:pointer;display:flex;align-items:center;gap:4px">
-                    <input type="checkbox" id="prf-check-all-stack" checked> Seleccionar todas
-                  </label>
-                </div>
-                <div style="max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
-                  ${stackItems.length === 0 ? '<p style="font-size:12px;color:#94a3b8;text-align:center;margin:12px 0">Esta ramificación no contiene tecnologías.</p>' :
-                    stackItems.map((item, iIdx) => {
-                      const avatar = item.image_url
-                        ? `<img src="${esc(thumbUrl(item.image_url, 64))}" style="width:20px;height:20px;object-fit:contain" alt="">`
-                        : `<span style="font-size:10px;font-weight:700;color:#0f766e">${esc((item.name || '?').charAt(0).toUpperCase())}</span>`;
-                      const maxPrice = item.margen_max !== null && item.margen_max !== undefined ? `${sym} ${Number(item.margen_max).toFixed(2)}` : (item.costo ? `${sym} ${Number(item.costo).toFixed(2)}` : 'Gratis');
-                      return `
-                        <label style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer">
-                          <div style="display:flex;align-items:center;gap:8px">
-                            <input type="checkbox" class="prf-stack-item-chk" data-item-idx="${iIdx}" checked>
-                            <div style="width:24px;height:24px;border-radius:4px;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;background:#fff">
-                              ${avatar}
-                            </div>
-                            <span style="font-size:12px;font-weight:600;color:#1e293b">${esc(item.name)}</span>
-                            <span style="font-size:10.5px;color:#64748b;background:#f1f5f9;padding:1px 6px;border-radius:4px">${esc(item.plan_name || 'Free')}</span>
-                          </div>
-                          <span style="font-size:11px;font-weight:700;color:#059669">${maxPrice}</span>
-                        </label>
-                      `;
-                    }).join('')}
-                </div>
+            ${stacks.length ? `
+              <!-- Selector de Ramificación -->
+              <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:12px">
+                <label style="font-size:11px;font-weight:800;color:#0f766e;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">
+                  Selecciona la Ramificación a Importar:
+                </label>
+                <select id="prf-stack-picker" style="width:100%;padding:8px 12px;font-size:12.5px;font-weight:600;border:1px solid #cbd5e1;border-radius:6px;background:#fff;color:#0f172a">
+                  ${stacks.map(s => {
+                    const count = (s.stages || []).reduce((c, st) => c + (st.items || []).length, 0);
+                    return `
+                      <option value="${esc(s.id)}" ${selectedStack && s.id === selectedStack.id ? 'selected' : ''}>
+                        [${esc(s.project_type || 'Web')}] ${esc(s.name)} — ${count} tecnologías en ${(s.stages||[]).length} columnas
+                      </option>
+                    `;
+                  }).join('')}
+                </select>
               </div>
 
-              <button type="button" id="prf-btn-import-stack" class="btn btn-primary" style="width:100%;padding:9px;font-size:13px;font-weight:700">
-                📥 Importar Tecnologías a la Cotización
-              </button>
-            ` : '<p style="text-align:center;color:#94a3b8">No hay Tech Stacks registrados.</p>'}
+              <!-- Caja Contenedora de Tecnologías -->
+              <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;display:flex;flex-direction:column;flex:1;min-height:220px">
+                
+                <!-- Barra superior: Título, Contador, Buscar, Filtro y Seleccionar Todas -->
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px;flex-wrap:wrap">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="font-size:12px;font-weight:700;color:#0f766e">Tecnologías en este Stack (${filteredStackItems.length}):</span>
+                    <span style="font-size:10.5px;font-weight:700;color:#0f766e;background:#ccfbf1;padding:2px 8px;border-radius:12px">
+                      ${checkedCount} seleccionadas
+                    </span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <button type="button" id="prf-btn-select-all" style="background:none;border:none;color:#0f766e;font-size:11px;font-weight:700;cursor:pointer;padding:2px 4px;text-decoration:underline">Marcar todas</button>
+                    <button type="button" id="prf-btn-deselect-all" style="background:none;border:none;color:#64748b;font-size:11px;font-weight:600;cursor:pointer;padding:2px 4px;text-decoration:underline">Desmarcar</button>
+                    <label style="font-size:11px;color:#475569;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-weight:600;margin:0">
+                      <input type="checkbox" id="prf-check-all-stack" ${allFilteredChecked ? 'checked' : ''} style="width:15px!important;height:15px!important;margin:0!important;padding:0!important;accent-color:var(--primary);cursor:pointer">
+                      Seleccionar todas
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Buscador y filtro de columnas -->
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+                  <input type="text" id="prf-stack-search" value="${esc(stackSearchQuery)}" placeholder="🔍 Filtrar tecnología por nombre o plan..."
+                    style="flex:1;padding:6px 10px;font-size:12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;margin:0">
+                  ${stagesList.length > 1 ? `
+                    <select id="prf-stage-filter" style="width:auto;min-width:170px;padding:6px 10px;font-size:12px;font-weight:600;border:1px solid #cbd5e1;border-radius:6px;background:#fff;color:#334155;margin:0">
+                      <option value="all">Todas las Columnas (${stackItems.length})</option>
+                      ${stagesList.map((st, idx) => `
+                        <option value="${idx}" ${selectedStageFilter === String(idx) ? 'selected' : ''}>
+                          C${idx + 1}: ${esc(st.title || 'Columna')} (${(st.items || []).length})
+                        </option>
+                      `).join('')}
+                    </select>
+                  ` : ''}
+                </div>
+
+                <!-- Lista Vertical Scrollable de Tecnologías Bien Ordenadas -->
+                <div style="flex:1;max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;padding-right:4px">
+                  ${filteredStackItems.length === 0 ? `
+                    <div style="text-align:center;padding:32px 16px;color:#94a3b8;font-size:12px">
+                      No se encontraron tecnologías con el filtro actual.
+                    </div>
+                  ` : groupedByStage.map(group => `
+                    ${stagesList.length > 1 && selectedStageFilter === 'all' ? `
+                      <div style="font-size:10.5px;font-weight:800;color:#0369a1;background:#f0f9ff;border:1px solid #bae6fd;padding:3px 10px;border-radius:5px;display:flex;align-items:center;justify-content:space-between;margin:6px 0 2px">
+                        <span>C${group.stageNum} · ${esc(group.stageTitle)}</span>
+                        <span style="font-size:10px;opacity:0.8">${group.items.length} ítem${group.items.length === 1 ? '' : 's'}</span>
+                      </div>
+                    ` : ''}
+                    ${group.items.map(item => {
+                      const isChecked = checkedIndices.has(item.globalIdx);
+                      const avatar = item.image_url
+                        ? `<img src="${esc(thumbUrl(item.image_url, 64))}" style="width:100%;height:100%;object-fit:contain;padding:2px" alt="">`
+                        : `<span style="font-size:10px;font-weight:800;color:#0f766e">${esc((item.name || '?').charAt(0).toUpperCase())}</span>`;
+                      const maxPriceNum = (item.margen_max !== null && item.margen_max !== undefined && item.margen_max !== '')
+                        ? Number(item.margen_max)
+                        : (item.precio_max !== null && item.precio_max !== undefined ? Number(item.precio_max) : (item.costo || 0));
+                      const maxPriceStr = `${sym} ${maxPriceNum.toFixed(2)}`;
+                      const isTool = item.category === 'tool' || item.category !== 'language';
+
+                      return `
+                        <div class="prf-stack-item-row" data-global-idx="${item.globalIdx}"
+                          style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:${isChecked ? '#f0fdfa' : '#ffffff'};border:1px solid ${isChecked ? '#5eead4' : '#e2e8f0'};border-radius:7px;cursor:pointer;transition:all .12s;gap:10px">
+                          
+                          <!-- Lado Izquierdo: Checkbox + Icono + Nombre + Badges -->
+                          <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;overflow:hidden">
+                            <input type="checkbox" class="prf-stack-item-chk" data-global-idx="${item.globalIdx}" ${isChecked ? 'checked' : ''}
+                              style="width:16px!important;min-width:16px!important;max-width:16px!important;height:16px!important;min-height:16px!important;margin:0!important;padding:0!important;flex-shrink:0!important;accent-color:var(--primary);cursor:pointer">
+                            
+                            <div style="width:26px;min-width:26px;max-width:26px;height:26px;border-radius:5px;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;background:#fff;flex-shrink:0;overflow:hidden">
+                              ${avatar}
+                            </div>
+
+                            <span style="font-size:12.5px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(item.name)}">
+                              ${esc(item.name)}
+                            </span>
+
+                            <span class="badge ${isTool ? 'b-web' : 'b-mobile'}" style="font-size:9.5px;padding:1px 5px;white-space:nowrap;flex-shrink:0;border-radius:4px">
+                              ${isTool ? 'Herramienta' : 'Lenguaje'}
+                            </span>
+
+                            <span style="font-size:10px;font-weight:600;color:#475569;background:#f1f5f9;padding:1px 6px;border-radius:4px;white-space:nowrap;flex-shrink:0">
+                              ${esc(item.plan_name || 'FREE')}
+                            </span>
+                          </div>
+
+                          <!-- Lado Derecho: Propuesta / Precio -->
+                          <div style="text-align:right;flex-shrink:0;margin-left:8px">
+                            <strong style="font-size:12px;color:#059669;font-weight:700;white-space:nowrap">${maxPriceStr}</strong>
+                          </div>
+                        </div>
+                      `;
+                    }).join('')}
+                  `).join('')}
+                </div>
+
+              </div>
+            ` : `
+              <div style="text-align:center;padding:48px 20px;color:#94a3b8">
+                <span style="font-size:36px;display:block;margin-bottom:8px">📁</span>
+                <p style="font-size:13px;font-weight:600;color:#64748b">No hay Tech Stacks registrados en la base de datos.</p>
+              </div>
+            `}
           ` : `
-            <div style="margin-bottom:12px">
-              <input type="text" id="prf-cat-search" value="${esc(catalogSearchQuery)}" placeholder="Buscar herramienta o lenguaje..." style="width:100%;padding:8px 12px;font-size:12.5px;border:1px solid #cbd5e1;border-radius:8px">
+            <!-- Tab Catálogo -->
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+              <input type="text" id="prf-cat-search" value="${esc(catalogSearchQuery)}" placeholder="🔍 Buscar en el catálogo..."
+                style="flex:1;min-width:200px;padding:7px 12px;font-size:12.5px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;margin:0">
+              <div style="display:flex;gap:4px">
+                <button type="button" class="btn btn-sm ${catalogCategoryFilter === 'all' ? 'btn-primary' : 'btn-outline'}" id="prf-cat-flt-all" style="font-size:11.5px;padding:5px 10px">Todas (${tools.length + langs.length})</button>
+                <button type="button" class="btn btn-sm ${catalogCategoryFilter === 'tool' ? 'btn-primary' : 'btn-outline'}" id="prf-cat-flt-tool" style="font-size:11.5px;padding:5px 10px">Herramientas (${tools.length})</button>
+                <button type="button" class="btn btn-sm ${catalogCategoryFilter === 'language' ? 'btn-primary' : 'btn-outline'}" id="prf-cat-flt-lang" style="font-size:11.5px;padding:5px 10px">Lenguajes (${langs.length})</button>
+              </div>
             </div>
 
-            <div style="max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
-              ${allCatalog.length === 0 ? '<p style="font-size:12px;color:#94a3b8;text-align:center;padding:16px 0">No se encontraron tecnologías.</p>' :
-                allCatalog.map(t => {
-                  const avatar = t.image_url
-                    ? `<img src="${esc(thumbUrl(t.image_url, 64))}" style="width:20px;height:20px;object-fit:contain" alt="">`
-                    : `<span style="font-size:10px;font-weight:700;color:#0f766e">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
-                  const isTool = t.category === 'tool' || !t.isLang;
-                  const plans = isTool && Array.isArray(t.plans) && t.plans.length ? t.plans : [{ name: 'Free / Gratis', costo: t.costo, margen_min: t.margen_min, margen_max: t.margen_max }];
-                  const pMax = plans[0]?.margen_max !== null && plans[0]?.margen_max !== undefined ? Number(plans[0].margen_max) : (t.margen_max || t.costo || 0);
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;flex:1;max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:5px">
+              ${allCatalog.length === 0 ? `
+                <div style="text-align:center;padding:36px 16px;color:#94a3b8;font-size:12px">
+                  No se encontraron tecnologías en el catálogo.
+                </div>
+              ` : allCatalog.map(t => {
+                const avatar = t.image_url
+                  ? `<img src="${esc(thumbUrl(t.image_url, 64))}" style="width:100%;height:100%;object-fit:contain;padding:2px" alt="">`
+                  : `<span style="font-size:10px;font-weight:700;color:#0f766e">${esc((t.name || '?').charAt(0).toUpperCase())}</span>`;
+                const isTool = t.category === 'tool' || !t.isLang;
+                const plans = isTool && Array.isArray(t.plans) && t.plans.length ? t.plans : [{ name: 'Free / Gratis', costo: t.costo, margen_min: t.margen_min, margen_max: t.margen_max }];
+                const pMax = plans[0]?.margen_max !== null && plans[0]?.margen_max !== undefined ? Number(plans[0].margen_max) : (t.margen_max || t.costo || 0);
 
-                  return `
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;gap:10px">
-                      <div style="display:flex;align-items:center;gap:10px;flex:1;overflow:hidden">
-                        <div style="width:28px;height:28px;border-radius:6px;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;background:#fff;flex-shrink:0">
-                          ${avatar}
-                        </div>
-                        <div style="overflow:hidden">
-                          <div style="font-size:12.5px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.name)}</div>
-                          <div style="font-size:10.5px;color:#64748b;text-transform:capitalize">${isTool ? 'Herramienta' : 'Lenguaje'} · ${plans.length > 1 ? `${plans.length} planes` : (plans[0]?.name || 'Estándar')}</div>
-                        </div>
+                return `
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:7px;gap:10px">
+                    <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;overflow:hidden">
+                      <div style="width:26px;min-width:26px;max-width:26px;height:26px;border-radius:5px;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;background:#fff;flex-shrink:0;overflow:hidden">
+                        ${avatar}
                       </div>
-                      <div style="display:flex;align-items:center;gap:10px">
-                        <span style="font-size:11.5px;font-weight:700;color:#059669">${sym} ${Number(pMax).toFixed(2)}</span>
-                        <button type="button" class="btn btn-outline btn-sm prf-btn-add-tech" data-tech-name="${esc(t.name)}" style="font-size:11px;padding:3px 8px;font-weight:600">
-                          + Agregar
-                        </button>
-                      </div>
+                      <span style="font-size:12.5px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(t.name)}">
+                        ${esc(t.name)}
+                      </span>
+                      <span class="badge ${isTool ? 'b-web' : 'b-mobile'}" style="font-size:9.5px;padding:1px 5px;white-space:nowrap;flex-shrink:0;border-radius:4px">
+                        ${isTool ? 'Herramienta' : 'Lenguaje'}
+                      </span>
+                      <span style="font-size:10px;color:#475569;background:#f1f5f9;padding:1px 6px;border-radius:4px;white-space:nowrap;flex-shrink:0">
+                        ${plans.length > 1 ? `${plans.length} planes` : (plans[0]?.name || 'Estándar')}
+                      </span>
                     </div>
-                  `;
-                }).join('')}
+
+                    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+                      <span style="font-size:12px;font-weight:700;color:#059669;white-space:nowrap">${sym} ${Number(pMax).toFixed(2)}</span>
+                      <button type="button" class="btn btn-outline btn-sm prf-btn-add-tech" data-tech-name="${esc(t.name)}" style="font-size:11px;padding:3px 10px;font-weight:700">
+                        + Agregar
+                      </button>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
             </div>
           `}
         </div>
+
+        <!-- Footer -->
+        <div style="padding:12px 20px;background:#fff;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between">
+          ${currentTab === 'stack' ? `
+            <button type="button" class="btn btn-outline" id="prf-ts-cancel-btn" style="padding:8px 16px;font-size:12.5px;font-weight:600">
+              Cancelar
+            </button>
+            <button type="button" id="prf-btn-import-stack" class="btn btn-primary" style="padding:9px 24px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:8px" ${checkedCount === 0 ? 'disabled' : ''}>
+              <span>📥 Importar</span>
+              <span style="background:rgba(255,255,255,0.25);padding:1px 7px;border-radius:10px;font-size:11.5px">${checkedCount}</span>
+              <span>a Cotización</span>
+            </button>
+          ` : `
+            <div style="font-size:12px;color:#64748b">
+              Agrega ítems individuales desde el catálogo a tu cotización
+            </div>
+            <button type="button" class="btn btn-outline" id="prf-ts-cancel-btn" style="padding:8px 18px;font-size:12.5px;font-weight:600">
+              Cerrar
+            </button>
+          `}
+        </div>
+
       </div>
     `;
 
-    // Event listeners del modal
+    // Event listeners
     modal.querySelector('#prf-ts-close')?.addEventListener('click', () => modal.remove());
+    modal.querySelector('#prf-ts-cancel-btn')?.addEventListener('click', () => modal.remove());
     modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 
     modal.querySelector('#prf-tab-stack')?.addEventListener('click', () => { currentTab = 'stack'; renderModalContent(); });
@@ -4638,29 +4806,81 @@ async function openTechStackModalForProforma(defaultTab = 'stack') {
 
     modal.querySelector('#prf-stack-picker')?.addEventListener('change', e => {
       selectedStackId = e.target.value;
+      initializedStackId = null;
       renderModalContent();
     });
 
-    const checkAll = modal.querySelector('#prf-check-all-stack');
-    if (checkAll) {
-      checkAll.addEventListener('change', e => {
-        modal.querySelectorAll('.prf-stack-item-chk').forEach(c => c.checked = e.target.checked);
+    const stackSearchInput = modal.querySelector('#prf-stack-search');
+    if (stackSearchInput) {
+      stackSearchInput.addEventListener('input', e => {
+        stackSearchQuery = e.target.value;
+        renderModalContent();
+        const updatedInput = modal.querySelector('#prf-stack-search');
+        if (updatedInput) {
+          updatedInput.focus();
+          updatedInput.setSelectionRange(updatedInput.value.length, updatedInput.value.length);
+        }
       });
     }
 
+    modal.querySelector('#prf-stage-filter')?.addEventListener('change', e => {
+      selectedStageFilter = e.target.value;
+      renderModalContent();
+    });
+
+    modal.querySelector('#prf-btn-select-all')?.addEventListener('click', () => {
+      filteredStackItems.forEach(it => checkedIndices.add(it.globalIdx));
+      renderModalContent();
+    });
+
+    modal.querySelector('#prf-btn-deselect-all')?.addEventListener('click', () => {
+      filteredStackItems.forEach(it => checkedIndices.delete(it.globalIdx));
+      renderModalContent();
+    });
+
+    const checkAllHeader = modal.querySelector('#prf-check-all-stack');
+    if (checkAllHeader) {
+      checkAllHeader.addEventListener('change', e => {
+        const checked = e.target.checked;
+        filteredStackItems.forEach(it => {
+          if (checked) checkedIndices.add(it.globalIdx);
+          else checkedIndices.delete(it.globalIdx);
+        });
+        renderModalContent();
+      });
+    }
+
+    // Toggle al hacer click en la fila completa
+    modal.querySelectorAll('.prf-stack-item-row').forEach(row => {
+      row.addEventListener('click', e => {
+        if (e.target.closest('.prf-stack-item-chk')) return;
+        const gIdx = Number(row.dataset.globalIdx);
+        if (checkedIndices.has(gIdx)) checkedIndices.delete(gIdx);
+        else checkedIndices.add(gIdx);
+        renderModalContent();
+      });
+    });
+
+    modal.querySelectorAll('.prf-stack-item-chk').forEach(chk => {
+      chk.addEventListener('change', e => {
+        const gIdx = Number(e.target.dataset.globalIdx);
+        if (e.target.checked) checkedIndices.add(gIdx);
+        else checkedIndices.delete(gIdx);
+        renderModalContent();
+      });
+    });
+
+    // Botón Importar Tecnologías a la Cotización
     modal.querySelector('#prf-btn-import-stack')?.addEventListener('click', () => {
-      const chks = modal.querySelectorAll('.prf-stack-item-chk:checked');
-      if (!chks.length) {
+      if (!checkedIndices.size) {
         alert('Selecciona al menos una tecnología para importar.');
         return;
       }
       let added = 0;
-      chks.forEach(chk => {
-        const idx = Number(chk.dataset.itemIdx);
+      checkedIndices.forEach(idx => {
         const it = stackItems[idx];
         if (!it) return;
 
-        // Buscar catálogo para tener planes completos
         const catMatch = (_techCatalogCache.tool || []).concat(_techCatalogCache.language || []).find(c => (c.name || '').toLowerCase() === (it.name || '').toLowerCase());
         const catPlans = (catMatch && Array.isArray(catMatch.plans)) ? catMatch.plans : [];
 
@@ -4692,14 +4912,23 @@ async function openTechStackModalForProforma(defaultTab = 'stack') {
       if (window.toast) window.toast('success', 'Tecnologías Importadas', `Se importaron ${added} tecnologías del Tech Stack a los costos variables.`);
     });
 
-    const catInp = modal.querySelector('#prf-cat-search');
-    if (catInp) {
-      catInp.focus();
-      catInp.addEventListener('input', e => {
+    // Tab Catálogo listeners
+    const catSearchInp = modal.querySelector('#prf-cat-search');
+    if (catSearchInp) {
+      catSearchInp.addEventListener('input', e => {
         catalogSearchQuery = e.target.value.toLowerCase();
         renderModalContent();
+        const updatedCatInp = modal.querySelector('#prf-cat-search');
+        if (updatedCatInp) {
+          updatedCatInp.focus();
+          updatedCatInp.setSelectionRange(updatedCatInp.value.length, updatedCatInp.value.length);
+        }
       });
     }
+
+    modal.querySelector('#prf-cat-flt-all')?.addEventListener('click', () => { catalogCategoryFilter = 'all'; renderModalContent(); });
+    modal.querySelector('#prf-cat-flt-tool')?.addEventListener('click', () => { catalogCategoryFilter = 'tool'; renderModalContent(); });
+    modal.querySelector('#prf-cat-flt-lang')?.addEventListener('click', () => { catalogCategoryFilter = 'language'; renderModalContent(); });
 
     modal.querySelectorAll('.prf-btn-add-tech').forEach(btn => {
       btn.addEventListener('click', e => {
