@@ -6789,8 +6789,142 @@ async function renderInfoTecnico() {
   }
 
   try {
-    const raw = await qcApiFetch('/api/comercial/tech-plan-info');
-    _odnInfoTecnicoItems = Array.isArray(raw) ? raw : [];
+    const [rawInfo, rawCatalog] = await Promise.all([
+      qcApiFetch('/api/comercial/tech-plan-info').catch(() => []),
+      qcApiFetch('/api/comercial/technology-catalog').catch(() => [])
+    ]);
+
+    const infoList = Array.isArray(rawInfo) ? rawInfo : [];
+    const catalog = Array.isArray(rawCatalog) ? rawCatalog : [];
+
+    function odnCurSym(moneda) {
+      return { PEN: 'S/', USD: '$', EUR: '€' }[moneda] || (moneda === 'USD' ? '$' : 'S/');
+    }
+
+    function odnFormatPlanPrice(p, customNote = '') {
+      if (!p) return 'A cotizar';
+      const sym = odnCurSym(p.moneda);
+      const periodoStr = p.periodo === 'año' ? ' / año' : ' / mes';
+      const min = (p.margen_min !== null && p.margen_min !== '' && p.margen_min !== undefined) ? Number(p.margen_min) : null;
+      const max = (p.margen_max !== null && p.margen_max !== '' && p.margen_max !== undefined) ? Number(p.margen_max) : null;
+      const costo = (p.costo !== null && p.costo !== '' && p.costo !== undefined) ? Number(p.costo) : null;
+
+      let priceStr = '';
+      if (min === null && max === null && costo === null) {
+        priceStr = 'A cotizar';
+      } else {
+        const numMin = min || 0;
+        const numMax = max !== null && max !== undefined ? max : (costo || 0);
+
+        if (numMin === 0 && numMax === 0 && (costo === 0 || costo === null)) {
+          priceStr = `${sym} 0.00${periodoStr}`;
+        } else if (numMin > 0 && numMax > numMin) {
+          const fMin = numMin.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          const fMax = numMax.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          priceStr = `${sym} ${fMin} - ${sym} ${fMax}${periodoStr}`;
+        } else {
+          const fMax = numMax.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          priceStr = `${sym} ${fMax}${periodoStr}`;
+        }
+      }
+
+      if (customNote && customNote.trim()) {
+        priceStr += ` ${customNote.trim()}`;
+      }
+      return priceStr;
+    }
+
+    // Unificar tecnologías y planes derivados de la Imagen 2 (ti.technology_catalog)
+    const unifiedPlans = [];
+
+    catalog.forEach(tech => {
+      let catalogPlans = [];
+      if (Array.isArray(tech.plans) && tech.plans.length > 0) {
+        catalogPlans = tech.plans.filter(p => p && p.name && String(p.name).trim() !== '');
+      }
+      if (catalogPlans.length === 0) {
+        catalogPlans = [{
+          name: tech.category === 'language' ? tech.name : 'Plan Base',
+          costo: tech.costo,
+          margen_min: tech.margen_min,
+          margen_max: tech.margen_max,
+          moneda: tech.moneda || 'PEN',
+          periodo: tech.periodo || 'mes'
+        }];
+      }
+
+      catalogPlans.forEach((cp, idx) => {
+        const pName = String(cp.name || '').trim();
+        const info = infoList.find(it => {
+          const matchTech = (it.tech_name || it.producto_nombre || '').toLowerCase() === tech.name.toLowerCase() ||
+                            (it.tech_id && tech.id && it.tech_id === tech.id);
+          if (!matchTech) return false;
+          const itPlan = (it.plan_nombre || '').trim();
+          return itPlan.toLowerCase() === pName.toLowerCase() || (catalogPlans.length === 1 && !itPlan);
+        });
+
+        let note = '';
+        if (info?.precio) {
+          const noteMatch = info.precio.match(/\((?:Aprox|12 meses|aprox|según|Licencia|Open Source|Base|usuario)[^)]*\)/i) || 
+                            info.precio.match(/\([^)]+\)$/);
+          if (noteMatch) note = noteMatch[0];
+        }
+
+        const price = odnFormatPlanPrice({
+          moneda: cp.moneda || tech.moneda || 'PEN',
+          costo: cp.costo,
+          margen_min: cp.margen_min,
+          margen_max: cp.margen_max,
+          periodo: cp.periodo || tech.periodo || 'mes'
+        }, note);
+
+        unifiedPlans.push({
+          id: info?.id || `cat-${tech.id || tech.name}-${idx}`,
+          tech_id: tech.id,
+          tech_name: tech.name,
+          category: tech.category || 'tool',
+          image_url: tech.image_url || info?.image_url || '',
+          plan_nombre: pName,
+          precio: price,
+          costo: cp.costo,
+          margen_min: cp.margen_min,
+          margen_max: cp.margen_max,
+          moneda: cp.moneda || tech.moneda || 'PEN',
+          periodo: cp.periodo || tech.periodo || 'mes',
+          descripcion: info?.descripcion || '',
+          limites_tecnicos: info?.limites_tecnicos || '',
+          cuota_mensual: info?.cuota_mensual || '',
+          limites_archivos: info?.limites_archivos || '',
+          limites_api: info?.limites_api || '',
+          cuentas_usuarios: info?.cuentas_usuarios || '',
+          seguridad_control_acceso: info?.seguridad_control_acceso || '',
+          entrega_dominio: info?.entrega_dominio || '',
+          respaldo_almacenamiento: info?.respaldo_almacenamiento || '',
+          complementos_ia: info?.complementos_ia || '',
+          video: info?.video || '',
+          soporte: info?.soporte || '',
+          agregados: info?.agregados || '',
+          que_no_incluye: info?.que_no_incluye || '',
+          ejemplo_consumo_mensual: info?.ejemplo_consumo_mensual || '',
+          pasa_si_te_pasas_del_limite: info?.pasa_si_te_pasas_del_limite || '',
+          cuando_subir: info?.cuando_subir || '',
+          plan_no_resuelve: info?.plan_no_resuelve || '',
+          campos_extra: info?.campos_extra || []
+        });
+      });
+    });
+
+    // Agregar cualquier plan que esté en infoList y no en el catálogo
+    infoList.forEach(it => {
+      const itName = (it.tech_name || it.producto_nombre || '').toLowerCase();
+      const pName = (it.plan_nombre || '').toLowerCase();
+      const exists = unifiedPlans.some(u => (u.tech_name || '').toLowerCase() === itName && (u.plan_nombre || '').toLowerCase() === pName);
+      if (!exists) {
+        unifiedPlans.push(it);
+      }
+    });
+
+    _odnInfoTecnicoItems = unifiedPlans;
     renderInfoTecnicoUI();
   } catch(err) {
     console.error('Error cargando info técnico en ODN:', err);
