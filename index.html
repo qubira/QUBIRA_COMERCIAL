@@ -4374,9 +4374,25 @@ function renderProformaTechItemsTable() {
                 // Generar select interactivo de cambio de plan
                 const planOptionsHtml = plans.map((p, pIdx) => {
                   const isSelected = pIdx === selectedIdx;
-                  const periodLabel = p.periodo ? ` / ${p.periodo}` : '';
-                  const costNum = (p.costo !== null && p.costo !== undefined && p.costo !== '') ? Number(p.costo) : 0;
-                  const costLabel = costNum > 0 ? ` (${sym} ${costNum.toFixed(0)}${periodLabel})` : ' (Gratis)';
+                  const pHasCost = p.costo !== null && p.costo !== undefined && p.costo !== '';
+                  const pHasMin = p.margen_min !== null && p.margen_min !== undefined && p.margen_min !== '';
+                  const pHasMax = p.margen_max !== null && p.margen_max !== undefined && p.margen_max !== '';
+
+                  let costLabel = '';
+                  if (!pHasCost && !pHasMin && !pHasMax) {
+                    costLabel = ' (Indefinido)';
+                  } else {
+                    const c = pHasCost ? Number(p.costo) : 0;
+                    const mx = pHasMax ? Number(p.margen_max) : 0;
+                    const mn = pHasMin ? Number(p.margen_min) : 0;
+                    if (c === 0 && mx === 0 && mn === 0) {
+                      costLabel = ' (Gratis)';
+                    } else {
+                      const periodLabel = p.periodo ? ` / ${p.periodo}` : '';
+                      const displayNum = pHasCost && c > 0 ? c : (mx > 0 ? mx : mn);
+                      costLabel = ` (${sym} ${displayNum.toFixed(0)}${periodLabel})`;
+                    }
+                  }
                   return `<option value="${pIdx}" ${isSelected ? 'selected' : ''}>${esc(p.name)}${costLabel}</option>`;
                 }).join('');
 
@@ -4389,9 +4405,19 @@ function renderProformaTechItemsTable() {
                   </select>
                 `;
 
-                const costoStr = (it.costo !== null && it.costo !== undefined && it.costo !== '') ? `${sym} ${Number(it.costo).toFixed(2)}` : '—';
-                const minStr = (it.margen_min !== null && it.margen_min !== undefined && it.margen_min !== '') ? `${sym} ${Number(it.margen_min).toFixed(2)}` : '—';
-                const maxStr = (it.margen_max !== null && it.margen_max !== undefined && it.margen_max !== '') ? `${sym} ${Number(it.margen_max).toFixed(2)}` : '—';
+                const hasCost = it.costo !== null && it.costo !== undefined && it.costo !== '';
+                const hasMin = it.margen_min !== null && it.margen_min !== undefined && it.margen_min !== '';
+                const hasMax = it.margen_max !== null && it.margen_max !== undefined && it.margen_max !== '';
+                const isIndefinido = !hasCost && !hasMin && !hasMax;
+
+                const costoStr = hasCost ? `${sym} ${Number(it.costo).toFixed(2)}` : '—';
+                const minStr = hasMin ? `${sym} ${Number(it.margen_min).toFixed(2)}` : '—';
+                const maxStr = hasMax ? `${sym} ${Number(it.margen_max).toFixed(2)}` : '—';
+
+                const valPropuesta = (it.propuesta !== null && it.propuesta !== undefined && it.propuesta !== '')
+                  ? Number(it.propuesta).toFixed(2)
+                  : (isIndefinido ? '' : '0.00');
+                const placeholderPropuesta = isIndefinido ? 'Indefinido' : '0.00';
 
                 return `
                   <tr>
@@ -4409,8 +4435,8 @@ function renderProformaTechItemsTable() {
                     <td>
                       <div style="display:flex;align-items:center;gap:4px">
                         <span style="font-size:11px;color:var(--text-muted)">${sym}</span>
-                        <input type="number" step="0.01" min="0" value="${Number(it.propuesta || 0).toFixed(2)}"
-                          style="padding:4px 6px;font-size:12px;text-align:right;font-weight:700;color:var(--primary)"
+                        <input type="number" step="0.01" min="0" value="${valPropuesta}" placeholder="${placeholderPropuesta}"
+                          style="padding:4px 6px;font-size:12px;text-align:right;font-weight:700;color:var(--primary);width:100%"
                           oninput="updateProformaTechItem(${globalIdx}, 'propuesta', this.value)">
                       </div>
                     </td>
@@ -4456,9 +4482,19 @@ function renderProformaTechItemsTable() {
                   ? `<div style="width:24px;height:24px;border-radius:5px;background:#fff;border:1px solid #e2e8f0;display:inline-flex;align-items:center;justify-content:center;padding:2px;flex-shrink:0"><img src="${esc(thumbUrl(it.image_url, 64))}" style="max-width:100%;max-height:100%;object-fit:contain" alt=""></div>`
                   : `<span style="width:24px;height:24px;border-radius:5px;background:#eff6ff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#2563eb;flex-shrink:0">${esc((it.name || '?').charAt(0).toUpperCase())}</span>`;
 
-                const costoStr = (it.costo !== null && it.costo !== undefined && it.costo !== '') ? `${sym} ${Number(it.costo).toFixed(2)}` : '—';
-                const minStr = (it.margen_min !== null && it.margen_min !== undefined && it.margen_min !== '') ? `${sym} ${Number(it.margen_min).toFixed(2)}` : '—';
-                const maxStr = (it.margen_max !== null && it.margen_max !== undefined && it.margen_max !== '') ? `${sym} ${Number(it.margen_max).toFixed(2)}` : '—';
+                const hasCost = it.costo !== null && it.costo !== undefined && it.costo !== '';
+                const hasMin = it.margen_min !== null && it.margen_min !== undefined && it.margen_min !== '';
+                const hasMax = it.margen_max !== null && it.margen_max !== undefined && it.margen_max !== '';
+                const isIndefinido = !hasCost && !hasMin && !hasMax;
+
+                const costoStr = hasCost ? `${sym} ${Number(it.costo).toFixed(2)}` : '—';
+                const minStr = hasMin ? `${sym} ${Number(it.margen_min).toFixed(2)}` : '—';
+                const maxStr = hasMax ? `${sym} ${Number(it.margen_max).toFixed(2)}` : '—';
+
+                const valPropuesta = (it.propuesta !== null && it.propuesta !== undefined && it.propuesta !== '')
+                  ? Number(it.propuesta).toFixed(2)
+                  : (isIndefinido ? '' : '0.00');
+                const placeholderPropuesta = isIndefinido ? 'Indefinido' : '0.00';
 
                 return `
                   <tr>
@@ -4475,8 +4511,8 @@ function renderProformaTechItemsTable() {
                     <td>
                       <div style="display:flex;align-items:center;gap:4px">
                         <span style="font-size:11px;color:var(--text-muted)">${sym}</span>
-                        <input type="number" step="0.01" min="0" value="${Number(it.propuesta || 0).toFixed(2)}"
-                          style="padding:4px 6px;font-size:12px;text-align:right;font-weight:700;color:var(--primary)"
+                        <input type="number" step="0.01" min="0" value="${valPropuesta}" placeholder="${placeholderPropuesta}"
+                          style="padding:4px 6px;font-size:12px;text-align:right;font-weight:700;color:var(--primary);width:100%"
                           oninput="updateProformaTechItem(${globalIdx}, 'propuesta', this.value)">
                       </div>
                     </td>
@@ -4501,7 +4537,8 @@ function renderProformaTechItemsTable() {
 function updateProformaTechItem(idx, field, value) {
   if (!_currentProformaTechItems[idx]) return;
   if (field === 'propuesta') {
-    _currentProformaTechItems[idx].propuesta = Math.max(0, parseFloat(value) || 0);
+    const valTrim = (value !== null && value !== undefined) ? String(value).trim() : '';
+    _currentProformaTechItems[idx].propuesta = valTrim === '' ? null : Math.max(0, parseFloat(valTrim) || 0);
   }
   calcProformaTotals();
 }
@@ -4526,19 +4563,11 @@ function onProformaTechPlanSelect(idx, planVal) {
       renderProformaTechItemsTable();
       return;
     }
-    const customCostStr = prompt(`Costo de referencia del plan (${sym}):`, item.costo !== null && item.costo !== undefined ? String(item.costo) : '0');
-    if (customCostStr === null) {
-      renderProformaTechItemsTable();
-      return;
-    }
-    const customCost = Math.max(0, parseFloat(customCostStr) || 0);
+    const customCostStr = prompt(`Costo de referencia del plan (${sym}) [deje vacío si es indefinido]:`, item.costo !== null && item.costo !== undefined ? String(item.costo) : '');
+    const customCost = (customCostStr !== null && customCostStr.trim() !== '') ? Math.max(0, parseFloat(customCostStr) || 0) : null;
 
-    const customPropStr = prompt(`Propuesta para la cotización (${sym}):`, item.propuesta !== null && item.propuesta !== undefined ? String(item.propuesta) : String(customCost));
-    if (customPropStr === null) {
-      renderProformaTechItemsTable();
-      return;
-    }
-    const customProp = Math.max(0, parseFloat(customPropStr) || customCost);
+    const customPropStr = prompt(`Propuesta para la cotización (${sym}) [deje vacío si es indefinido]:`, item.propuesta !== null && item.propuesta !== undefined ? String(item.propuesta) : (customCost !== null ? String(customCost) : ''));
+    const customProp = (customPropStr !== null && customPropStr.trim() !== '') ? Math.max(0, parseFloat(customPropStr) || 0) : null;
 
     item.plan_name = customName.trim();
     item.costo = customCost;
@@ -4568,16 +4597,34 @@ function onProformaTechPlanSelect(idx, planVal) {
   if (chosen) {
     item.plan_name = chosen.name;
     item.periodo = chosen.periodo || item.periodo || 'mes';
-    item.costo = (chosen.costo !== null && chosen.costo !== undefined && chosen.costo !== '') ? Number(chosen.costo) : 0;
-    item.margen_min = (chosen.margen_min !== null && chosen.margen_min !== undefined && chosen.margen_min !== '') ? Number(chosen.margen_min) : 0;
-    item.margen_max = (chosen.margen_max !== null && chosen.margen_max !== undefined && chosen.margen_max !== '') ? Number(chosen.margen_max) : 0;
-    
-    // Al cambiar de plan, la propuesta toma el margen_max sugerido del plan
-    item.propuesta = item.margen_max > 0 ? item.margen_max : (item.costo || 0);
+
+    const hasCost = chosen.costo !== null && chosen.costo !== undefined && chosen.costo !== '';
+    const hasMin = chosen.margen_min !== null && chosen.margen_min !== undefined && chosen.margen_min !== '';
+    const hasMax = chosen.margen_max !== null && chosen.margen_max !== undefined && chosen.margen_max !== '';
+
+    item.costo = hasCost ? Number(chosen.costo) : null;
+    item.margen_min = hasMin ? Number(chosen.margen_min) : null;
+    item.margen_max = hasMax ? Number(chosen.margen_max) : null;
+
+    if (hasMax && item.margen_max > 0) {
+      item.propuesta = item.margen_max;
+    } else if (hasCost && item.costo > 0) {
+      item.propuesta = item.costo;
+    } else if ((hasCost && item.costo === 0) || (hasMax && item.margen_max === 0)) {
+      item.propuesta = 0; // Gratis
+    } else {
+      // Indefinido: no hay costo ni margen registrado
+      item.propuesta = null;
+    }
 
     renderProformaTechItemsTable();
     calcProformaTotals();
-    if (window.toast) window.toast('info', 'Plan Cambiado', `Se actualizó a "${chosen.name}" en ${item.name}. Costos y totales recalculados.`);
+
+    const isIndef = !hasCost && !hasMin && !hasMax;
+    const statusMsg = isIndef
+      ? `Se seleccionó "${chosen.name}" (Costo indefinido, puedes ingresar una propuesta).`
+      : `Se actualizó a "${chosen.name}". Costos y totales recalculados.`;
+    if (window.toast) window.toast('info', 'Plan Cambiado', statusMsg);
   }
 }
 
@@ -5081,10 +5128,29 @@ async function openTechStackModalForProforma(defaultTab = 'stack') {
 
         // Buscar si el plan_name del stack existe en los planes del catálogo
         const planMatch = catPlans.find(p => (p.name || '').trim().toLowerCase() === (it.plan_name || '').trim().toLowerCase());
-        const pCost = planMatch && planMatch.costo !== null && planMatch.costo !== undefined ? Number(planMatch.costo) : (it.costo !== null && it.costo !== undefined ? Number(it.costo) : 0);
-        const pMin = planMatch && planMatch.margen_min !== null && planMatch.margen_min !== undefined ? Number(planMatch.margen_min) : (it.margen_min !== null && it.margen_min !== undefined ? Number(it.margen_min) : 0);
-        const pMax = planMatch && planMatch.margen_max !== null && planMatch.margen_max !== undefined ? Number(planMatch.margen_max) : (it.margen_max !== null && it.margen_max !== undefined ? Number(it.margen_max) : pCost);
-        const defaultPropuesta = pMax > 0 ? pMax : pCost;
+
+        const hasPlanMatchCost = planMatch && planMatch.costo !== null && planMatch.costo !== undefined && planMatch.costo !== '';
+        const hasItCost = it.costo !== null && it.costo !== undefined && it.costo !== '';
+        const pCost = hasPlanMatchCost ? Number(planMatch.costo) : (hasItCost ? Number(it.costo) : null);
+
+        const hasPlanMatchMin = planMatch && planMatch.margen_min !== null && planMatch.margen_min !== undefined && planMatch.margen_min !== '';
+        const hasItMin = it.margen_min !== null && it.margen_min !== undefined && it.margen_min !== '';
+        const pMin = hasPlanMatchMin ? Number(planMatch.margen_min) : (hasItMin ? Number(it.margen_min) : null);
+
+        const hasPlanMatchMax = planMatch && planMatch.margen_max !== null && planMatch.margen_max !== undefined && planMatch.margen_max !== '';
+        const hasItMax = it.margen_max !== null && it.margen_max !== undefined && it.margen_max !== '';
+        const pMax = hasPlanMatchMax ? Number(planMatch.margen_max) : (hasItMax ? Number(it.margen_max) : null);
+
+        let defaultPropuesta = null;
+        if (pMax !== null && pMax > 0) {
+          defaultPropuesta = pMax;
+        } else if (pCost !== null && pCost > 0) {
+          defaultPropuesta = pCost;
+        } else if ((pCost === 0 && pCost !== null) || (pMax === 0 && pMax !== null)) {
+          defaultPropuesta = 0; // Gratis
+        } else {
+          defaultPropuesta = null; // Indefinido
+        }
 
         _currentProformaTechItems.push({
           id: 'tech_var_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
@@ -5143,7 +5209,16 @@ async function openTechStackModalForProforma(defaultTab = 'stack') {
         const pMin = (defaultPlan.margen_min !== null && defaultPlan.margen_min !== undefined && defaultPlan.margen_min !== '') ? Number(defaultPlan.margen_min) : (match.margen_min ? Number(match.margen_min) : null);
         const pMax = (defaultPlan.margen_max !== null && defaultPlan.margen_max !== undefined && defaultPlan.margen_max !== '') ? Number(defaultPlan.margen_max) : (match.margen_max ? Number(match.margen_max) : null);
 
-        const propuesta = pMax !== null && pMax > 0 ? pMax : (pCost || 0);
+        let propuesta = null;
+        if (pMax !== null && pMax > 0) {
+          propuesta = pMax;
+        } else if (pCost !== null && pCost > 0) {
+          propuesta = pCost;
+        } else if ((pCost === 0 && pCost !== null) || (pMax === 0 && pMax !== null)) {
+          propuesta = 0; // Gratis
+        } else {
+          propuesta = null; // Indefinido
+        }
 
         _currentProformaTechItems.push({
           id: 'tech_var_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
