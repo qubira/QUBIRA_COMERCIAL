@@ -6771,8 +6771,8 @@ async function submitEditClientForm() {
 // Modo exclusivo de Solo Lectura.
 // ══════════════════════════════════════════════════════
 let _odnInfoTecnicoItems = [];
-let _odnInfoTecnicoProducts = [];
-let _odnInfoTecnicoSelectedProduct = 'all';
+let _odnInfoTecnicoCategory = 'all'; // 'all' | 'tool' | 'language'
+let _odnInfoTecnicoSelectedTech = 'all';
 let _odnInfoTecnicoSearchQuery = '';
 
 async function renderInfoTecnico() {
@@ -6783,7 +6783,7 @@ async function renderInfoTecnico() {
     mount.innerHTML = `
       <div style="text-align:center;padding:60px 20px;color:var(--text-muted)">
         <div style="font-size:32px;margin-bottom:12px;display:inline-block">⚡</div>
-        <p style="font-size:14px;font-weight:600">Cargando fichas técnicas de productos y planes...</p>
+        <p style="font-size:14px;font-weight:600">Cargando catálogo técnico de herramientas y lenguajes...</p>
       </div>
     `;
   }
@@ -6791,11 +6791,6 @@ async function renderInfoTecnico() {
   try {
     const raw = await qcApiFetch('/api/comercial/tech-plan-info');
     _odnInfoTecnicoItems = Array.isArray(raw) ? raw : [];
-
-    const prodsSet = new Set();
-    _odnInfoTecnicoItems.forEach(it => { if (it.producto_nombre) prodsSet.add(it.producto_nombre); });
-    _odnInfoTecnicoProducts = Array.from(prodsSet).sort();
-
     renderInfoTecnicoUI();
   } catch(err) {
     console.error('Error cargando info técnico en ODN:', err);
@@ -6814,13 +6809,21 @@ function renderInfoTecnicoUI() {
   const mount = document.getElementById('odn-info-tecnico-mount');
   if (!mount) return;
 
+  const totalCount = _odnInfoTecnicoItems.length;
+  const toolCount = _odnInfoTecnicoItems.filter(x => (x.category || 'tool') === 'tool').length;
+  const langCount = _odnInfoTecnicoItems.filter(x => x.category === 'language').length;
+
+  // Filtrado
   const filtered = _odnInfoTecnicoItems.filter(it => {
-    if (_odnInfoTecnicoSelectedProduct !== 'all' && (it.producto_nombre || '').toLowerCase() !== _odnInfoTecnicoSelectedProduct.toLowerCase()) {
+    const cat = it.category || 'tool';
+    if (_odnInfoTecnicoCategory !== 'all' && cat !== _odnInfoTecnicoCategory) return false;
+    const techName = it.tech_name || it.producto_nombre || '';
+    if (_odnInfoTecnicoSelectedTech !== 'all' && techName.toLowerCase() !== _odnInfoTecnicoSelectedTech.toLowerCase()) {
       return false;
     }
     if (_odnInfoTecnicoSearchQuery) {
       const q = _odnInfoTecnicoSearchQuery.toLowerCase();
-      const inBasic = (it.producto_nombre || '').toLowerCase().includes(q) ||
+      const inBasic = techName.toLowerCase().includes(q) ||
                       (it.plan_nombre || '').toLowerCase().includes(q) ||
                       (it.precio || '').toLowerCase().includes(q) ||
                       (it.descripcion || '').toLowerCase().includes(q);
@@ -6828,19 +6831,31 @@ function renderInfoTecnicoUI() {
                        (it.limites_api || '').toLowerCase().includes(q) ||
                        (it.limites_archivos || '').toLowerCase().includes(q) ||
                        (it.cuentas_usuarios || '').toLowerCase().includes(q);
-      const inTools = JSON.stringify(it.herramientas || []).toLowerCase().includes(q);
       const inExtras = JSON.stringify(it.campos_extra || []).toLowerCase().includes(q);
-      if (!inBasic && !inLimits && !inTools && !inExtras) return false;
+      if (!inBasic && !inLimits && !inExtras) return false;
     }
     return true;
   });
 
-  // Agrupar por producto
+  // Lista de tecnologías únicas para el selector
+  const techsMap = new Map();
+  _odnInfoTecnicoItems.forEach(it => {
+    const name = it.tech_name || it.producto_nombre || '';
+    if (name) {
+      const cat = it.category || 'tool';
+      if (!techsMap.has(name.toLowerCase())) {
+        techsMap.set(name.toLowerCase(), { name, category: cat });
+      }
+    }
+  });
+  const availableTechs = Array.from(techsMap.values()).sort((a,b) => a.name.localeCompare(b.name));
+
+  // Agrupar filtrados por Tecnología
   const grouped = {};
   filtered.forEach(it => {
-    const prod = it.producto_nombre || 'General';
-    if (!grouped[prod]) grouped[prod] = [];
-    grouped[prod].push(it);
+    const tName = it.tech_name || it.producto_nombre || 'General';
+    if (!grouped[tName]) grouped[tName] = [];
+    grouped[tName].push(it);
   });
 
   let html = `
@@ -6848,83 +6863,92 @@ function renderInfoTecnicoUI() {
     <div class="card" style="margin-bottom:20px;padding:16px 20px">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
         <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:24px">🧠</span>
+          <span style="font-size:24px">⚡</span>
           <div>
             <div style="font-size:15px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px">
-              <span>Catálogo Técnico de Soluciones & Planes</span>
+              <span>Info Técnico — Herramientas & Lenguajes</span>
               <span class="badge b-aprobada" style="font-size:10.5px;padding:2px 8px">👁️ Solo Lectura (ODN)</span>
             </div>
             <div style="font-size:12px;color:var(--text-muted)">
-              Consulta al instante los límites, arquitecturas, políticas de escalamiento y especificaciones para cotizar y asesorar a clientes.
+              Consultas rápidas de especificaciones técnicas, límites de consumo y políticas por plan para asesorar y cotizar.
             </div>
           </div>
         </div>
 
         <div style="font-size:12px;font-weight:600;color:var(--text-muted);background:var(--bg);padding:4px 10px;border-radius:6px;border:1px solid var(--border)">
-          <span>Gestionado por:</span> <strong style="color:var(--primary)">ADG / OTI</strong>
+          <span>Administrado por:</span> <strong style="color:var(--primary)">ADG / OTI</strong>
         </div>
       </div>
 
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
         <div style="flex:1;min-width:240px;position:relative">
           <input type="text" id="odn-it-search-input" value="${esc(_odnInfoTecnicoSearchQuery)}"
-            placeholder="🔍 Buscar por producto, plan, herramienta, lenguaje, límite, API, cuota..."
+            placeholder="🔍 Buscar herramienta, lenguaje, plan, límite, API, cuota..."
             style="width:100%;padding:8px 12px;font-size:12.5px;border:1px solid var(--border);border-radius:6px;background:#fff;margin:0">
         </div>
 
         <div style="width:240px">
-          <select id="odn-it-product-filter" style="width:100%;padding:8px 12px;font-size:12.5px;border:1px solid var(--border);border-radius:6px;background:#fff;margin:0">
-            <option value="all">📁 Todos los Productos (${_odnInfoTecnicoProducts.length})</option>
-            ${_odnInfoTecnicoProducts.map(p => `
-              <option value="${esc(p)}" ${_odnInfoTecnicoSelectedProduct.toLowerCase() === p.toLowerCase() ? 'selected' : ''}>
-                ${esc(p)}
+          <select id="odn-it-tech-filter" style="width:100%;padding:8px 12px;font-size:12.5px;border:1px solid var(--border);border-radius:6px;background:#fff;margin:0">
+            <option value="all">🌐 Todas las Tecnologías (${availableTechs.length})</option>
+            ${availableTechs.map(t => `
+              <option value="${esc(t.name)}" ${_odnInfoTecnicoSelectedTech.toLowerCase() === t.name.toLowerCase() ? 'selected' : ''}>
+                ${t.category === 'tool' ? '🛠️' : '💻'} ${esc(t.name)}
               </option>
             `).join('')}
           </select>
         </div>
       </div>
 
-      <!-- Quick Pills -->
-      <div style="display:flex;gap:6px;align-items:center;overflow-x:auto;padding-top:12px;margin-top:10px;border-top:1px solid var(--border)">
-        <span style="font-size:11px;font-weight:700;color:var(--text-muted);flex-shrink:0">Productos:</span>
-        <button type="button" class="btn btn-sm ${_odnInfoTecnicoSelectedProduct === 'all' ? 'btn-primary' : 'btn-outline'}"
-          style="font-size:11px;padding:3px 10px;border-radius:20px;flex-shrink:0" data-odn-prod="all">
-          Todos (${_odnInfoTecnicoItems.length})
+      <!-- Quick Pills por Categoría -->
+      <div style="display:flex;gap:8px;align-items:center;overflow-x:auto;padding-top:12px;margin-top:10px;border-top:1px solid var(--border)">
+        <span style="font-size:11px;font-weight:700;color:var(--text-muted);flex-shrink:0">Filtro Rápido:</span>
+        <button type="button" class="btn btn-sm ${_odnInfoTecnicoCategory === 'all' ? 'btn-primary' : 'btn-outline'}"
+          style="font-size:11px;padding:3px 10px;border-radius:20px;flex-shrink:0" data-odn-cat="all">
+          🌐 Todas (${totalCount} planes)
         </button>
-        ${_odnInfoTecnicoProducts.map(p => {
-          const count = _odnInfoTecnicoItems.filter(x => (x.producto_nombre || '').toLowerCase() === p.toLowerCase()).length;
-          const isAct = _odnInfoTecnicoSelectedProduct.toLowerCase() === p.toLowerCase();
-          return `
-            <button type="button" class="btn btn-sm ${isAct ? 'btn-primary' : 'btn-outline'}"
-              style="font-size:11px;padding:3px 10px;border-radius:20px;flex-shrink:0" data-odn-prod="${esc(p)}">
-              ${esc(p)} <span style="opacity:0.75">(${count})</span>
-            </button>
-          `;
-        }).join('')}
+        <button type="button" class="btn btn-sm ${_odnInfoTecnicoCategory === 'tool' ? 'btn-primary' : 'btn-outline'}"
+          style="font-size:11px;padding:3px 10px;border-radius:20px;flex-shrink:0" data-odn-cat="tool">
+          🛠️ Herramientas (${toolCount})
+        </button>
+        <button type="button" class="btn btn-sm ${_odnInfoTecnicoCategory === 'language' ? 'btn-primary' : 'btn-outline'}"
+          style="font-size:11px;padding:3px 10px;border-radius:20px;flex-shrink:0" data-odn-cat="language">
+          💻 Lenguajes (${langCount})
+        </button>
       </div>
     </div>
 
-    <!-- Lista de Fichas Técnicas -->
+    <!-- Lista de Fichas Técnicas por Tecnología -->
     <div style="display:flex;flex-direction:column;gap:24px">
       ${Object.keys(grouped).length === 0 ? `
         <div class="card" style="text-align:center;padding:48px 20px;color:var(--text-muted)">
           <div style="font-size:36px;margin-bottom:8px">🔍</div>
           <h3 style="font-size:15px;font-weight:700;color:var(--text);margin:0 0 6px">No se encontraron fichas técnicas</h3>
-          <p style="font-size:12.5px;margin:0">Prueba ajustando el término de búsqueda o seleccionando otro producto.</p>
+          <p style="font-size:12.5px;margin:0">Prueba ajustando el término de búsqueda o seleccionando otra categoría.</p>
         </div>
-      ` : Object.entries(grouped).map(([prodName, plans]) => `
-        <div style="display:flex;flex-direction:column;gap:12px">
-          <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--border);padding-bottom:6px">
-            <span style="font-size:20px">🏢</span>
-            <h2 style="font-size:17px;font-weight:800;color:var(--text);margin:0">${esc(prodName)}</h2>
-            <span class="badge b-web" style="font-size:11px">${plans.length} plan${plans.length === 1 ? '' : 'es'}</span>
-          </div>
+      ` : Object.entries(grouped).map(([techName, plans]) => {
+        const first = plans[0] || {};
+        const isTool = (first.category || 'tool') === 'tool';
+        const avatar = first.image_url
+          ? `<img src="${esc(first.image_url)}" style="width:28px;height:28px;object-fit:contain;padding:2px;background:#fff;border-radius:6px;border:1px solid #cbd5e1" alt="">`
+          : `<span style="width:28px;height:28px;border-radius:6px;background:${isTool ? '#fef3c7' : '#dbeafe'};color:${isTool ? '#b45309' : '#1d4ed8'};display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px">${esc(techName.charAt(0).toUpperCase())}</span>`;
 
-          <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(460px, 1fr));gap:18px">
-            ${plans.map(renderOdnPlanCard).join('')}
+        return `
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--border);padding-bottom:6px">
+              ${avatar}
+              <h2 style="font-size:17px;font-weight:800;color:var(--text);margin:0">${esc(techName)}</h2>
+              <span class="badge ${isTool ? 'b-web' : 'b-mobile'}" style="font-size:10.5px">
+                ${isTool ? '🛠️ Herramienta' : '💻 Lenguaje'}
+              </span>
+              <span style="font-size:11.5px;color:var(--text-muted);font-weight:600">(${plans.length} plan${plans.length === 1 ? '' : 'es'})</span>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(460px, 1fr));gap:18px">
+              ${plans.map(renderOdnPlanCard).join('')}
+            </div>
           </div>
-        </div>
-      `).join('')}
+        `;
+      }).join('')}
     </div>
   `;
 
@@ -6944,14 +6968,14 @@ function renderInfoTecnicoUI() {
     });
   }
 
-  document.getElementById('odn-it-product-filter')?.addEventListener('change', e => {
-    _odnInfoTecnicoSelectedProduct = e.target.value;
+  document.getElementById('odn-it-tech-filter')?.addEventListener('change', e => {
+    _odnInfoTecnicoSelectedTech = e.target.value;
     renderInfoTecnicoUI();
   });
 
-  mount.querySelectorAll('[data-odn-prod]').forEach(btn => {
+  mount.querySelectorAll('[data-odn-cat]').forEach(btn => {
     btn.addEventListener('click', () => {
-      _odnInfoTecnicoSelectedProduct = btn.dataset.odnProd;
+      _odnInfoTecnicoCategory = btn.dataset.odnCat;
       renderInfoTecnicoUI();
     });
   });
@@ -6962,24 +6986,15 @@ function renderInfoTecnicoUI() {
 
   mount.querySelectorAll('.btn-odn-proforma-shortcut').forEach(btn => {
     btn.addEventListener('click', () => {
-      const it = _odnInfoTecnicoItems.find(x => x.id === btn.dataset.id);
       navigate('crear-proforma');
-      setTimeout(() => {
-        const prodSel = document.getElementById('prf-producto-sel');
-        const prodSearch = document.getElementById('prf-producto-search');
-        if (it && prodSel) {
-          prodSel.value = it.producto_nombre;
-          if (prodSearch) prodSearch.value = it.producto_nombre;
-          onProformaProductChange(it.producto_nombre);
-        }
-      }, 200);
     });
   });
 }
 
 function renderOdnPlanCard(it) {
-  const tools = Array.isArray(it.herramientas) ? it.herramientas : [];
   const extras = Array.isArray(it.campos_extra) ? it.campos_extra : [];
+  const techName = it.tech_name || it.producto_nombre || '';
+  const isTool = (it.category || 'tool') === 'tool';
 
   return `
     <div class="card" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:space-between;border:1px solid #cbd5e1;box-shadow:0 1px 3px rgba(0,0,0,0.06)">
@@ -6988,15 +7003,15 @@ function renderOdnPlanCard(it) {
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
           <div>
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
-              <span class="badge b-web" style="font-size:10px;font-weight:700">${esc(it.producto_nombre)}</span>
-              <span style="font-size:10.5px;color:var(--text-muted);background:#e2e8f0;padding:1px 6px;border-radius:4px">${esc(it.categoria || 'Web')}</span>
+              <span class="badge ${isTool ? 'b-web' : 'b-mobile'}" style="font-size:10px;font-weight:700">${esc(techName)}</span>
+              <span style="font-size:10.5px;color:var(--text-muted);background:#e2e8f0;padding:1px 6px;border-radius:4px">${isTool ? 'Herramienta' : 'Lenguaje'}</span>
             </div>
             <h3 style="font-size:16px;font-weight:800;color:var(--text);margin:0">${esc(it.plan_nombre)}</h3>
           </div>
 
           <div style="text-align:right;flex-shrink:0">
             <span style="font-size:10.5px;color:var(--text-muted);display:block">Precio Sugerido</span>
-            <div style="font-size:15px;font-weight:900;color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;padding:3px 8px;border-radius:6px;display:inline-block">
+            <div style="font-size:14px;font-weight:900;color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;padding:3px 8px;border-radius:6px;display:inline-block">
               ${esc(it.precio || 'A cotizar')}
             </div>
           </div>
@@ -7006,22 +7021,6 @@ function renderOdnPlanCard(it) {
           <p style="font-size:12px;color:#475569;margin:8px 0 0;line-height:1.4">
             ${esc(it.descripcion)}
           </p>
-        ` : ''}
-
-        <!-- Stack Tecnológico -->
-        ${tools.length > 0 ? `
-          <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:10px;padding-top:8px;border-top:1px dashed #e2e8f0">
-            <span style="font-size:10.5px;font-weight:700;color:var(--text-muted);flex-shrink:0">Stack:</span>
-            ${tools.map(t => {
-              const name = typeof t === 'string' ? t : (t.name || 'Tool');
-              const ic = typeof t === 'object' && t.icon ? t.icon : '⚡';
-              return `
-                <span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:#1e293b;background:#ffffff;border:1px solid #cbd5e1;padding:1px 6px;border-radius:4px">
-                  <span>${ic}</span> <span>${esc(name)}</span>
-                </span>
-              `;
-            }).join('')}
-          </div>
         ` : ''}
       </div>
 
@@ -7081,7 +7080,7 @@ function renderOdnPlanCard(it) {
           </div>
         </details>
 
-        <!-- Bloque 5: Campos Personalizados -->
+        <!-- Bloque 5: Campos Personalizados Dinámicos -->
         ${extras.length > 0 ? `
           <div style="background:#fff;border:1px dashed #cbd5e1;border-radius:6px;padding:8px 12px">
             <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px">Campos Adicionales:</div>
@@ -7100,8 +7099,8 @@ function renderOdnPlanCard(it) {
           <span>📋</span> <span>Copiar Resumen</span>
         </button>
 
-        <button type="button" class="btn btn-primary btn-sm btn-odn-proforma-shortcut" data-id="${it.id}" style="font-size:11.5px;padding:4px 12px;font-weight:700" title="Iniciar proforma con este producto">
-          <span>📑</span> <span>Cotizar Producto</span>
+        <button type="button" class="btn btn-primary btn-sm btn-odn-proforma-shortcut" data-id="${it.id}" style="font-size:11.5px;padding:4px 12px;font-weight:700" title="Ver cotización de proformas">
+          <span>📑</span> <span>Proformas</span>
         </button>
       </div>
     </div>
@@ -7112,14 +7111,11 @@ function copyOdnPlanToClipboard(id) {
   const it = _odnInfoTecnicoItems.find(x => x.id === id);
   if (!it) return;
 
-  const tools = Array.isArray(it.herramientas) ? it.herramientas : [];
-  const toolsStr = tools.map(t => typeof t === 'string' ? t : (t.name || '')).filter(Boolean).join(', ');
-
+  const techName = it.tech_name || it.producto_nombre || '';
   const text = `
-📌 FICHA TÉCNICA: ${it.producto_nombre} - ${it.plan_nombre}
-💰 Precio / Inversión: ${it.precio || 'Consultar con ejecutivo'}
-🏷️ Categoría: ${it.categoria || 'Web'}
-💻 Stack: ${toolsStr || 'Estándar'}
+📌 FICHA TÉCNICA: ${techName} [${it.plan_nombre}]
+💰 Precio / Inversión: ${it.precio || 'N/A'}
+🏷️ Categoría: ${(it.category || 'tool') === 'tool' ? 'Herramienta' : 'Lenguaje'}
 
 📝 DESCRIPCIÓN:
 ${it.descripcion || '—'}
