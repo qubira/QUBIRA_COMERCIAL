@@ -1912,7 +1912,7 @@
 
 <div class="toast-wrap" id="toast-wrap"></div>
 
-<script src="js/tech-stack-odn.js?v=11"></script>
+<script src="js/tech-stack-odn.js?v=12"></script>
 <script>
 'use strict';
 
@@ -2078,6 +2078,7 @@ function toast(type, title, msg) {
   w.appendChild(d);
   setTimeout(() => d.remove(), 4200);
 }
+window.toast = toast;
 
 // ══════════════════════════════════════════════════════
 // DATOS — catálogo de productos (ti.projects filtrados por ADG)

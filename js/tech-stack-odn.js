@@ -351,36 +351,25 @@
             ${_activeStack.is_quotation ? '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:#d97706;color:#fff">Cotización Activa</span>' : ''}
           </div>
 
-          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px">
-            <button type="button" id="ts-odn-btn-new" class="btn btn-outline" style="padding:5px 12px;font-size:12px">
-              + Nueva Ramificación
-            </button>
-            <button type="button" id="ts-odn-btn-clone" class="btn btn-outline" style="padding:5px 12px;font-size:12px;background:#fffbeb;color:#92400e;border-color:#fcd34d">
-              📋 Clonar para Cotización
-            </button>
-            <button type="button" id="ts-odn-btn-add-col" class="btn btn-outline" style="padding:5px 12px;font-size:12px">
-              + Agregar Columna
-            </button>
-            <button type="button" id="ts-odn-btn-save" class="btn btn-primary" style="padding:5px 16px;font-size:12px;font-weight:700">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px">
+            <span style="font-size:11px;font-weight:600;color:#0f766e;background:#ecfdf5;padding:5px 12px;border-radius:8px;border:1px solid #a7f3d0;display:flex;align-items:center;gap:6px">
+              💼 <span>Modo Cotización ODN (Estructura técnica fijada por TI)</span>
+            </span>
+            <button type="button" id="ts-odn-btn-save" class="btn btn-primary" style="padding:6px 18px;font-size:12px;font-weight:700">
               Guardar Cambios
-            </button>
-            <button type="button" id="ts-odn-btn-delete" class="btn btn-outline" style="padding:5px 10px;font-size:12px;color:var(--danger);border-color:#fca5a5" title="Eliminar ramificación">
-              🗑️
             </button>
           </div>
         </div>
 
         <!-- Barra de Metadatos y Navegación del Árbol -->
         <div class="ts-odn-meta-bar">
-          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:240px">
+          <div style="display:flex;align-items:center;gap:8px">
             <span style="color:var(--text-muted);font-weight:600">Nombre:</span>
-            <input type="text" id="ts-odn-name" value="${esc(_activeStack.name)}" style="padding:4px 10px;font-size:12px;font-weight:600;border:1px solid var(--border);border-radius:6px;width:100%;max-width:320px" placeholder="Ej: Stack Web E-Commerce">
+            <span style="font-weight:700;color:#1e293b;font-size:12.5px">${esc(_activeStack.name)}</span>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
             <span style="color:var(--text-muted);font-weight:600">Tipo:</span>
-            <select id="ts-odn-type" style="padding:4px 10px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:#fff">
-              ${renderProjectTypeOptions(_activeStack.project_type || 'Web')}
-            </select>
+            <span style="font-size:11px;font-weight:700;color:#475569;background:#f1f5f9;padding:2px 8px;border-radius:6px;border:1px solid #cbd5e1">${esc(_activeStack.project_type || 'Web')}</span>
           </div>
 
           <!-- Navegación rápida horizontal del árbol (desplazamiento suave) -->
@@ -476,36 +465,20 @@
 
     return `
       <div class="ts-odn-column" data-stage-index="${sIdx}">
-        <div class="ts-odn-col-header" style="flex-direction:column;gap:6px">
+        <div class="ts-odn-col-header" style="flex-direction:column;gap:4px">
           <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:6px">
             <div style="display:flex;align-items:center;gap:6px;overflow:hidden;flex:1">
               <span style="font-size:10px;font-weight:700;color:var(--text-muted);background:#e2e8f0;padding:2px 5px;border-radius:4px">C${sIdx + 1}</span>
-              <input type="text" class="ts-odn-col-title" value="${esc(stage.title)}" data-stage-index="${sIdx}" style="font-size:12px;font-weight:700;color:#1e293b;border:none;background:transparent;width:100%;outline:none;cursor:pointer" title="Clic para renombrar">
+              <span style="font-size:12px;font-weight:700;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(stage.title)}</span>
             </div>
-            <div style="display:flex;align-items:center;gap:2px">
-              <button type="button" class="ts-odn-btn-move-left" data-stage-index="${sIdx}" ${sIdx === 0 ? 'disabled' : ''} style="background:none;border:none;color:${sIdx === 0 ? '#cbd5e1' : '#64748b'};cursor:${sIdx === 0 ? 'not-allowed' : 'pointer'};font-size:13px;padding:2px 4px;font-weight:700" title="${sIdx === 0 ? 'Primera columna' : 'Mover columna a la izquierda (←)'}">←</button>
-              <button type="button" class="ts-odn-btn-move-right" data-stage-index="${sIdx}" ${isLast ? 'disabled' : ''} style="background:none;border:none;color:${isLast ? '#cbd5e1' : '#64748b'};cursor:${isLast ? 'not-allowed' : 'pointer'};font-size:13px;padding:2px 4px;font-weight:700" title="${isLast ? 'Última columna' : 'Mover columna a la derecha (→)'}">→</button>
-              <button type="button" class="ts-odn-btn-add-item" data-stage-index="${sIdx}" style="background:none;border:none;color:#059669;cursor:pointer;font-size:15px;padding:2px 4px;font-weight:700" title="Añadir tecnología">+</button>
-              ${_activeStack.stages.length > 2 ? `
-              <button type="button" class="ts-odn-btn-del-col" data-stage-index="${sIdx}" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:13px;padding:2px 4px" title="Eliminar columna">&times;</button>` : ''}
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;width:100%;font-size:10px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:4px">
-            <div style="display:flex;align-items:center;gap:6px">
-              ${sIdx === 0 ? `
-              <button type="button" class="ts-odn-btn-insert-col-before" data-stage-index="${sIdx}" style="background:none;border:none;color:#0f766e;font-weight:700;cursor:pointer;font-size:10.5px;padding:0" title="Insertar columna al inicio (antes de C1)">+ Antes</button>
-              <span style="color:#cbd5e1">|</span>` : ''}
-              <button type="button" class="ts-odn-btn-insert-col" data-stage-index="${sIdx}" style="background:none;border:none;color:#0f766e;font-weight:700;cursor:pointer;font-size:10.5px;padding:0" title="Insertar una nueva columna después de C${sIdx + 1}">+ Columna aquí</button>
-            </div>
-            <span style="font-weight:700;background:#f1f5f9;padding:1px 4px;border-radius:3px">C${sIdx + 1}/${_activeStack.stages.length}</span>
+            <span style="font-size:10px;font-weight:700;color:#64748b;background:#f1f5f9;padding:1px 5px;border-radius:3px">C${sIdx + 1}/${_activeStack.stages.length}</span>
           </div>
         </div>
 
         <div style="padding:10px;display:flex;flex-direction:column;gap:10px;min-height:200px">
           ${items.length === 0 ? `
             <div style="border:1px dashed #cbd5e1;border-radius:8px;padding:18px 10px;text-align:center;color:var(--text-muted);font-size:11px;background:#f8fafc">
-              <p style="margin-bottom:6px">Sin tecnologías</p>
-              <button type="button" class="ts-odn-btn-add-item" data-stage-index="${sIdx}" style="color:var(--primary);background:none;border:none;font-size:11px;font-weight:700;cursor:pointer">+ Añadir elemento</button>
+              <p style="margin:0">Sin tecnologías</p>
             </div>` :
             items.map((it, itIdx) => renderNodeCard(it, sIdx, itIdx, isLast)).join('')}
         </div>
@@ -596,7 +569,6 @@
             <div style="font-size:12px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(item.name)}</div>
             <div style="font-size:10px;color:var(--text-muted);text-transform:capitalize">${esc(item.category || 'tecnología')}</div>
           </div>
-          <button type="button" class="ts-odn-del-node" data-stage-index="${sIdx}" data-item-index="${itIdx}" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:13px;padding:2px" title="Quitar">&times;</button>
         </div>
 
         <!-- Plan selector y costo -->
@@ -811,113 +783,6 @@
       });
     }
 
-    document.getElementById('ts-odn-name')?.addEventListener('input', e => {
-      _activeStack.name = e.target.value;
-    });
-
-    document.getElementById('ts-odn-type')?.addEventListener('change', e => {
-      let val = e.target.value;
-      if (val === 'Otro') {
-        const custom = prompt('Escribe el tipo de proyecto / solución personalizado:', _activeStack.project_type || '');
-        if (custom && custom.trim()) {
-          val = custom.trim();
-        } else {
-          renderBuilder();
-          return;
-        }
-      }
-      _activeStack.project_type = val;
-      renderBuilder();
-    });
-
-    document.getElementById('ts-odn-btn-new')?.addEventListener('click', () => {
-      const name = prompt('Nombre de la nueva ramificación:', 'Nuevo Tech Stack');
-      if (!name || !name.trim()) return;
-      const newStack = createEmptyStack(name.trim(), 'Web', false);
-      _stacks.push(newStack);
-      _activeStack = JSON.parse(JSON.stringify(newStack));
-      renderBuilder();
-    });
-
-    document.getElementById('ts-odn-btn-clone')?.addEventListener('click', () => {
-      const cloned = JSON.parse(JSON.stringify(_activeStack));
-      cloned.id = 'stack_odn_' + Date.now();
-      cloned.name = `[Cotización] ${cloned.name}`;
-      cloned.is_quotation = true;
-      _stacks.push(cloned);
-      _activeStack = cloned;
-      renderBuilder();
-      if (window.toast) window.toast('success', 'Cotización Creada', 'Se clonó la ramificación para cotizar precios.');
-    });
-
-    document.getElementById('ts-odn-btn-add-col')?.addEventListener('click', () => {
-      _activeStack.stages.push({
-        id: 'stg_' + Date.now(),
-        title: 'HERRAMIENTA',
-        category: 'tool',
-        items: []
-      });
-      cleanStaleTargets();
-      renderBuilder({ scrollToEnd: true });
-    });
-
-    // Move column left (←)
-    document.querySelectorAll('.ts-odn-btn-move-left').forEach(btn => {
-      btn.addEventListener('click', e => {
-        const sIdx = Number(e.currentTarget.dataset.stageIndex);
-        if (sIdx > 0 && _activeStack.stages.length > 1) {
-          const temp = _activeStack.stages[sIdx];
-          _activeStack.stages[sIdx] = _activeStack.stages[sIdx - 1];
-          _activeStack.stages[sIdx - 1] = temp;
-          cleanStaleTargets();
-          renderBuilder({ scrollToStage: sIdx - 1 });
-        }
-      });
-    });
-
-    // Move column right (→)
-    document.querySelectorAll('.ts-odn-btn-move-right').forEach(btn => {
-      btn.addEventListener('click', e => {
-        const sIdx = Number(e.currentTarget.dataset.stageIndex);
-        if (sIdx < _activeStack.stages.length - 1) {
-          const temp = _activeStack.stages[sIdx];
-          _activeStack.stages[sIdx] = _activeStack.stages[sIdx + 1];
-          _activeStack.stages[sIdx + 1] = temp;
-          cleanStaleTargets();
-          renderBuilder({ scrollToStage: sIdx + 1 });
-        }
-      });
-    });
-
-    // Insert column after
-    document.querySelectorAll('.ts-odn-btn-insert-col').forEach(btn => {
-      btn.addEventListener('click', e => {
-        const sIdx = Number(e.currentTarget.dataset.stageIndex);
-        _activeStack.stages.splice(sIdx + 1, 0, {
-          id: 'stg_' + Date.now(),
-          title: 'HERRAMIENTA',
-          category: 'tool',
-          items: []
-        });
-        cleanStaleTargets();
-        renderBuilder({ scrollToStage: sIdx + 1 });
-      });
-    });
-
-    // Insert column before C1
-    document.querySelectorAll('.ts-odn-btn-insert-col-before').forEach(btn => {
-      btn.addEventListener('click', () => {
-        _activeStack.stages.unshift({
-          id: 'stg_' + Date.now(),
-          title: 'HERRAMIENTA',
-          category: 'tool',
-          items: []
-        });
-        cleanStaleTargets();
-        renderBuilder({ scrollToStage: 0 });
-      });
-    });
-
     document.getElementById('ts-odn-btn-save')?.addEventListener('click', async () => {
       try {
         const payload = {
@@ -950,75 +815,13 @@
         const match = _stacks.find(s => s.id === _activeStack.id) || _stacks[0];
         if (match) _activeStack = JSON.parse(JSON.stringify(match));
         renderBuilder();
-        if (window.toast) window.toast('success', 'Tech Stack Guardado', 'Se guardó la ramificación correctamente en la base de datos.');
+        if (window.toast) window.toast('success', 'Cotización Guardada', 'Se guardaron los planes y precios seleccionados.');
       } catch (err) {
         alert('Error al guardar: ' + err.message);
       }
     });
 
-    document.getElementById('ts-odn-btn-delete')?.addEventListener('click', async () => {
-      if (!confirm(`¿Eliminar la ramificación "${_activeStack.name}"?`)) return;
-      try {
-        if (!String(_activeStack.id).startsWith('stack_')) {
-          await window.qcApiFetch('/api/comercial/tech-stacks/' + encodeURIComponent(_activeStack.id), {
-            method: 'DELETE'
-          });
-        }
-        _stacks = _stacks.filter(s => s.id !== _activeStack.id);
-        _activeStack = _stacks.length ? JSON.parse(JSON.stringify(_stacks[0])) : createEmptyStack('Nuevo Tech Stack', 'Web');
-        renderBuilder();
-      } catch (err) {
-        alert('Error al eliminar: ' + err.message);
-      }
-    });
 
-    // Column titles
-    document.querySelectorAll('.ts-odn-col-title').forEach(inp => {
-      inp.addEventListener('input', e => {
-        const sIdx = Number(e.target.dataset.stageIndex);
-        if (_activeStack.stages[sIdx]) {
-          _activeStack.stages[sIdx].title = e.target.value;
-        }
-      });
-      inp.addEventListener('change', e => {
-        const sIdx = Number(e.target.dataset.stageIndex);
-        if (_activeStack.stages[sIdx]) {
-          _activeStack.stages[sIdx].title = e.target.value.toUpperCase();
-          renderBuilder({ scrollToStage: sIdx });
-        }
-      });
-    });
-
-    // Add item buttons
-    document.querySelectorAll('.ts-odn-btn-add-item').forEach(btn => {
-      btn.addEventListener('click', e => {
-        const sIdx = Number(e.currentTarget.dataset.stageIndex);
-        openAddItemModal(sIdx);
-      });
-    });
-
-    // Delete column buttons
-    document.querySelectorAll('.ts-odn-btn-del-col').forEach(btn => {
-      btn.addEventListener('click', e => {
-        const sIdx = Number(e.currentTarget.dataset.stageIndex);
-        if (_activeStack.stages.length <= 2) return;
-        _activeStack.stages.splice(sIdx, 1);
-        cleanStaleTargets();
-        renderBuilder({ scrollToStage: Math.max(0, sIdx - 1) });
-      });
-    });
-
-    // Delete node
-    document.querySelectorAll('.ts-odn-del-node').forEach(btn => {
-      btn.addEventListener('click', e => {
-        const sIdx = Number(e.currentTarget.dataset.stageIndex);
-        const itIdx = Number(e.currentTarget.dataset.itemIndex);
-        if (_activeStack.stages[sIdx]) {
-          _activeStack.stages[sIdx].items.splice(itIdx, 1);
-          renderBuilder({ scrollToStage: sIdx });
-        }
-      });
-    });
 
     // Plan selection change
     document.querySelectorAll('.ts-odn-plan-sel').forEach(sel => {
