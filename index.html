@@ -6825,8 +6825,8 @@ function renderInfoTecnicoUI() {
     const availableTechs = Array.from(techsMap.values()).sort((a,b) => a.name.localeCompare(b.name));
 
     mount.innerHTML = `
-      <!-- Barra superior de filtros y búsqueda rápida -->
-      <div class="card" style="margin-bottom:20px;padding:16px 20px">
+      <!-- Barra superior de filtros y búsqueda rápida (Sticky) -->
+      <div class="card" style="margin-bottom:20px;padding:16px 20px;position:sticky;top:0;z-index:30;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.06)">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
           <div style="display:flex;align-items:center;gap:10px">
             <span style="font-size:24px">⚡</span>
