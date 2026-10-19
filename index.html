@@ -4379,19 +4379,17 @@ function renderProformaTechItemsTable() {
                   const pHasMax = p.margen_max !== null && p.margen_max !== undefined && p.margen_max !== '';
 
                   let costLabel = '';
-                  if (!pHasCost && !pHasMin && !pHasMax) {
-                    costLabel = ' (Indefinido)';
+                  if (pHasCost && Number(p.costo) === 0) {
+                    costLabel = ' (Gratis)';
+                  } else if (pHasCost && Number(p.costo) > 0) {
+                    const periodLabel = p.periodo ? ` / ${p.periodo}` : '';
+                    costLabel = ` (${sym} ${Number(p.costo).toFixed(0)}${periodLabel})`;
+                  } else if (!pHasCost && (pHasMax || pHasMin)) {
+                    const mx = pHasMax ? Number(p.margen_max) : Number(p.margen_min);
+                    const periodLabel = p.periodo ? ` / ${p.periodo}` : '';
+                    costLabel = mx > 0 ? ` (${sym} ${mx.toFixed(0)}${periodLabel})` : ' (Gratis)';
                   } else {
-                    const c = pHasCost ? Number(p.costo) : 0;
-                    const mx = pHasMax ? Number(p.margen_max) : 0;
-                    const mn = pHasMin ? Number(p.margen_min) : 0;
-                    if (c === 0 && mx === 0 && mn === 0) {
-                      costLabel = ' (Gratis)';
-                    } else {
-                      const periodLabel = p.periodo ? ` / ${p.periodo}` : '';
-                      const displayNum = pHasCost && c > 0 ? c : (mx > 0 ? mx : mn);
-                      costLabel = ` (${sym} ${displayNum.toFixed(0)}${periodLabel})`;
-                    }
+                    costLabel = (p.name || '').trim().toUpperCase() === 'FREE' ? ' (Gratis)' : ' (Indefinido)';
                   }
                   return `<option value="${pIdx}" ${isSelected ? 'selected' : ''}>${esc(p.name)}${costLabel}</option>`;
                 }).join('');
@@ -4401,7 +4399,6 @@ function renderProformaTechItemsTable() {
                     style="padding:4px 8px;font-size:11.5px;font-weight:700;border:1.5px solid #cbd5e1;border-radius:6px;background:#fff;color:#0f766e;cursor:pointer;width:100%;max-width:160px;outline:none;transition:border-color .15s, box-shadow .15s"
                     title="Cambiar plan de ${esc(it.name)}">
                     ${planOptionsHtml}
-                    <option value="__custom__">✏️ Personalizado...</option>
                   </select>
                 `;
 
@@ -4553,42 +4550,6 @@ function removeProformaTechItem(idx) {
 function onProformaTechPlanSelect(idx, planVal) {
   const item = _currentProformaTechItems[idx];
   if (!item) return;
-
-  const moneda = document.getElementById('prf-moneda')?.value || 'USD';
-  const sym = moneda === 'PEN' ? 'S/' : '$';
-
-  if (planVal === '__custom__') {
-    const customName = prompt(`Ingrese el nombre del plan para "${item.name}":`, item.plan_name || 'Personalizado');
-    if (!customName || !customName.trim()) {
-      renderProformaTechItemsTable();
-      return;
-    }
-    const customCostStr = prompt(`Costo de referencia del plan (${sym}) [deje vacío si es indefinido]:`, item.costo !== null && item.costo !== undefined ? String(item.costo) : '');
-    const customCost = (customCostStr !== null && customCostStr.trim() !== '') ? Math.max(0, parseFloat(customCostStr) || 0) : null;
-
-    const customPropStr = prompt(`Propuesta para la cotización (${sym}) [deje vacío si es indefinido]:`, item.propuesta !== null && item.propuesta !== undefined ? String(item.propuesta) : (customCost !== null ? String(customCost) : ''));
-    const customProp = (customPropStr !== null && customPropStr.trim() !== '') ? Math.max(0, parseFloat(customPropStr) || 0) : null;
-
-    item.plan_name = customName.trim();
-    item.costo = customCost;
-    item.margen_min = customCost;
-    item.margen_max = customProp;
-    item.propuesta = customProp;
-
-    if (!Array.isArray(item.plans)) item.plans = [];
-    item.plans.push({
-      name: item.plan_name,
-      costo: item.costo,
-      margen_min: item.margen_min,
-      margen_max: item.margen_max,
-      periodo: 'mes'
-    });
-
-    renderProformaTechItemsTable();
-    calcProformaTotals();
-    if (window.toast) window.toast('success', 'Plan Personalizado', `Se configuró el plan "${item.plan_name}" para ${item.name}.`);
-    return;
-  }
 
   const pIdx = Number(planVal);
   const plans = Array.isArray(item.plans) ? item.plans : [];
