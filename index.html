@@ -4430,7 +4430,7 @@ function renderProformaTechItemsTable() {
                   placeholderPropuesta = 'Indefinido';
                 } else {
                   valPropuesta = '';
-                  placeholderPropuesta = (mx !== null && mx > 0) ? `0.00 (Máx ${mx.toFixed(0)})` : '0.00';
+                  placeholderPropuesta = (mx !== null && mx > 0) ? mx.toFixed(2) : '0.00';
                 }
 
                 const isMissingInput = (it.propuesta === null || it.propuesta === undefined || it.propuesta === '') && !isDefaultZero;
@@ -4452,8 +4452,9 @@ function renderProformaTechItemsTable() {
                         <span style="font-size:11px;color:var(--text-muted)">${sym}</span>
                         <input type="number" step="0.01" min="${mn !== null && mn > 0 ? mn : 0}" value="${valPropuesta}" placeholder="${placeholderPropuesta}"
                           style="padding:4px 6px;font-size:12px;text-align:right;font-weight:700;color:var(--primary);width:100%;border:1.5px solid ${isMissingInput ? '#f59e0b' : '#cbd5e1'};border-radius:6px;background:${isMissingInput ? '#fffbeb' : '#fff'}"
-                          title="${mn !== null && mn > 0 ? `Mínimo permitido: ${sym} ${mn.toFixed(2)}` : 'Ingrese propuesta'}"
+                          title="${mn !== null && mn > 0 ? `Mínimo: ${sym} ${mn.toFixed(2)} | Máx: ${sym} ${(mx||0).toFixed(2)}` : (mx !== null && mx > 0 ? `Margen Máximo: ${sym} ${mx.toFixed(2)}` : 'Ingrese propuesta')}"
                           oninput="updateProformaTechItem(${globalIdx}, 'propuesta', this.value)"
+                          onkeydown="if(event.key==='Enter') this.blur()"
                           onblur="validateProformaTechItemPropuesta(${globalIdx}, this)">
                       </div>
                     </td>
@@ -4517,7 +4518,7 @@ function renderProformaTechItemsTable() {
                   placeholderPropuesta = 'Indefinido';
                 } else {
                   valPropuesta = '';
-                  placeholderPropuesta = (mx !== null && mx > 0) ? `0.00 (Máx ${mx.toFixed(0)})` : '0.00';
+                  placeholderPropuesta = (mx !== null && mx > 0) ? mx.toFixed(2) : '0.00';
                 }
 
                 const isMissingInput = (it.propuesta === null || it.propuesta === undefined || it.propuesta === '') && !isDefaultZero;
@@ -4538,8 +4539,9 @@ function renderProformaTechItemsTable() {
                         <span style="font-size:11px;color:var(--text-muted)">${sym}</span>
                         <input type="number" step="0.01" min="${mn !== null && mn > 0 ? mn : 0}" value="${valPropuesta}" placeholder="${placeholderPropuesta}"
                           style="padding:4px 6px;font-size:12px;text-align:right;font-weight:700;color:var(--primary);width:100%;border:1.5px solid ${isMissingInput ? '#f59e0b' : '#cbd5e1'};border-radius:6px;background:${isMissingInput ? '#fffbeb' : '#fff'}"
-                          title="${mn !== null && mn > 0 ? `Mínimo permitido: ${sym} ${mn.toFixed(2)}` : 'Ingrese propuesta'}"
+                          title="${mn !== null && mn > 0 ? `Mínimo: ${sym} ${mn.toFixed(2)} | Máx: ${sym} ${(mx||0).toFixed(2)}` : (mx !== null && mx > 0 ? `Margen Máximo: ${sym} ${mx.toFixed(2)}` : 'Ingrese propuesta')}"
                           oninput="updateProformaTechItem(${globalIdx}, 'propuesta', this.value)"
+                          onkeydown="if(event.key==='Enter') this.blur()"
                           onblur="validateProformaTechItemPropuesta(${globalIdx}, this)">
                       </div>
                     </td>
@@ -4586,6 +4588,7 @@ function validateProformaTechItemPropuesta(idx, el) {
   const moneda = document.getElementById('prf-moneda')?.value || 'USD';
   const sym = moneda === 'PEN' ? 'S/' : '$';
 
+  // Si se deja en blanco
   if (valTrim === '') {
     if (mn === 0 && mx === 0) {
       item.propuesta = 0;
@@ -4600,7 +4603,7 @@ function validateProformaTechItemPropuesta(idx, el) {
   }
 
   const numVal = parseFloat(valTrim);
-  if (isNaN(numVal) || numVal < 0) {
+  if (isNaN(numVal)) {
     item.propuesta = null;
     el.value = '';
     renderProformaTechItemsTable();
@@ -4608,19 +4611,49 @@ function validateProformaTechItemPropuesta(idx, el) {
     return;
   }
 
-  // Validación: No se puede poner menos de lo que el margen indique
-  const minRequired = (mn !== null && mn > 0) ? mn : 0;
-  if (numVal < minRequired) {
-    if (window.toast) {
-      window.toast('warning', 'Monto Menor al Margen Mínimo', `En ${item.name}, no se puede cotizar menos de ${sym} ${minRequired.toFixed(2)} (Margen Mínimo). Se ajustó al mínimo.`);
-    }
-    item.propuesta = minRequired;
-    el.value = minRequired.toFixed(2);
+  // Si ambos márgenes son 0 (tecnología gratuita)
+  if (mn === 0 && mx === 0) {
+    item.propuesta = Math.max(0, numVal);
+    el.value = item.propuesta.toFixed(2);
     renderProformaTechItemsTable();
     calcProformaTotals();
     return;
   }
 
+  const minRequired = (mn !== null && mn > 0) ? mn : 0;
+  const maxAllowed = (mx !== null && mx > 0) ? mx : null;
+
+  // Si el usuario ingresa un monto más bajo de los límites de min y max:
+  // (menor al mínimo requerido, o <= 0 cuando hay margen requerido)
+  // En vez de poner el precio bajo automáticamente, se asigna el Margen máx!
+  const isBelowMin = (minRequired > 0 && numVal < minRequired);
+  const isZeroOrNegativeWhenMarginExpected = (maxAllowed !== null && maxAllowed > 0 && numVal <= 0);
+
+  if (isBelowMin || isZeroOrNegativeWhenMarginExpected) {
+    const targetMax = (maxAllowed !== null && maxAllowed > 0) ? maxAllowed : minRequired;
+    if (window.toast) {
+      window.toast('warning', 'Límite de Margen', `En ${item.name}, el monto ingresado (${sym} ${numVal.toFixed(2)}) es menor a los límites permitidos. Se asignó automáticamente el Margen Máximo (${sym} ${targetMax.toFixed(2)}).`);
+    }
+    item.propuesta = targetMax;
+    el.value = targetMax.toFixed(2);
+    renderProformaTechItemsTable();
+    calcProformaTotals();
+    return;
+  }
+
+  // Si el usuario ingresa un monto que supera el Margen Máximo permitido
+  if (maxAllowed !== null && maxAllowed > 0 && numVal > maxAllowed) {
+    if (window.toast) {
+      window.toast('warning', 'Margen Máximo Superado', `En ${item.name}, el monto no puede superar el Margen Máximo (${sym} ${maxAllowed.toFixed(2)}). Se ajustó al máximo.`);
+    }
+    item.propuesta = maxAllowed;
+    el.value = maxAllowed.toFixed(2);
+    renderProformaTechItemsTable();
+    calcProformaTotals();
+    return;
+  }
+
+  // Monto válido dentro de los márgenes permitidos
   item.propuesta = numVal;
   el.value = numVal.toFixed(2);
   renderProformaTechItemsTable();
@@ -5506,6 +5539,17 @@ async function handleGuardarProforma(e) {
       propuesta: Number(it.propuesta) || 0,
     });
   });
+
+  const unpricedTech = _currentProformaTechItems.find(it => {
+    const mn = (it.margen_min !== null && it.margen_min !== undefined && it.margen_min !== '') ? Number(it.margen_min) : null;
+    const mx = (it.margen_max !== null && it.margen_max !== undefined && it.margen_max !== '') ? Number(it.margen_max) : null;
+    if (mn === 0 && mx === 0) return false;
+    return it.propuesta === null || it.propuesta === undefined || it.propuesta === '';
+  });
+  if (unpricedTech) {
+    toast('warning', 'Propuesta Pendiente', `Debes ingresar el monto de la propuesta para la tecnología "${unpricedTech.name}" guiándote de su margen.`);
+    return;
+  }
 
   if (!itemsClean.length) {
     toast('error', 'Error', 'Debes incluir al menos un ítem o tecnología en la cotización.');
