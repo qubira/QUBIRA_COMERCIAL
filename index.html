@@ -6813,7 +6813,119 @@ function renderInfoTecnicoUI() {
   const toolCount = _odnInfoTecnicoItems.filter(x => (x.category || 'tool') === 'tool').length;
   const langCount = _odnInfoTecnicoItems.filter(x => x.category === 'language').length;
 
-  // Filtrado
+  let cardsContainer = document.getElementById('odn-it-cards-container');
+  if (!cardsContainer) {
+    const techsMap = new Map();
+    _odnInfoTecnicoItems.forEach(it => {
+      const name = it.tech_name || it.producto_nombre || '';
+      if (name && !techsMap.has(name.toLowerCase())) {
+        techsMap.set(name.toLowerCase(), { name, category: it.category || 'tool' });
+      }
+    });
+    const availableTechs = Array.from(techsMap.values()).sort((a,b) => a.name.localeCompare(b.name));
+
+    mount.innerHTML = `
+      <!-- Barra superior de filtros y búsqueda rápida -->
+      <div class="card" style="margin-bottom:20px;padding:16px 20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:24px">⚡</span>
+            <div>
+              <div style="font-size:15px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px">
+                <span>Info Técnico — Herramientas & Lenguajes</span>
+                <span class="badge b-aprobada" style="font-size:10.5px;padding:2px 8px">👁️ Solo Lectura (ODN)</span>
+              </div>
+              <div style="font-size:12px;color:var(--text-muted)">
+                Consultas rápidas de especificaciones técnicas, límites de consumo y políticas por plan para asesorar y cotizar.
+              </div>
+            </div>
+          </div>
+
+          <div style="font-size:12px;font-weight:600;color:var(--text-muted);background:var(--bg);padding:4px 10px;border-radius:6px;border:1px solid var(--border)">
+            <span>Administrado por:</span> <strong style="color:var(--primary)">ADG / OTI</strong>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <div style="flex:1;min-width:240px;position:relative">
+            <input type="text" id="odn-it-search-input" value="${esc(_odnInfoTecnicoSearchQuery)}"
+              placeholder="🔍 Buscar herramienta, lenguaje, plan, límite, API, cuota..."
+              style="width:100%;padding:8px 12px;font-size:12.5px;border:1px solid var(--border);border-radius:6px;background:#fff;margin:0">
+          </div>
+
+          <div style="width:240px">
+            <select id="odn-it-tech-filter" style="width:100%;padding:8px 12px;font-size:12.5px;border:1px solid var(--border);border-radius:6px;background:#fff;margin:0">
+              <option value="all">🌐 Todas las Tecnologías (${availableTechs.length})</option>
+              ${availableTechs.map(t => `
+                <option value="${esc(t.name)}" ${_odnInfoTecnicoSelectedTech.toLowerCase() === t.name.toLowerCase() ? 'selected' : ''}>
+                  ${t.category === 'tool' ? '🛠️' : '💻'} ${esc(t.name)}
+                </option>
+              `).join('')}
+            </select>
+          </div>
+        </div>
+
+        <!-- Quick Pills por Categoría -->
+        <div style="display:flex;gap:8px;align-items:center;overflow-x:auto;padding-top:12px;margin-top:10px;border-top:1px solid var(--border)">
+          <span style="font-size:11px;font-weight:700;color:var(--text-muted);flex-shrink:0">Filtro Rápido:</span>
+          <button type="button" class="btn btn-sm btn-odn-cat ${_odnInfoTecnicoCategory === 'all' ? 'btn-primary' : 'btn-outline'}"
+            style="font-size:11px;padding:3px 10px;border-radius:20px;flex-shrink:0" data-odn-cat="all">
+            🌐 Todas (${totalCount} planes)
+          </button>
+          <button type="button" class="btn btn-sm btn-odn-cat ${_odnInfoTecnicoCategory === 'tool' ? 'btn-primary' : 'btn-outline'}"
+            style="font-size:11px;padding:3px 10px;border-radius:20px;flex-shrink:0" data-odn-cat="tool">
+            🛠️ Herramientas (${toolCount})
+          </button>
+          <button type="button" class="btn btn-sm btn-odn-cat ${_odnInfoTecnicoCategory === 'language' ? 'btn-primary' : 'btn-outline'}"
+            style="font-size:11px;padding:3px 10px;border-radius:20px;flex-shrink:0" data-odn-cat="language">
+            💻 Lenguajes (${langCount})
+          </button>
+        </div>
+      </div>
+
+      <!-- Contenedor dinámico de Fichas -->
+      <div id="odn-it-cards-container" style="display:flex;flex-direction:column;gap:24px"></div>
+    `;
+
+    cardsContainer = document.getElementById('odn-it-cards-container');
+
+    const searchInp = document.getElementById('odn-it-search-input');
+    if (searchInp) {
+      searchInp.addEventListener('input', e => {
+        _odnInfoTecnicoSearchQuery = e.target.value;
+        renderOdnCardsList();
+      });
+    }
+
+    document.getElementById('odn-it-tech-filter')?.addEventListener('change', e => {
+      _odnInfoTecnicoSelectedTech = e.target.value;
+      renderOdnCardsList();
+    });
+
+    mount.querySelectorAll('.btn-odn-cat').forEach(btn => {
+      btn.addEventListener('click', () => {
+        _odnInfoTecnicoCategory = btn.dataset.odnCat;
+        mount.querySelectorAll('.btn-odn-cat').forEach(b => {
+          if (b.dataset.odnCat === _odnInfoTecnicoCategory) {
+            b.classList.remove('btn-outline');
+            b.classList.add('btn-primary');
+          } else {
+            b.classList.remove('btn-primary');
+            b.classList.add('btn-outline');
+          }
+        });
+        renderOdnCardsList();
+      });
+    });
+  }
+
+  renderOdnCardsList();
+}
+
+function renderOdnCardsList() {
+  const cardsContainer = document.getElementById('odn-it-cards-container');
+  if (!cardsContainer) return;
+
   const filtered = _odnInfoTecnicoItems.filter(it => {
     const cat = it.category || 'tool';
     if (_odnInfoTecnicoCategory !== 'all' && cat !== _odnInfoTecnicoCategory) return false;
@@ -6837,20 +6949,6 @@ function renderInfoTecnicoUI() {
     return true;
   });
 
-  // Lista de tecnologías únicas para el selector
-  const techsMap = new Map();
-  _odnInfoTecnicoItems.forEach(it => {
-    const name = it.tech_name || it.producto_nombre || '';
-    if (name) {
-      const cat = it.category || 'tool';
-      if (!techsMap.has(name.toLowerCase())) {
-        techsMap.set(name.toLowerCase(), { name, category: cat });
-      }
-    }
-  });
-  const availableTechs = Array.from(techsMap.values()).sort((a,b) => a.name.localeCompare(b.name));
-
-  // Agrupar filtrados por Tecnología
   const grouped = {};
   filtered.forEach(it => {
     const tName = it.tech_name || it.producto_nombre || 'General';
@@ -6858,133 +6956,47 @@ function renderInfoTecnicoUI() {
     grouped[tName].push(it);
   });
 
-  let html = `
-    <!-- Barra superior de filtros y búsqueda rápida -->
-    <div class="card" style="margin-bottom:20px;padding:16px 20px">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:24px">⚡</span>
-          <div>
-            <div style="font-size:15px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px">
-              <span>Info Técnico — Herramientas & Lenguajes</span>
-              <span class="badge b-aprobada" style="font-size:10.5px;padding:2px 8px">👁️ Solo Lectura (ODN)</span>
-            </div>
-            <div style="font-size:12px;color:var(--text-muted)">
-              Consultas rápidas de especificaciones técnicas, límites de consumo y políticas por plan para asesorar y cotizar.
-            </div>
-          </div>
-        </div>
-
-        <div style="font-size:12px;font-weight:600;color:var(--text-muted);background:var(--bg);padding:4px 10px;border-radius:6px;border:1px solid var(--border)">
-          <span>Administrado por:</span> <strong style="color:var(--primary)">ADG / OTI</strong>
-        </div>
+  if (Object.keys(grouped).length === 0) {
+    cardsContainer.innerHTML = `
+      <div class="card" style="text-align:center;padding:48px 20px;color:var(--text-muted)">
+        <div style="font-size:36px;margin-bottom:8px">🔍</div>
+        <h3 style="font-size:15px;font-weight:700;color:var(--text);margin:0 0 6px">No se encontraron fichas técnicas</h3>
+        <p style="font-size:12.5px;margin:0">Prueba ajustando el término de búsqueda o seleccionando otra categoría.</p>
       </div>
-
-      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-        <div style="flex:1;min-width:240px;position:relative">
-          <input type="text" id="odn-it-search-input" value="${esc(_odnInfoTecnicoSearchQuery)}"
-            placeholder="🔍 Buscar herramienta, lenguaje, plan, límite, API, cuota..."
-            style="width:100%;padding:8px 12px;font-size:12.5px;border:1px solid var(--border);border-radius:6px;background:#fff;margin:0">
-        </div>
-
-        <div style="width:240px">
-          <select id="odn-it-tech-filter" style="width:100%;padding:8px 12px;font-size:12.5px;border:1px solid var(--border);border-radius:6px;background:#fff;margin:0">
-            <option value="all">🌐 Todas las Tecnologías (${availableTechs.length})</option>
-            ${availableTechs.map(t => `
-              <option value="${esc(t.name)}" ${_odnInfoTecnicoSelectedTech.toLowerCase() === t.name.toLowerCase() ? 'selected' : ''}>
-                ${t.category === 'tool' ? '🛠️' : '💻'} ${esc(t.name)}
-              </option>
-            `).join('')}
-          </select>
-        </div>
-      </div>
-
-      <!-- Quick Pills por Categoría -->
-      <div style="display:flex;gap:8px;align-items:center;overflow-x:auto;padding-top:12px;margin-top:10px;border-top:1px solid var(--border)">
-        <span style="font-size:11px;font-weight:700;color:var(--text-muted);flex-shrink:0">Filtro Rápido:</span>
-        <button type="button" class="btn btn-sm ${_odnInfoTecnicoCategory === 'all' ? 'btn-primary' : 'btn-outline'}"
-          style="font-size:11px;padding:3px 10px;border-radius:20px;flex-shrink:0" data-odn-cat="all">
-          🌐 Todas (${totalCount} planes)
-        </button>
-        <button type="button" class="btn btn-sm ${_odnInfoTecnicoCategory === 'tool' ? 'btn-primary' : 'btn-outline'}"
-          style="font-size:11px;padding:3px 10px;border-radius:20px;flex-shrink:0" data-odn-cat="tool">
-          🛠️ Herramientas (${toolCount})
-        </button>
-        <button type="button" class="btn btn-sm ${_odnInfoTecnicoCategory === 'language' ? 'btn-primary' : 'btn-outline'}"
-          style="font-size:11px;padding:3px 10px;border-radius:20px;flex-shrink:0" data-odn-cat="language">
-          💻 Lenguajes (${langCount})
-        </button>
-      </div>
-    </div>
-
-    <!-- Lista de Fichas Técnicas por Tecnología -->
-    <div style="display:flex;flex-direction:column;gap:24px">
-      ${Object.keys(grouped).length === 0 ? `
-        <div class="card" style="text-align:center;padding:48px 20px;color:var(--text-muted)">
-          <div style="font-size:36px;margin-bottom:8px">🔍</div>
-          <h3 style="font-size:15px;font-weight:700;color:var(--text);margin:0 0 6px">No se encontraron fichas técnicas</h3>
-          <p style="font-size:12.5px;margin:0">Prueba ajustando el término de búsqueda o seleccionando otra categoría.</p>
-        </div>
-      ` : Object.entries(grouped).map(([techName, plans]) => {
-        const first = plans[0] || {};
-        const isTool = (first.category || 'tool') === 'tool';
-        const avatar = first.image_url
-          ? `<img src="${esc(first.image_url)}" style="width:28px;height:28px;object-fit:contain;padding:2px;background:#fff;border-radius:6px;border:1px solid #cbd5e1" alt="">`
-          : `<span style="width:28px;height:28px;border-radius:6px;background:${isTool ? '#fef3c7' : '#dbeafe'};color:${isTool ? '#b45309' : '#1d4ed8'};display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px">${esc(techName.charAt(0).toUpperCase())}</span>`;
-
-        return `
-          <div style="display:flex;flex-direction:column;gap:12px">
-            <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--border);padding-bottom:6px">
-              ${avatar}
-              <h2 style="font-size:17px;font-weight:800;color:var(--text);margin:0">${esc(techName)}</h2>
-              <span class="badge ${isTool ? 'b-web' : 'b-mobile'}" style="font-size:10.5px">
-                ${isTool ? '🛠️ Herramienta' : '💻 Lenguaje'}
-              </span>
-              <span style="font-size:11.5px;color:var(--text-muted);font-weight:600">(${plans.length} plan${plans.length === 1 ? '' : 'es'})</span>
-            </div>
-
-            <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(460px, 1fr));gap:18px">
-              ${plans.map(renderOdnPlanCard).join('')}
-            </div>
-          </div>
-        `;
-      }).join('')}
-    </div>
-  `;
-
-  mount.innerHTML = html;
-
-  // Listeners
-  const searchInp = document.getElementById('odn-it-search-input');
-  if (searchInp) {
-    searchInp.addEventListener('input', e => {
-      _odnInfoTecnicoSearchQuery = e.target.value;
-      renderInfoTecnicoUI();
-      const updated = document.getElementById('odn-it-search-input');
-      if (updated) {
-        updated.focus();
-        updated.setSelectionRange(updated.value.length, updated.value.length);
-      }
-    });
+    `;
+    return;
   }
 
-  document.getElementById('odn-it-tech-filter')?.addEventListener('change', e => {
-    _odnInfoTecnicoSelectedTech = e.target.value;
-    renderInfoTecnicoUI();
-  });
+  cardsContainer.innerHTML = Object.entries(grouped).map(([techName, plans]) => {
+    const first = plans[0] || {};
+    const isTool = (first.category || 'tool') === 'tool';
+    const avatar = first.image_url
+      ? `<img src="${esc(first.image_url)}" style="width:28px;height:28px;object-fit:contain;padding:2px;background:#fff;border-radius:6px;border:1px solid #cbd5e1" alt="">`
+      : `<span style="width:28px;height:28px;border-radius:6px;background:${isTool ? '#fef3c7' : '#dbeafe'};color:${isTool ? '#b45309' : '#1d4ed8'};display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px">${esc(techName.charAt(0).toUpperCase())}</span>`;
 
-  mount.querySelectorAll('[data-odn-cat]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      _odnInfoTecnicoCategory = btn.dataset.odnCat;
-      renderInfoTecnicoUI();
-    });
-  });
+    return `
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--border);padding-bottom:6px">
+          ${avatar}
+          <h2 style="font-size:17px;font-weight:800;color:var(--text);margin:0">${esc(techName)}</h2>
+          <span class="badge ${isTool ? 'b-web' : 'b-mobile'}" style="font-size:10.5px">
+            ${isTool ? '🛠️ Herramienta' : '💻 Lenguaje'}
+          </span>
+          <span style="font-size:11.5px;color:var(--text-muted);font-weight:600">(${plans.length} plan${plans.length === 1 ? '' : 'es'})</span>
+        </div>
 
-  mount.querySelectorAll('.btn-odn-copy-plan').forEach(btn => {
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(460px, 1fr));gap:18px">
+          ${plans.map(renderOdnPlanCard).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  cardsContainer.querySelectorAll('.btn-odn-copy-plan').forEach(btn => {
     btn.addEventListener('click', () => copyOdnPlanToClipboard(btn.dataset.id));
   });
 
-  mount.querySelectorAll('.btn-odn-proforma-shortcut').forEach(btn => {
+  cardsContainer.querySelectorAll('.btn-odn-proforma-shortcut').forEach(btn => {
     btn.addEventListener('click', () => {
       navigate('crear-proforma');
     });
