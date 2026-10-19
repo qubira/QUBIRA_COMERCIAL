@@ -4504,6 +4504,12 @@ async function openTechStackModalForProforma(defaultTab = 'stack') {
   let catalogCategoryFilter = 'all'; // 'all' | 'tool' | 'language'
 
   const renderModalContent = () => {
+    // Guardar scroll actual antes de renderizar
+    const prevScrollEl = modal.querySelector('#prf-stack-list-scroll');
+    const prevScrollTop = prevScrollEl ? prevScrollEl.scrollTop : 0;
+    const prevBodyEl = modal.querySelector('#prf-modal-body-scroll');
+    const prevBodyScrollTop = prevBodyEl ? prevBodyEl.scrollTop : 0;
+
     const selectedStack = stacks.find(s => s.id === selectedStackId) || stacks[0] || null;
     let stackItems = [];
     if (selectedStack && Array.isArray(selectedStack.stages)) {
@@ -4579,7 +4585,7 @@ async function openTechStackModalForProforma(defaultTab = 'stack') {
               <p style="font-size:11.5px;color:rgba(255,255,255,0.9);margin:2px 0 0">Agrega o importa herramientas y lenguajes a la cotización</p>
             </div>
           </div>
-          <button type="button" id="prf-ts-close" style="background:rgba(255,255,255,0.15);border:none;width:30px;height:30px;border-radius:6px;font-size:20px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:background .15s" title="Cerrar modal">&times;</button>
+          <button type="button" id="prf-ts-close" style="background:rgba(255,255,255,0.15);border:none;width:30px;height:30px;border-radius:6px;font-size:20px;color:#fff;cursor:display;align-items:center;justify-content:center;line-height:1;transition:background .15s" title="Cerrar modal">&times;</button>
         </div>
 
         <!-- Pestañas -->
@@ -4593,7 +4599,7 @@ async function openTechStackModalForProforma(defaultTab = 'stack') {
         </div>
 
         <!-- Contenido -->
-        <div style="flex:1;overflow-y:auto;padding:16px 20px;background:#f8fafc;display:flex;flex-direction:column">
+        <div id="prf-modal-body-scroll" style="flex:1;overflow-y:auto;padding:16px 20px;background:#f8fafc;display:flex;flex-direction:column">
           ${currentTab === 'stack' ? `
             ${stacks.length ? `
               <!-- Selector de Ramificación -->
@@ -4620,7 +4626,7 @@ async function openTechStackModalForProforma(defaultTab = 'stack') {
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px;flex-wrap:wrap">
                   <div style="display:flex;align-items:center;gap:8px">
                     <span style="font-size:12px;font-weight:700;color:#0f766e">Tecnologías en este Stack (${filteredStackItems.length}):</span>
-                    <span style="font-size:10.5px;font-weight:700;color:#0f766e;background:#ccfbf1;padding:2px 8px;border-radius:12px">
+                    <span id="prf-selected-count-badge" style="font-size:10.5px;font-weight:700;color:#0f766e;background:#ccfbf1;padding:2px 8px;border-radius:12px">
                       ${checkedCount} seleccionadas
                     </span>
                   </div>
@@ -4651,7 +4657,7 @@ async function openTechStackModalForProforma(defaultTab = 'stack') {
                 </div>
 
                 <!-- Lista Vertical Scrollable de Tecnologías Bien Ordenadas -->
-                <div style="flex:1;max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;padding-right:4px">
+                <div id="prf-stack-list-scroll" style="flex:1;max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;padding-right:4px">
                   ${filteredStackItems.length === 0 ? `
                     <div style="text-align:center;padding:32px 16px;color:#94a3b8;font-size:12px">
                       No se encontraron tecnologías con el filtro actual.
@@ -4676,7 +4682,7 @@ async function openTechStackModalForProforma(defaultTab = 'stack') {
 
                       return `
                         <div class="prf-stack-item-row" data-global-idx="${item.globalIdx}"
-                          style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:${isChecked ? '#f0fdfa' : '#ffffff'};border:1px solid ${isChecked ? '#5eead4' : '#e2e8f0'};border-radius:7px;cursor:pointer;transition:all .12s;gap:10px">
+                          style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:${isChecked ? '#f0fdfa' : '#ffffff'};border:1px solid ${isChecked ? '#5eead4' : '#e2e8f0'};border-radius:7px;cursor:pointer;transition:background .12s, border-color .12s;gap:10px">
                           
                           <!-- Lado Izquierdo: Checkbox + Icono + Nombre + Badges -->
                           <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;overflow:hidden">
@@ -4780,7 +4786,7 @@ async function openTechStackModalForProforma(defaultTab = 'stack') {
             </button>
             <button type="button" id="prf-btn-import-stack" class="btn btn-primary" style="padding:9px 24px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:8px" ${checkedCount === 0 ? 'disabled' : ''}>
               <span>📥 Importar</span>
-              <span style="background:rgba(255,255,255,0.25);padding:1px 7px;border-radius:10px;font-size:11.5px">${checkedCount}</span>
+              <span id="prf-btn-import-count" style="background:rgba(255,255,255,0.25);padding:1px 7px;border-radius:10px;font-size:11.5px">${checkedCount}</span>
               <span>a Cotización</span>
             </button>
           ` : `
@@ -4795,6 +4801,77 @@ async function openTechStackModalForProforma(defaultTab = 'stack') {
 
       </div>
     `;
+
+    // Restaurar posición de scroll exacta si existía (para búsqueda o filtros)
+    if (prevScrollTop > 0) {
+      const newScrollEl = modal.querySelector('#prf-stack-list-scroll');
+      if (newScrollEl) newScrollEl.scrollTop = prevScrollTop;
+    }
+    if (prevBodyScrollTop > 0) {
+      const newBodyEl = modal.querySelector('#prf-modal-body-scroll');
+      if (newBodyEl) newBodyEl.scrollTop = prevBodyScrollTop;
+    }
+
+    // Helper para actualizar la selección en el DOM IN-SITU (sin re-renderizar todo el HTML)
+    // Esto garantiza que el scroll no se mueva NI UN SOLO PÍXEL al marcar/desmarcar
+    const updateSelectionInPlace = (gIdx, willBeChecked) => {
+      if (willBeChecked) checkedIndices.add(gIdx);
+      else checkedIndices.delete(gIdx);
+
+      const chk = modal.querySelector(`.prf-stack-item-chk[data-global-idx="${gIdx}"]`);
+      if (chk) chk.checked = willBeChecked;
+
+      const row = modal.querySelector(`.prf-stack-item-row[data-global-idx="${gIdx}"]`);
+      if (row) {
+        row.style.background = willBeChecked ? '#f0fdfa' : '#ffffff';
+        row.style.borderColor = willBeChecked ? '#5eead4' : '#e2e8f0';
+      }
+
+      // Actualizar contador
+      const countBadge = modal.querySelector('#prf-selected-count-badge');
+      if (countBadge) countBadge.textContent = `${checkedIndices.size} seleccionadas`;
+
+      // Actualizar botón Importar
+      const importBtn = modal.querySelector('#prf-btn-import-stack');
+      const importCountSpan = modal.querySelector('#prf-btn-import-count');
+      if (importCountSpan) importCountSpan.textContent = checkedIndices.size;
+      if (importBtn) importBtn.disabled = checkedIndices.size === 0;
+
+      // Actualizar checkbox maestro
+      const checkAllHeader = modal.querySelector('#prf-check-all-stack');
+      if (checkAllHeader) {
+        checkAllHeader.checked = filteredStackItems.length > 0 && filteredStackItems.every(it => checkedIndices.has(it.globalIdx));
+      }
+    };
+
+    const setAllFilteredInPlace = (shouldCheck) => {
+      filteredStackItems.forEach(it => {
+        if (shouldCheck) checkedIndices.add(it.globalIdx);
+        else checkedIndices.delete(it.globalIdx);
+
+        const chk = modal.querySelector(`.prf-stack-item-chk[data-global-idx="${it.globalIdx}"]`);
+        if (chk) chk.checked = shouldCheck;
+
+        const row = modal.querySelector(`.prf-stack-item-row[data-global-idx="${it.globalIdx}"]`);
+        if (row) {
+          row.style.background = shouldCheck ? '#f0fdfa' : '#ffffff';
+          row.style.borderColor = shouldCheck ? '#5eead4' : '#e2e8f0';
+        }
+      });
+
+      const countBadge = modal.querySelector('#prf-selected-count-badge');
+      if (countBadge) countBadge.textContent = `${checkedIndices.size} seleccionadas`;
+
+      const importBtn = modal.querySelector('#prf-btn-import-stack');
+      const importCountSpan = modal.querySelector('#prf-btn-import-count');
+      if (importCountSpan) importCountSpan.textContent = checkedIndices.size;
+      if (importBtn) importBtn.disabled = checkedIndices.size === 0;
+
+      const checkAllHeader = modal.querySelector('#prf-check-all-stack');
+      if (checkAllHeader) {
+        checkAllHeader.checked = shouldCheck && filteredStackItems.length > 0;
+      }
+    };
 
     // Event listeners
     modal.querySelector('#prf-ts-close')?.addEventListener('click', () => modal.remove());
@@ -4829,44 +4906,34 @@ async function openTechStackModalForProforma(defaultTab = 'stack') {
     });
 
     modal.querySelector('#prf-btn-select-all')?.addEventListener('click', () => {
-      filteredStackItems.forEach(it => checkedIndices.add(it.globalIdx));
-      renderModalContent();
+      setAllFilteredInPlace(true);
     });
 
     modal.querySelector('#prf-btn-deselect-all')?.addEventListener('click', () => {
-      filteredStackItems.forEach(it => checkedIndices.delete(it.globalIdx));
-      renderModalContent();
+      setAllFilteredInPlace(false);
     });
 
     const checkAllHeader = modal.querySelector('#prf-check-all-stack');
     if (checkAllHeader) {
       checkAllHeader.addEventListener('change', e => {
-        const checked = e.target.checked;
-        filteredStackItems.forEach(it => {
-          if (checked) checkedIndices.add(it.globalIdx);
-          else checkedIndices.delete(it.globalIdx);
-        });
-        renderModalContent();
+        setAllFilteredInPlace(e.target.checked);
       });
     }
 
-    // Toggle al hacer click en la fila completa
+    // Toggle IN-SITU al hacer click en la fila completa (sin alterar scroll)
     modal.querySelectorAll('.prf-stack-item-row').forEach(row => {
       row.addEventListener('click', e => {
-        if (e.target.closest('.prf-stack-item-chk')) return;
+        if (e.target.closest('.prf-stack-item-chk')) return; // Manejado por el checkbox change
         const gIdx = Number(row.dataset.globalIdx);
-        if (checkedIndices.has(gIdx)) checkedIndices.delete(gIdx);
-        else checkedIndices.add(gIdx);
-        renderModalContent();
+        const willBeChecked = !checkedIndices.has(gIdx);
+        updateSelectionInPlace(gIdx, willBeChecked);
       });
     });
 
     modal.querySelectorAll('.prf-stack-item-chk').forEach(chk => {
       chk.addEventListener('change', e => {
         const gIdx = Number(e.target.dataset.globalIdx);
-        if (e.target.checked) checkedIndices.add(gIdx);
-        else checkedIndices.delete(gIdx);
-        renderModalContent();
+        updateSelectionInPlace(gIdx, e.target.checked);
       });
     });
 
@@ -4882,7 +4949,7 @@ async function openTechStackModalForProforma(defaultTab = 'stack') {
         if (!it) return;
 
         const catMatch = (_techCatalogCache.tool || []).concat(_techCatalogCache.language || []).find(c => (c.name || '').toLowerCase() === (it.name || '').toLowerCase());
-        const catPlans = (catMatch && Array.isArray(catMatch.plans)) ? catMatch.plans : [];
+        const catPlans = (catMatch && Array.isArray(catMatch.plans)) ? catPlans : [];
 
         const defaultPropuesta = (it.margen_max !== null && it.margen_max !== undefined && it.margen_max !== '')
           ? Number(it.margen_max)
