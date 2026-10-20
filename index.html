@@ -396,12 +396,22 @@
     }
     .contract-paper h2, .proforma-paper h2 { font-size: 19px; font-weight: 800; text-align: center; color: #0f766e; margin-bottom: 4px; letter-spacing: -.01em; }
     .contract-paper .contract-subtitle, .proforma-paper .proforma-subtitle { text-align: center; font-size: 11px; color: #6b7280; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
-    .contract-clause { margin-bottom: 18px; font-size: 13px; }
-    .contract-clause strong { color: #111827; display: block; margin-bottom: 4px; font-size: 13.5px; font-weight: 700; }
-    .contract-signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; padding-top: 24px; border-top: 1px dashed #cbd5e1; }
-    .signature-box { text-align: center; border-top: 1px solid #111827; padding-top: 10px; margin-top: 50px; }
-    .signature-box .sign-name { font-weight: 700; font-size: 13px; }
-    .signature-box .sign-role { font-size: 11px; color: #6b7280; }
+    .contract-clause { margin-bottom: 20px; font-size: 12.5px; line-height: 1.65; color: #1e293b; }
+    .contract-clause strong.clause-title { display: block; font-size: 13px; font-weight: 800; color: #0f766e; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+    .contract-clause p { margin-bottom: 8px; text-align: justify; }
+    .contract-clause ul, .contract-clause ol { margin: 6px 0 10px 22px; color: #1e293b; }
+    .contract-clause li { margin-bottom: 5px; text-align: justify; }
+    .contract-sprint-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
+    .contract-sprint-table th { background: #0f766e; color: #fff; padding: 8px 10px; border: 1px solid #0f766e; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; text-align: left; }
+    .contract-sprint-table td { padding: 8px 10px; border: 1px solid #e2e8f0; }
+    .contract-sprint-table tbody tr:nth-child(even) { background: #f8fafc; }
+    .contract-signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 36px; padding-top: 20px; border-top: 1px dashed #cbd5e1; }
+    @media (max-width: 768px) {
+      .contract-signatures { grid-template-columns: 1fr; gap: 24px; }
+    }
+    .signature-box { text-align: center; border-top: 1px solid #111827; padding-top: 10px; margin-top: 40px; }
+    .signature-box .sign-name { font-weight: 700; font-size: 13px; color: #0f172a; }
+    .signature-box .sign-role { font-size: 11px; color: #64748b; line-height: 1.4; margin-top: 2px; }
 
     /* Proforma specific layout elements */
     .proforma-meta-box {
@@ -1107,22 +1117,38 @@
               </div>
             </div>
 
-            <!-- SECCIÓN 3: Alcance y Cláusulas -->
-            <div class="form-section-title">
-              <svg class="icon" style="width:15px;height:15px"><use href="#icon-file-text"></use></svg>
-              3. Alcance y Cláusulas Especiales
+            <!-- SECCIÓN 3: Alcance y Cláusulas del Modelo Qubira -->
+            <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+              <div style="display:flex;align-items:center;gap:6px">
+                <svg class="icon" style="width:15px;height:15px"><use href="#icon-file-text"></use></svg>
+                <span>3. Alcance, Metodología Ágil y Cláusulas del Modelo Qubira</span>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" onclick="cargarPlantillaContratoModelo()" style="font-size:11px;padding:3px 10px;display:inline-flex;align-items:center;gap:4px">
+                <span>📑</span> Cargar Plantilla Modelo Qubira
+              </button>
+            </div>
+
+            <div class="form-group" style="margin-bottom:12px">
+              <label for="ctr-metodo-trabajo">Metodología de Desarrollo y Gestión Ágil *</label>
+              <select id="ctr-metodo-trabajo" required onchange="updateContractPreview()">
+                <option value="Scrum — Marco Ágil por Sprints iterativos con entregables continuos y feedback">Scrum — Sprints iterativos de 1 a 2 semanas con entregables continuos (Modelo Oficial Qubira)</option>
+                <option value="Kanban — Marco Ágil por flujo continuo en tablero visual">Kanban — Flujo continuo y tablero visual dinámico</option>
+                <option value="Scrumban — Marco híbrido de sprints y tablero Kanban">Scrumban — Híbrido de Sprints con tablero visual</option>
+                <option value="Desarrollo Estructurado por Fases e Hitos Técnicos">Desarrollo Estructurado por Fases e Hitos Técnicos</option>
+              </select>
+              <span class="form-help">Rige las Cláusulas Segunda (Metodología Scrum) y Séptima (Plan de Trabajo por Sprints).</span>
             </div>
 
             <div class="form-group">
               <label for="ctr-objeto">Objeto del Contrato (Alcance Principal) *</label>
               <textarea id="ctr-objeto" rows="3" required oninput="updateContractPreview()"></textarea>
-              <span class="form-help">Describe con precisión la solución contratada por el cliente.</span>
+              <span class="form-help">Describe la solución contratada por el cliente (Cláusula Primera).</span>
             </div>
 
             <div class="form-group" style="margin-top:12px">
-              <label for="ctr-entregables">Entregables y Compromisos Clave</label>
-              <textarea id="ctr-entregables" rows="3" oninput="updateContractPreview()"></textarea>
-              <span class="form-help">Ej: Licencias de software, acceso a repositorio/servidor, capacitaciones o soporte.</span>
+              <label for="ctr-entregables">Requerimientos Funcionales, Módulos y Entregables Clave (Product Backlog) *</label>
+              <textarea id="ctr-entregables" rows="4" required oninput="updateContractPreview()"></textarea>
+              <span class="form-help">Módulos del sistema, pantallas, base de datos y entregables (Cláusulas Tercera y Octava).</span>
             </div>
 
             <div class="form-grid-2" style="margin-top:12px">
@@ -2120,7 +2146,7 @@
 
 <!-- ═══ MODAL REVISAR CONTRATO (DOCUMENTO OFICIAL) ═══ -->
 <div class="modal-overlay" id="contract-view-modal">
-  <div class="modal" style="max-width:880px">
+  <div class="modal" style="max-width:920px">
     <div class="modal-header">
       <div>
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px" id="contract-modal-code">CTR-2026-0000</div>
@@ -3913,6 +3939,134 @@ function formatCurrency(monto, moneda) {
   return `${symb} ${num.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function numeroALetras(monto, moneda) {
+  const num = Math.round(Number(monto) * 100) / 100;
+  if (isNaN(num) || num < 0) return '';
+  const enteros = Math.floor(num);
+  const centavos = Math.round((num - enteros) * 100);
+  const centavosStr = String(centavos).padStart(2, '0') + '/100';
+
+  const unidades = ['', 'un', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve'];
+  const especiales = {
+    10: 'diez', 11: 'once', 12: 'doce', 13: 'trece', 14: 'catorce', 15: 'quince',
+    16: 'dieciséis', 17: 'diecisiete', 18: 'dieciocho', 19: 'diecinueve', 20: 'veinte',
+    21: 'veintiuno', 22: 'veintidós', 23: 'veintitrés', 24: 'veinticuatro', 25: 'veinticinco',
+    26: 'veintiséis', 27: 'veintisiete', 28: 'veintiocho', 29: 'veintinueve'
+  };
+  const decenas = ['', '', '', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
+  const centenas = ['', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos', 'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'];
+
+  function convertirGrupo(n) {
+    if (n === 0) return '';
+    if (n === 100) return 'cien';
+    let res = '';
+    const c = Math.floor(n / 100);
+    const resto = n % 100;
+    if (c > 0) res += centenas[c] + ' ';
+    if (resto > 0) {
+      if (resto < 10) {
+        res += unidades[resto];
+      } else if (resto <= 29) {
+        res += especiales[resto];
+      } else {
+        const d = Math.floor(resto / 10);
+        const u = resto % 10;
+        res += decenas[d];
+        if (u > 0) res += ' y ' + unidades[u];
+      }
+    }
+    return res.trim();
+  }
+
+  function convertirNumero(n) {
+    if (n === 0) return 'cero';
+    let res = '';
+    const millones = Math.floor(n / 1000000);
+    let resto = n % 1000000;
+    const miles = Math.floor(resto / 1000);
+    resto = resto % 1000;
+
+    if (millones > 0) {
+      if (millones === 1) res += 'un millón ';
+      else res += convertirGrupo(millones) + ' millones ';
+    }
+    if (miles > 0) {
+      if (miles === 1) res += 'mil ';
+      else res += convertirGrupo(miles) + ' mil ';
+    }
+    if (resto > 0) {
+      res += convertirGrupo(resto);
+    }
+    return res.trim();
+  }
+
+  const textoEntero = convertirNumero(enteros);
+  const monedaTexto = (moneda === 'PEN') ? 'soles' : 'dólares americanos';
+  const resultado = `${textoEntero} con ${centavosStr} ${monedaTexto}`;
+  return resultado.charAt(0).toUpperCase() + resultado.slice(1);
+}
+
+function formatContractDateSpanish(dateStr) {
+  if (!dateStr) {
+    return new Date().toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  try {
+    const clean = String(dateStr).split('T')[0];
+    const parts = clean.split('-');
+    if (parts.length === 3) {
+      const year = parts[0];
+      const monthIdx = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'setiembre', 'octubre', 'noviembre', 'diciembre'];
+      if (meses[monthIdx] !== undefined) {
+        return `${day} de ${meses[monthIdx]} del ${year}`;
+      }
+    }
+    const d = new Date(dateStr);
+    return isNaN(d) ? dateStr : d.toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' });
+  } catch (e) {
+    return dateStr;
+  }
+}
+
+function calcularDiasCalendario(inicioStr, finStr) {
+  if (!inicioStr || !finStr) return 30;
+  try {
+    const f1 = new Date(inicioStr);
+    const f2 = new Date(finStr);
+    const diff = Math.round((f2 - f1) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : 30;
+  } catch (e) {
+    return 30;
+  }
+}
+
+function cargarPlantillaContratoModelo() {
+  const objEl = document.getElementById('ctr-objeto');
+  if (objEl) {
+    objEl.value = 'Diseño, desarrollo, implementación y puesta en producción de la solución de software corporativo con arquitectura cloud, integración de base de datos relacional y panel administrativo para la gestión integral de operaciones.';
+  }
+  const entEl = document.getElementById('ctr-entregables');
+  if (entEl) {
+    entEl.value = '1. Código fuente completo alojado en repositorio de GitHub con historial de commits.\n2. Aplicación y panel administrativo desplegados en producción y accesibles mediante URL pública.\n3. Base de datos relacional en la nube (PostgreSQL / Cloud) configurada con conexión segura SSL.\n4. Servicio de almacenamiento multimedia en la nube configurado y desacoplado del servidor de aplicación.\n5. Panel administrativo funcional con control de accesos, roles diferenciados y secciones operativas.\n6. Diagramas del sistema (arquitectura, entidad-relación y flujo funcional).\n7. Documento de requerimientos funcionales y no funcionales aprobados.\n8. Credenciales de servicios y sesión de inducción al equipo designado.';
+  }
+  const metodoEl = document.getElementById('ctr-metodo-trabajo');
+  if (metodoEl) metodoEl.value = 'SCRUM (Desarrollo Ágil por Sprints)';
+
+  const modEl = document.getElementById('ctr-modalidad');
+  if (modEl && (!modEl.value || modEl.value.includes('50%'))) {
+    modEl.value = '50% anticipo y 50% contra entrega final';
+  }
+
+  const garEl = document.getElementById('ctr-garantia');
+  if (garEl) garEl.value = '30 días calendario soporte correctivo';
+
+  updateContractPreview();
+  if (typeof toast === 'function') {
+    toast('info', 'Plantilla Qubira Cargada', 'Se han insertado las cláusulas y entregables estándar del contrato modelo Qubira.');
+  }
+}
+
 function getNextContractCode() {
   const ctrs = getStoredContratos();
   const year = new Date().getFullYear();
@@ -4023,6 +4177,8 @@ async function renderCrearContrato() {
     if (entEl && p.items && p.items.length) {
       entEl.value = p.items.map((it, idx) => `${idx + 1}. ${it.descripcion} (Cant: ${it.cantidad})`).join('\n');
     }
+    const metodoEl = document.getElementById('ctr-metodo-trabajo');
+    if (metodoEl && p.metodo_trabajo) metodoEl.value = p.metodo_trabajo;
     toast('info', 'Proforma Importada', `Datos de la proforma ${p.id} cargados exitosamente en el contrato.`);
     _proformaToConvert = null;
   }
@@ -4123,6 +4279,7 @@ async function handleGuardarContrato(e) {
   const entregables = document.getElementById('ctr-entregables')?.value;
   const estado = document.getElementById('ctr-estado')?.value || 'borrador';
   const responsable = document.getElementById('ctr-responsable')?.value || 'ODN Qubira';
+  const metodo_trabajo = document.getElementById('ctr-metodo-trabajo')?.value || 'SCRUM (Desarrollo Ágil por Sprints)';
 
   const btn = document.querySelector('#form-crear-contrato button[type="submit"]');
   if (btn) btn.disabled = true;
@@ -4132,6 +4289,7 @@ async function handleGuardarContrato(e) {
       body: JSON.stringify({
         cliente_id: cliente.id, tipo, producto_nombre: producto, moneda, monto, modalidad_pago: modalidad,
         fecha_inicio: fInicio, fecha_fin: fFin, garantia, objeto, entregables, estado, responsable,
+        metodo_trabajo,
       }),
     });
     await reloadContratos();
@@ -4152,25 +4310,32 @@ function resetCrearContratoForm() {
 function previewCurrentDraft() {
   const clientes = getStoredClientes();
   const cliId = document.getElementById('ctr-cliente-sel')?.value;
-  const cliente = clientes.find(c => c.id === cliId) || { razon_social: 'Cliente en Proceso', ruc: '00000000000', direccion: 'Dirección Comercial' };
+  const cliente = clientes.find(c => c.id === cliId) || {
+    razon_social: 'Cliente en Proceso',
+    ruc: '—',
+    contacto_nombre: 'Representante Autorizado',
+    contacto_cargo: 'Representante Legal',
+    direccion: 'Lima, Perú'
+  };
 
   const draftContract = {
     id: document.getElementById('ctr-codigo')?.value || 'CTR-2026-BORRADOR',
     cliente_nombre: cliente.razon_social,
     cliente_ruc: cliente.ruc,
-    cliente_contacto: cliente.contacto_nombre || 'Representante Legal',
-    cliente_cargo: cliente.contacto_cargo || 'Gerente',
+    cliente_contacto: cliente.contacto_nombre || 'Representante Autorizado',
+    cliente_cargo: cliente.contacto_cargo || 'Representante Legal',
     cliente_direccion: cliente.direccion || 'Lima, Perú',
-    tipo: document.getElementById('ctr-tipo')?.value || 'Venta de Licencia',
-    producto_nombre: document.getElementById('ctr-producto-sel')?.value || 'Software Qubira',
+    tipo: document.getElementById('ctr-tipo')?.value || 'Desarrollo de Software a Medida',
+    producto_nombre: document.getElementById('ctr-producto-sel')?.value || 'Solución de Software Qubira',
     moneda: document.getElementById('ctr-moneda')?.value || 'USD',
     monto: parseFloat(document.getElementById('ctr-monto')?.value) || 0,
-    modalidad_pago: document.getElementById('ctr-modalidad')?.value || 'Pago único',
-    fecha_inicio: document.getElementById('ctr-fecha-inicio')?.value || '2026-01-01',
-    fecha_fin: document.getElementById('ctr-fecha-fin')?.value || '2026-12-31',
-    garantia: document.getElementById('ctr-garantia')?.value || '12 meses',
-    objeto: document.getElementById('ctr-objeto')?.value || 'Prestación de servicios tecnológicos.',
-    entregables: document.getElementById('ctr-entregables')?.value || 'Entregables pactados.',
+    modalidad_pago: document.getElementById('ctr-modalidad')?.value || '50% anticipo y 50% contra entrega final',
+    fecha_inicio: document.getElementById('ctr-fecha-inicio')?.value || new Date().toISOString().split('T')[0],
+    fecha_fin: document.getElementById('ctr-fecha-fin')?.value || new Date(Date.now() + 90*86400000).toISOString().split('T')[0],
+    garantia: document.getElementById('ctr-garantia')?.value || '30 días calendario soporte correctivo',
+    objeto: document.getElementById('ctr-objeto')?.value || 'Diseño, desarrollo, implementación y puesta en producción de software empresarial.',
+    entregables: document.getElementById('ctr-entregables')?.value || '',
+    metodo_trabajo: document.getElementById('ctr-metodo-trabajo')?.value || 'SCRUM (Desarrollo Ágil por Sprints)',
     estado: document.getElementById('ctr-estado')?.value || 'borrador',
     created_at: new Date().toISOString().split('T')[0]
   };
@@ -4305,7 +4470,7 @@ function viewContract(id) {
 
 function renderContractOfficialModal(c) {
   document.getElementById('contract-modal-code').textContent = `${c.id} · Qubira ODN`;
-  document.getElementById('contract-modal-title').textContent = `Contrato Oficial: ${c.cliente_nombre}`;
+  document.getElementById('contract-modal-title').textContent = `Contrato Oficial: ${c.cliente_nombre || 'Cliente'}`;
 
   const statusSel = document.getElementById('contract-modal-status-select');
   if (statusSel) statusSel.value = c.estado || 'borrador';
@@ -4313,78 +4478,290 @@ function renderContractOfficialModal(c) {
   const body = document.getElementById('contract-modal-body');
   if (!body) return;
 
-  const hoyFormato = new Date().toLocaleDateString('es-PE', { year: 'numeric', month: 'long', day: 'numeric' });
+  const fechaInicioFormato = formatContractDateSpanish(c.fecha_inicio || new Date());
+  const fechaFinFormato    = formatContractDateSpanish(c.fecha_fin || new Date());
+  const fechaEmision       = formatContractDateSpanish(c.created_at || c.fecha_inicio || new Date());
+  const montoFormato       = formatCurrency(c.monto, c.moneda);
+  const montoEnLetras      = numeroALetras(c.monto, c.moneda);
+  const diasProyecto       = calcularDiasCalendario(c.fecha_inicio, c.fecha_fin);
+  const metodoTrabajo      = c.metodo_trabajo || 'SCRUM (Desarrollo Ágil por Sprints)';
+
+  const cliNombre    = c.cliente_nombre || 'EL CLIENTE';
+  const cliRuc       = c.cliente_ruc || '—';
+  const cliContacto  = c.cliente_contacto || 'Representante Autorizado';
+  const cliCargo     = c.cliente_cargo || 'Representante Legal';
+  const cliDireccion = c.cliente_direccion || 'la ciudad de Lima, Perú';
+  const prodNombre   = c.producto_nombre || 'Solución de Software Qubira';
+  const tipoServicio = c.tipo || 'Desarrollo de Software a Medida';
+  const garantiaTxt  = c.garantia || '30 días calendario soporte correctivo';
+  const modPagoTxt   = c.modalidad_pago || '50% anticipo y 50% contra entrega final';
+
+  // Parsear lista de entregables
+  let entregablesListHtml = '';
+  if (c.entregables && c.entregables.trim()) {
+    const rawLines = c.entregables.split('\n').map(l => l.trim()).filter(Boolean);
+    entregablesListHtml = '<ol style="margin:8px 0 10px 22px;color:#1e293b">' + rawLines.map(line => `<li style="margin-bottom:6px;line-height:1.6">${esc(line.replace(/^\d+[\.\-\)]\s*/, ''))}</li>`).join('') + '</ol>';
+  } else {
+    entregablesListHtml = `
+      <ol style="margin:8px 0 10px 22px;color:#1e293b">
+        <li style="margin-bottom:6px;line-height:1.6">Código fuente completo alojado en repositorio de GitHub del cliente o desarrollador, incluyendo historial íntegro de commits y control de versiones.</li>
+        <li style="margin-bottom:6px;line-height:1.6">Aplicación y panel administrativo desplegados en producción y en pleno funcionamiento, accesibles mediante URL pública oficial bajo protocolo seguro SSL/HTTPS.</li>
+        <li style="margin-bottom:6px;line-height:1.6">Base de datos relacional PostgreSQL alojada en servicio cloud de alta disponibilidad (Neon / Cloud SQL), con tablas maestras, índices y datos iniciales de prueba configurados.</li>
+        <li style="margin-bottom:6px;line-height:1.6">Servicio cloud para almacenamiento y entrega de archivos y recursos multimedia (Cloudinary / S3), desacoplado del servidor de aplicación para garantizar persistencia continua ante redespliegues.</li>
+        <li style="margin-bottom:6px;line-height:1.6">Panel administrativo (Dashboard) plenamente operativo con control de acceso por roles y credenciales maestras de administración.</li>
+        <li style="margin-bottom:6px;line-height:1.6">Diagramas técnicos del sistema elaborados en Draw.io, incluyendo modelo entidad-relación (MER) de la base de datos y diagramas de flujo funcional.</li>
+        <li style="margin-bottom:6px;line-height:1.6">Documento técnico de especificación formal de requerimientos funcionales y no funcionales como respaldo formal del alcance entregado.</li>
+        <li style="margin-bottom:6px;line-height:1.6">Credenciales de acceso a los servicios de infraestructura en la nube entregadas de forma segura a EL CLIENTE, o la transferencia de titularidad según lo pactado.</li>
+      </ol>
+    `;
+  }
 
   body.innerHTML = `
     <div class="contract-paper" id="official-contract-sheet">
-      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #0f766e;padding-bottom:14px;margin-bottom:22px">
-        <div style="display:flex;align-items:center;gap:12px">
-          <img src="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" alt="Qubira Logo" style="width:48px;height:48px;border-radius:8px;object-fit:contain">
+      <!-- CABECERA INSTITUCIONAL QUBIRA S.A.C. -->
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #0f766e;padding-bottom:14px;margin-bottom:24px">
+        <div style="display:flex;align-items:center;gap:14px">
+          <img src="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" alt="Qubira Logo" style="width:52px;height:52px;border-radius:10px;object-fit:contain">
           <div>
-            <div style="font-size:16px;font-weight:800;letter-spacing:1px;color:#0f766e">QUBIRA S.A.C.</div>
-            <div style="font-size:11px;color:#6b7280">RUC: 10764275981 · Tecnologías de la Información</div>
+            <div style="font-size:18px;font-weight:800;letter-spacing:1px;color:#0f766e">QUBIRA S.A.C.</div>
+            <div style="font-size:11.5px;color:#475569;font-weight:600">RUC: 10764275981 · Tecnologías de la Información & Soluciones de Software</div>
+            <div style="font-size:11px;color:#64748b">qubira@gmail.com · www.qubira.vercel.app · Lima, Perú</div>
           </div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:13px;font-weight:700;font-family:monospace;color:#111827">${esc(c.id)}</div>
-          <div style="font-size:11px;color:#6b7280">${hoyFormato}</div>
+          <div style="font-size:14px;font-weight:800;font-family:monospace;color:#0f766e">${esc(c.id)}</div>
+          <div style="font-size:11.5px;color:#475569;font-weight:600">${fechaEmision}</div>
+          <div style="margin-top:4px"><span class="badge b-${esc(c.estado || 'borrador')}" style="font-size:10px;padding:3px 8px">${esc((c.estado || 'borrador').toUpperCase())}</span></div>
         </div>
       </div>
 
-      <h2>CONTRATO DE PRESTACIÓN DE SERVICIOS TECNOLÓGICOS Y LICENCIAMIENTO DE SOFTWARE</h2>
-      <div class="contract-subtitle">ACUERDO PRIVADO CON VALOR VINCULANTE · OFICINA DE DESARROLLO DE NEGOCIOS</div>
+      <h2>CONTRATO DE PRESTACIÓN DE SERVICIOS DE DESARROLLO DE SOFTWARE</h2>
+      <div class="contract-subtitle">N° ${esc(c.id)} · ACUERDO PRIVADO CON VALOR VINCULANTE · OFICINA DE DESARROLLO DE NEGOCIOS</div>
 
+      <!-- REUNIÓN DE LAS PARTES -->
       <div class="contract-clause">
-        <strong>CLÁUSULA PRIMERA: DE LAS PARTES</strong>
-        <p>Conste por el presente documento el contrato que celebran de una parte <strong>QUBIRA S.A.C.</strong>, con RUC N° 10764275981, con domicilio legal en Lima, debidamente representada por su Apoderado Legal; y de otra parte <strong>${esc(c.cliente_nombre)}</strong>, con Registro Único de Contribuyente (RUC) / DNI N° <strong>${esc(c.cliente_ruc || '—')}</strong>, con domicilio en ${esc(c.cliente_direccion || 'domicilio fijado por el cliente')}, debidamente representada por su representante legal <strong>${esc(c.cliente_contacto || 'EL CLIENTE')}</strong>, en su calidad de ${esc(c.cliente_cargo || 'Representante Autorizado')}, a quienes en adelante se denominará simplemente como <strong>EL CLIENTE</strong>.</p>
+        <strong class="clause-title">REUNIÓN DE LAS PARTES</strong>
+        <p>En la ciudad de Lima, República del Perú, con fecha <strong>${fechaInicioFormato}</strong>, comparecen libremente y de mutuo acuerdo las siguientes partes:</p>
+        <p style="margin-top:6px">De una parte, <strong>EL PROVEEDOR</strong>: <strong>QUBIRA S.A.C.</strong>, empresa de desarrollo de tecnologías de la información y software constituida conforme a la legislación de la República del Perú, con <strong>RUC N° 10764275981</strong>, con domicilio legal en Lima, Perú, debidamente representada en este acto conjuntamente por <strong>Melani A. Luyo R.</strong> en su calidad de <strong>CEO Comercial</strong> y por <strong>Abraham Aranda Cerna</strong> en su calidad de <strong>CEO de Tecnologías de la Información (TI)</strong>, a quienes en adelante se denominará indistintamente como <strong>"EL PROVEEDOR"</strong> o <strong>"QUBIRA"</strong>.</p>
+        <p style="margin-top:6px">De la otra parte, <strong>EL CLIENTE</strong>: <strong>${esc(cliNombre)}</strong>, con Registro Único de Contribuyente (RUC) / DNI N° <strong>${esc(cliRuc)}</strong>, con domicilio en <strong>${esc(cliDireccion)}</strong>, debidamente representada en este acto por <strong>${esc(cliContacto)}</strong> en su calidad de <strong>${esc(cliCargo)}</strong>, a quien en adelante se denominará indistintamente como <strong>"EL CLIENTE"</strong>.</p>
+        <p style="margin-top:6px">Ambas partes manifiestan tener la capacidad legal suficiente para suscribir el presente contrato y, reconociéndose mutuamente dicha capacidad, acuerdan celebrarlo bajo los términos y condiciones que se detallan a continuación:</p>
       </div>
 
+      <!-- CLÁUSULA PRIMERA -->
       <div class="contract-clause">
-        <strong>CLÁUSULA SEGUNDA: DEL OBJETO DEL CONTRATO</strong>
-        <p>Por el presente acuerdo, QUBIRA S.A.C. se compromete a otorgar la solución tecnológica denominada <strong>"${esc(c.producto_nombre)}"</strong> bajo la modalidad de <strong>${esc(c.tipo)}</strong>. El alcance comprende específicamente: ${esc(c.objeto)}</p>
+        <strong class="clause-title">CLÁUSULA PRIMERA — OBJETO DEL CONTRATO</strong>
+        <p>El presente contrato tiene por objeto regular la prestación de servicios de desarrollo de software por parte de <strong>EL PROVEEDOR</strong> a favor de <strong>EL CLIENTE</strong>, consistente en el diseño, desarrollo, implementación, pruebas y puesta en producción de la solución tecnológica denominada <strong>"${esc(prodNombre)}"</strong>, bajo la modalidad de <strong>${esc(tipoServicio)}</strong>.</p>
+        <p style="margin-top:6px">${esc(c.objeto || 'Dicho sistema comprenderá los módulos funcionales pactados para las operaciones de EL CLIENTE, incluyendo sitio web / portal interactivo, módulo de autenticación con control de roles, módulos de gestión operativa, almacenamiento cloud de imágenes y multimedia, y panel administrativo (dashboard) con secciones diferenciadas por función.')}</p>
       </div>
 
+      <!-- CLÁUSULA SEGUNDA -->
       <div class="contract-clause">
-        <strong>CLÁUSULA TERCERA: ENTREGABLES Y COMPROMISOS TÉCNICOS</strong>
-        <p style="white-space:pre-wrap">${esc(c.entregables || 'No se registraron condiciones adicionales.')}</p>
+        <strong class="clause-title">CLÁUSULA SEGUNDA — METODOLOGÍA DE DESARROLLO — ${esc(metodoTrabajo.toUpperCase())}</strong>
+        <p>El proyecto será gestionado y ejecutado bajo el marco de metodología ágil <strong>SCRUM</strong>, estructurado para garantizar entregas funcionales incrementales, total visibilidad del avance y capacidad de adaptación ante ajustes durante el ciclo de vida del desarrollo:</p>
+        <ul>
+          <li><strong>Roles SCRUM:</strong> <strong>EL CLIENTE</strong>, a través de su representante designado (<strong>${esc(cliContacto)}</strong>), ejercerá el rol de <strong>Product Owner</strong>, siendo responsable de priorizar el Product Backlog, absolver consultas del negocio y aprobar los entregables al término de cada Sprint. <strong>EL PROVEEDOR</strong> asumirá los roles de <strong>Scrum Master</strong> y <strong>Equipo de Desarrollo</strong>, liderado por <strong>Abraham Aranda Cerna (CEO TI)</strong>, siendo responsable de planificar, ejecutar y entregar el trabajo comprometido en cada ciclo.</li>
+          <li><strong>Sprints:</strong> El trabajo se organizará en ciclos de desarrollo denominados <em>Sprints</em>, con una duración de una (1) a dos (2) semanas cada uno. Al inicio de cada Sprint se realizará una sesión de <em>Sprint Planning</em> para definir tareas y criterios de aceptación. Al término de cada Sprint se realizará una sesión de <em>Sprint Review</em> en la que EL PROVEEDOR presentará el software funcional a EL CLIENTE para su revisión y aprobación, y una <em>Sprint Retrospective</em> técnica interna.</li>
+          <li><strong>Product Backlog:</strong> El Product Backlog estará constituido por la totalidad de los Requerimientos Funcionales pactados en la Cláusula Tercera del presente contrato, priorizados conforme al orden de Sprints acordado.</li>
+          <li><strong>Definition of Done (Criterio de Aceptación):</strong> Un requerimiento se considerará completado cuando la funcionalidad haya sido codificada, probada, desplegada en el entorno de producción cloud y aprobada formalmente por EL CLIENTE. Toda observación deberá ser comunicada dentro de los tres (3) días hábiles siguientes a la demostración del Sprint.</li>
+          <li><strong>Comunicación Continua:</strong> Las partes acuerdan mantener comunicación periódica y fluida (vía WhatsApp oficial, correo electrónico corporativo y/o videollamadas) para el seguimiento continuo del avance, reporte de impedimentos y validación de entregables.</li>
+        </ul>
       </div>
 
+      <!-- CLÁUSULA TERCERA -->
       <div class="contract-clause">
-        <strong>CLÁUSULA CUARTA: CONTRAPRESTACIÓN Y FORMA DE PAGO</strong>
-        <p>Como contraprestación por los servicios y productos provistos en el presente contrato, EL CLIENTE se compromete a abonar a QUBIRA S.A.C. el importe total de <strong>${formatCurrency(c.monto, c.moneda)}</strong> (${esc(c.moneda === 'PEN' ? 'Soles' : 'Dólares Americanos')}).</p>
-        <p style="margin-top:4px">La modalidad pactada es: <strong>${esc(c.modalidad_pago || 'Según cronograma valorizado')}</strong>. Los pagos se realizarán mediante abono en las cuentas bancarias autorizadas de QUBIRA S.A.C.</p>
+        <strong class="clause-title">CLÁUSULA TERCERA — REQUERIMIENTOS FUNCIONALES DEL SISTEMA (PRODUCT BACKLOG)</strong>
+        <p>Los siguientes requerimientos funcionales constituyen el Product Backlog acordado entre las partes y definen el comportamiento y capacidades esperadas del sistema. Su cumplimiento es de carácter obligatorio para EL PROVEEDOR, salvo modificación de alcance acordada por escrito:</p>
+        <ul>
+          <li><strong>Módulo de Sitio Público / Interfaz de Usuario:</strong> Vistas dinámicas y responsivas para navegación pública o de clientes, catálogo visual interactivo de productos o servicios, y página de contacto con enlace directo a WhatsApp (wa.me) y correo corporativo.</li>
+          <li><strong>Módulo de Autenticación y Control de Acceso:</strong> Inicio de sesión seguro con usuario y contraseña, validación criptográfica de credenciales en base de datos, redirección autorizada post-login y control de roles diferenciados para acceso al dashboard según permisos de usuario.</li>
+          <li><strong>Módulo de Gestión Operativa del Negocio:</strong> Operaciones completas (CRUD) de creación, consulta, actualización y baja de registros, gestión de almacén / inventario o transacciones comerciales, y subida directa de recursos multimedia a almacenamiento cloud.</li>
+          <li><strong>Módulo de Gestión de Usuarios y Configuración:</strong> Administración centralizada de usuarios del sistema, mantenimiento de parámetros maestros, categorías, subcategorías y roles operativos de la plataforma.</li>
+          <li><strong>Módulo de Panel Administrativo (Dashboard) y Monitoreo:</strong> Interfaz de administración centralizada con vistas diferenciadas por área funcional, métricas en tiempo real y endpoint de verificación de estado (<code>GET /health</code>) para monitoreo de disponibilidad del servidor en producción.</li>
+        </ul>
       </div>
 
+      <!-- CLÁUSULA CUARTA -->
       <div class="contract-clause">
-        <strong>CLÁUSULA QUINTA: PLAZO DE EJECUCIÓN Y VIGENCIA</strong>
-        <p>El periodo de prestación y entrega entra en vigencia a partir del <strong>${esc(c.fecha_inicio)}</strong> y rige formalmente hasta el <strong>${esc(c.fecha_fin)}</strong>, pudiendo ser prorrogado mediante addenda firmada por mutuo acuerdo entre las partes.</p>
+        <strong class="clause-title">CLÁUSULA CUARTA — REQUERIMIENTOS NO FUNCIONALES DEL SISTEMA (RNF)</strong>
+        <p>Los requerimientos no funcionales establecen los atributos de calidad, seguridad, persistencia, arquitectura y despliegue exigidos al sistema:</p>
+        <ul>
+          <li><strong>Persistencia y Base de Datos Relacional:</strong> Almacenamiento seguro de la información en base de datos relacional PostgreSQL alojada en servicio cloud de alta disponibilidad (Neon / Cloud SQL), con conexión cifrada mediante SSL en tránsito (<code>ssl: { rejectUnauthorized: false }</code>) para garantizar la integridad y confidencialidad.</li>
+          <li><strong>Disponibilidad y Desacoplamiento Multimedia:</strong> Los recursos gráficos e imágenes se almacenarán en servicio cloud externo (Cloudinary / S3) y no en el servidor de aplicación, evitando pérdida de datos ante reinicios o redespliegues.</li>
+          <li><strong>Gestión Segura de Credenciales:</strong> Las claves de conexión y credenciales de servicios cloud se mantendrán fuera del código fuente, gestionadas estrictamente mediante variables de entorno a través del estándar <code>.env / dotenv</code>.</li>
+          <li><strong>Seguridad Criptográfica y Filtros:</strong> Contraseñas protegidas mediante algoritmos de hash de un solo sentido utilizando <strong>bcryptjs</strong>. Control estricto de formatos MIME de archivos para mitigar vulnerabilidades.</li>
+          <li><strong>Usabilidad y Estilo Coherente:</strong> Interfaz adaptativa (Responsive Web Design) con hojas de estilo CSS dedicadas y optimizadas, garantizando coherencia visual y rápida velocidad de carga.</li>
+          <li><strong>Arquitectura y Monitoreo:</strong> Arquitectura de API REST servida mediante Node.js / Express con rutas fallback seguras para Single Page Application (SPA), puerto dinámico configurable mediante variable <code>PORT</code> y endpoint <code>GET /health</code> para monitoreo de uptime.</li>
+        </ul>
       </div>
 
+      <!-- CLÁUSULA QUINTA -->
       <div class="contract-clause">
-        <strong>CLÁUSULA SEXTA: GARANTÍA TÉCNICA Y NIVEL DE SERVICIO (SLA)</strong>
-        <p>QUBIRA S.A.C. garantiza la funcionalidad, estabilidad e integridad del software durante el término de: <strong>${esc(c.garantia || '12 meses')}</strong>. Dicha garantía incluye corrección de eventuales incidencias de código y soporte técnico prioritario según los protocolos de ODN y TI.</p>
+        <strong class="clause-title">CLÁUSULA QUINTA — ALCANCE TÉCNICO Y TECNOLOGÍAS UTILIZADAS</strong>
+        <p>El sistema será desarrollado bajo el ecosistema tecnológico estándar de QUBIRA S.A.C.: <strong>Node.js</strong> con <strong>Express</strong> como servidor backend y API REST; <strong>PostgreSQL</strong> alojado en <strong>Neon</strong> como base de datos relacional; <strong>Cloudinary</strong> para el almacenamiento cloud de archivos e imágenes; <strong>HTML5, CSS3 y JavaScript moderno</strong> como tecnologías frontend; <strong>bcryptjs</strong> para seguridad criptográfica; <strong>Git y GitHub</strong> para control de versiones; y plataforma cloud (<strong>Render / Vercel</strong>) para hosting continuo. La arquitectura técnica es coordinada con herramientas profesionales como <strong>Draw.io</strong> y <strong>Visual Studio Code</strong>.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px">
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;font-size:12px">
+            <strong style="color:#166534;display:block;margin-bottom:6px">INCLUIDO EN EL ALCANCE:</strong>
+            • Desarrollo completo de los módulos convenidos en el Backlog.<br>
+            • Conexión e integración con los servicios cloud (Neon y Cloudinary).<br>
+            • Despliegue inicial productivo y verificación de disponibilidad.<br>
+            • Entrega de código fuente completo en GitHub con historial de commits.<br>
+            • Documentación básica de requerimientos y sesión de inducción al dashboard.
+          </div>
+          <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:12px">
+            <strong style="color:#991b1b;display:block;margin-bottom:6px">FUERA DEL ALCANCE:</strong>
+            • Mantenimiento continuo o nuevas funciones posteriores a la garantía.<br>
+            • Costos recurrentes de suscripciones cloud que superen planes gratuitos.<br>
+            • Compra y renovación de nombres de dominios de internet privados.<br>
+            • Modificaciones causadas por manipulación de código por parte de terceros.<br>
+            • Capacitación extendida fuera de la sesión de inducción pactada.
+          </div>
+        </div>
       </div>
 
+      <!-- CLÁUSULA SEXTA -->
       <div class="contract-clause">
-        <strong>CLÁUSULA SÉPTIMA: CONFIDENCIALIDAD Y PROPIEDAD INTELECTUAL</strong>
-        <p>Ambas partes guardarán reserva y estricta confidencialidad respecto a la información sensible, datos operativos y código al que tengan acceso en mérito a este contrato. Los derechos morales y de autor de la plataforma base corresponden con exclusividad a QUBIRA S.A.C.</p>
+        <strong class="clause-title">CLÁUSULA SEXTA — CONDICIONES COMERCIALES Y FORMA DE PAGO</strong>
+        <p><strong>Precio Total del Proyecto:</strong> Las partes acuerdan un precio fijo y cerrado de <strong>${montoFormato}</strong> (<em>${montoEnLetras}</em>), sin incluir el Impuesto General a las Ventas (IGV), por la totalidad del desarrollo descrito en el presente contrato. Este precio es cerrado y no estará sujeto a variación, salvo acuerdo formal por escrito de ampliación de alcance.</p>
+        <p style="margin-top:6px"><strong>Forma de Pago:</strong> EL CLIENTE se obliga a realizar los abonos conforme a la modalidad pactada: <strong>${esc(modPagoTxt)}</strong>. De forma general: el cincuenta por ciento (50%) al inicio del proyecto, previo a la ejecución del Sprint 1; y el cincuenta por ciento (50%) restante contra entrega final y aprobación del sistema en producción.</p>
+        <p style="margin-top:6px"><strong>Métodos de Pago Aceptados:</strong> Transferencia bancaria a las cuentas oficiales de <strong>QUBIRA S.A.C.</strong>, o abono mediante aplicaciones <strong>Yape</strong> o <strong>Plin</strong> corporativos. EL CLIENTE remitirá el comprobante (voucher) de cada pago como constancia formal del desembolso.</p>
+        <p style="margin-top:6px"><strong>Duración del Proyecto:</strong> El plazo total de ejecución acordado es de <strong>${diasProyecto} días calendario</strong>, comprendidos desde el <strong>${fechaInicioFormato}</strong> hasta el <strong>${fechaFinFormato}</strong>, contados desde la recepción del primer pago de anticipo.</p>
+        <p style="margin-top:6px"><strong>Confidencialidad:</strong> Ambas partes se comprometen a suscribir un Acuerdo de No Divulgación (NDA) previo al inicio del proyecto, manteniendo la más estricta reserva sobre la información técnica, comercial y operativa intercambiada.</p>
       </div>
 
+      <!-- CLÁUSULA SÉPTIMA -->
+      <div class="contract-clause">
+        <strong class="clause-title">CLÁUSULA SÉPTIMA — PLAN DE TRABAJO POR SPRINTS</strong>
+        <p>El desarrollo del proyecto se organizará en cinco (5) Sprints de trabajo ágil, cada uno con un entregable verificable y porcentaje de avance valorizado:</p>
+        <table class="contract-sprint-table">
+          <thead>
+            <tr>
+              <th style="width:25%">Sprint</th>
+              <th style="width:18%">Cronograma</th>
+              <th style="width:12%">Avance</th>
+              <th>Entregable Comprometido</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Sprint 1 — Setup e Infraestructura</strong></td>
+              <td>Semana 1</td>
+              <td><strong>20%</strong></td>
+              <td>Configuración del entorno cloud (Render, Neon, Cloudinary), estructura del repositorio, conexión a base de datos y verificación del endpoint <code>/health</code>.</td>
+            </tr>
+            <tr>
+              <td><strong>Sprint 2 — Módulos Operativos y Datos</strong></td>
+              <td>Semanas 1 a 3</td>
+              <td><strong>30%</strong></td>
+              <td>Implementación de módulos operativos principales del sistema (CRUD completo), subida de imágenes a Cloudinary y módulos de configuración maestros.</td>
+            </tr>
+            <tr>
+              <td><strong>Sprint 3 — Autenticación y Control de Roles</strong></td>
+              <td>Semanas 3 a 5</td>
+              <td><strong>20%</strong></td>
+              <td>Módulo de autenticación seguro, hash de contraseñas con bcryptjs, asignación de permisos según rol/cargo y redirección validada al panel administrativo.</td>
+            </tr>
+            <tr>
+              <td><strong>Sprint 4 — UI y Panel Administrativo</strong></td>
+              <td>Semanas 5 a 7</td>
+              <td><strong>20%</strong></td>
+              <td>Desarrollo del sitio público o interfaces de cliente, panel administrativo (Dashboard) con secciones diferenciadas y diseño visual consistente mediante hojas de estilo CSS.</td>
+            </tr>
+            <tr>
+              <td><strong>Sprint 5 — QA, Pruebas y Despliegue Final</strong></td>
+              <td>Semana 8</td>
+              <td><strong>10%</strong></td>
+              <td>Pruebas funcionales de todos los módulos, corrección de observaciones, validación final con EL CLIENTE, documentación y despliegue definitivo en producción.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- CLÁUSULA OCTAVA -->
+      <div class="contract-clause">
+        <strong class="clause-title">CLÁUSULA OCTAVA — ENTREGABLES AL CIERRE DEL PROYECTO</strong>
+        <p>Al término del proyecto, EL PROVEEDOR hará entrega formal a EL CLIENTE de los siguientes ítems verificables:</p>
+        ${entregablesListHtml}
+      </div>
+
+      <!-- CLÁUSULA NOVENA -->
+      <div class="contract-clause">
+        <strong class="clause-title">CLÁUSULA NOVENA — OBLIGACIONES DE LAS PARTES</strong>
+        <p><strong>Obligaciones de EL PROVEEDOR (QUBIRA S.A.C.):</strong> Desarrollar el sistema conforme a los requerimientos funcionales y no funcionales establecidos en las Cláusulas Tercera y Cuarta; entregar los avances de cada Sprint dentro de los plazos comprometidos en la Cláusula Séptima; brindar soporte correctivo gratuito durante el periodo de garantía establecido en la Cláusula Undécima; mantener absoluta confidencialidad sobre la información de EL CLIENTE; y garantizar que el sistema quede desplegado y plenamente operativo en el entorno productivo al cierre del proyecto.</p>
+        <p style="margin-top:6px"><strong>Obligaciones de EL CLIENTE:</strong> Realizar los pagos en los plazos y formas establecidos en la Cláusula Sexta; proporcionar oportunamente la información, accesos y recursos que EL PROVEEDOR requiera para el desarrollo; designar formalmente a un representante autorizado (Product Owner) para la coordinación, revisión y aprobación de entregables; revisar y formular observaciones sobre cada Sprint en un plazo máximo de tres (3) días hábiles desde su demostración; y no divulgar a terceros el código fuente ni información técnica del sistema mientras el proyecto esté en curso.</p>
+      </div>
+
+      <!-- CLÁUSULA DÉCIMA -->
+      <div class="contract-clause">
+        <strong class="clause-title">CLÁUSULA DÉCIMA — CAUSALES DE RESOLUCIÓN Y PENALIDADES</strong>
+        <p>Cualquiera de las partes podrá resolver el presente contrato de forma anticipada en los siguientes supuestos: por incumplimiento de pago por parte de EL CLIENTE por más de cinco (5) días hábiles tras la fecha acordada; por incumplimiento reiterado de los plazos de entrega por parte de EL PROVEEDOR, sin justificación válida comunicada oportunamente; o por mutuo acuerdo entre las partes, dejando constancia escrita de los avances realizados y los montos a liquidar.</p>
+        <p style="margin-top:6px">En caso de resolución por incumplimiento de EL CLIENTE, EL PROVEEDOR retendrá los montos ya cobrados como compensación por el trabajo realizado hasta la fecha. En caso de resolución por incumplimiento de EL PROVEEDOR, este devolverá los montos percibidos en proporción a las fases no entregadas ni aprobadas.</p>
+      </div>
+
+      <!-- CLÁUSULA UNDÉCIMA -->
+      <div class="contract-clause">
+        <strong class="clause-title">CLÁUSULA UNDÉCIMA — GARANTÍA Y SOPORTE POST-ENTREGA</strong>
+        <p>EL PROVEEDOR otorga a EL CLIENTE un periodo de garantía de <strong>${esc(garantiaTxt)}</strong>, contados a partir de la firma del Acta de Conformidad, durante el cual se corregirán sin costo adicional los errores o fallos (bugs) atribuibles directamente al desarrollo original. Esta garantía aplica siempre y cuando el código fuente o la base de datos no hayan sido modificados por terceros ajenos a QUBIRA S.A.C. tras la entrega.</p>
+        <p style="margin-top:6px">Cualquier solicitud de cambio de funcionalidad, diseño o alcance no contemplada en el presente contrato se considerará trabajo adicional, sujeto a cotización y aprobación previa por escrito. El soporte ante incidencias propias de proveedores cloud independientes (caídas de Render, Neon o Cloudinary) no es responsabilidad de EL PROVEEDOR al tratarse de servicios autónomos de terceros.</p>
+      </div>
+
+      <!-- CLÁUSULA DUODÉCIMA -->
+      <div class="contract-clause">
+        <strong class="clause-title">CLÁUSULA DUODÉCIMA — PROPIEDAD INTELECTUAL</strong>
+        <p>El código fuente desarrollado en el marco del presente contrato será de propiedad exclusiva de <strong>EL CLIENTE</strong> una vez cancelado el cien por ciento (100%) del precio total acordado. Hasta dicho momento, EL PROVEEDOR conservará los derechos sobre el código como reserva de dominio en garantía del cumplimiento de pago. EL PROVEEDOR podrá mencionar el proyecto como referencia de su portafolio de trabajo y experiencia corporativa, sin divulgar información confidencial ni datos sensibles del cliente.</p>
+      </div>
+
+      <!-- CLÁUSULA DECIMOTERCERA -->
+      <div class="contract-clause">
+        <strong class="clause-title">CLÁUSULA DECIMOTERCERA — JURISDICCIÓN Y LEY APLICABLE</strong>
+        <p>Para la solución de cualquier controversia, disputa o diferencia derivada de la interpretación o ejecución del presente contrato, las partes se someten libre y expresamente a la jurisdicción y competencia de los Juzgados y Tribunales de la ciudad de <strong>Lima, República del Perú</strong>, renunciando a cualquier otro fuero territorial que pudiera corresponderles. El presente contrato se rige íntegramente por la legislación vigente de la República del Perú.</p>
+      </div>
+
+      <!-- CLÁUSULA DECIMOCUARTA -->
+      <div class="contract-clause">
+        <strong class="clause-title">CLÁUSULA DECIMOCUARTA — ACTA DE CONFORMIDAD DE ENTREGA</strong>
+        <p>Por medio de la presente cláusula, EL CLIENTE certifica haber revisado y probado satisfactoriamente el software y panel administrativo objeto del presente contrato, confirmando que las funcionalidades entregadas cumplen con los criterios de aceptación acordados. La suscripción del acta de conformidad certifica la entrega del software en producción y libera a EL PROVEEDOR de responsabilidad sobre requerimientos funcionales previamente revisados y aprobados por EL CLIENTE.</p>
+        <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:14px 18px;margin-top:10px;font-size:12px;line-height:1.7">
+          <div><strong style="color:#0f766e">Proyecto:</strong> ${esc(prodNombre)}</div>
+          <div><strong>Fecha de Entrega:</strong> ${fechaFinFormato}</div>
+          <div><strong>Representante del Cliente:</strong> ${esc(cliContacto)} (${esc(cliNombre)})</div>
+          <div><strong>Dirección Técnica Qubira:</strong> Abraham Aranda Cerna — CEO (TI) / Programador</div>
+          <div><strong>Dirección Comercial Qubira:</strong> Melani A. Luyo R. — CEO (Comercial) / QUBIRA</div>
+        </div>
+      </div>
+
+      <!-- SUSCRIPCIÓN DEL CONTRATO -->
+      <div class="contract-clause" style="margin-top:26px">
+        <strong class="clause-title">SUSCRIPCIÓN DEL CONTRATO</strong>
+        <p>En señal de conformidad con la totalidad de los términos, condiciones y cláusulas establecidos en el presente documento, las partes lo suscriben por triplicado en la ciudad de <strong>Lima, Perú</strong>, con fecha <strong>${fechaInicioFormato}</strong>.</p>
+      </div>
+
+      <!-- LAS 3 FIRMAS OFICIALES DE QUBIRA -->
       <div class="contract-signatures">
+        <!-- 1. CEO COMERCIAL QUBIRA -->
         <div class="signature-box">
-          <div style="height:35px;display:flex;align-items:center;justify-content:center;color:#0f766e;font-size:11px;font-weight:700">
+          <div style="height:42px;display:flex;align-items:center;justify-content:center;color:#0f766e;font-size:11px;font-weight:700">
             [Firma Digital Qubira S.A.C.]
           </div>
-          <div class="sign-name">QUBIRA S.A.C.</div>
-          <div class="sign-role">RUC: 10764275981 · Oficina Desarrollo de Negocios</div>
+          <div class="sign-name">Melani A. Luyo R.</div>
+          <div class="sign-role">CEO (COMERCIAL) · QUBIRA<br><strong>EL PROVEEDOR</strong></div>
         </div>
 
+        <!-- 2. REPRESENTANTE DEL CLIENTE -->
         <div class="signature-box">
-          <div style="height:35px;display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:11px">
+          <div style="height:42px;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:11px">
             [Firma y Sello del Cliente]
           </div>
-          <div class="sign-name">${esc(c.cliente_contacto || c.cliente_nombre)}</div>
-          <div class="sign-role">${esc(c.cliente_cargo || 'Representante Autorizado')} · ${esc(c.cliente_nombre)}</div>
+          <div class="sign-name">${esc(cliContacto)}</div>
+          <div class="sign-role">${esc(cliCargo)} · ${esc(cliNombre)}<br><strong>EL CLIENTE</strong></div>
+        </div>
+
+        <!-- 3. CEO TI QUBIRA -->
+        <div class="signature-box">
+          <div style="height:42px;display:flex;align-items:center;justify-content:center;color:#0f766e;font-size:11px;font-weight:700">
+            [Firma Digital Qubira S.A.C.]
+          </div>
+          <div class="sign-name">Abraham Aranda Cerna</div>
+          <div class="sign-role">CEO (TI) · QUBIRA<br><strong>EL PROVEEDOR</strong></div>
         </div>
       </div>
     </div>
