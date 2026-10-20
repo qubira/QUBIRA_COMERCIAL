@@ -1497,10 +1497,69 @@
               </div>
             </div>
 
-            <!-- SECCIÓN 3: Condiciones Comerciales y Entregables -->
+            <!-- SECCIÓN 3: Método de Trabajo (Metodología de Desarrollo Ágil) -->
+            <div class="form-section-title">
+              <svg class="icon" style="width:15px;height:15px"><use href="#icon-cpu"></use></svg>
+              3. Método de Trabajo (Metodología de Desarrollo)
+            </div>
+
+            <div class="form-grid-3">
+              <div class="form-group">
+                <label for="prf-metodo-trabajo">Marco / Metodología de Trabajo *</label>
+                <select id="prf-metodo-trabajo" required onchange="onMetodoTrabajoChange(); updateProformaPreview()">
+                  <option value="Scrum — Marco Ágil por Sprints con entregables continuos y feedback iterativo" selected>Scrum — Desarrollo Ágil por Sprints (Iterativo & Feedback)</option>
+                  <option value="Kanban — Flujo Continuo con Tablero Visual y Entregas Priorizadas">Kanban — Flujo Continuo & Priorización Dinámica</option>
+                  <option value="Scrumban — Híbrido Ágil (Sprints iterativos con flujo continuo en tablero)">Scrumban — Híbrido Ágil (Sprints + Tablero)</option>
+                  <option value="Design Sprint & Prototipado Rápido — Validación ágil y MVP funcional">Design Sprint & Prototipado Rápido (MVP Ágil)</option>
+                  <option value="Cascada Adaptativa / Híbrida — Hitos estructurados con validación ágil">Cascada Adaptativa / Híbrida (Hitos + Ágil)</option>
+                  <option value="Metodología Ágil Personalizada">Metodología Ágil Personalizada</option>
+                </select>
+                <span class="form-help">Forma operativa y dinámica en la que el equipo de Qubira ejecutará la solución.</span>
+              </div>
+
+              <div class="form-group">
+                <label for="prf-metodo-sprint">Duración del Sprint / Ciclo de Entrega *</label>
+                <select id="prf-metodo-sprint" required onchange="updateProformaPreview()">
+                  <option value="Sprints de 2 semanas con entregables funcionales y demostración" selected>Sprints de 2 semanas (Recomendado Scrum)</option>
+                  <option value="Sprints de 1 semana para despliegue acelerado">Sprints de 1 semana (Rápida iteración)</option>
+                  <option value="Sprints de 3 a 4 semanas para módulos de alta complejidad">Sprints de 3-4 semanas (Módulos complejos)</option>
+                  <option value="Flujo continuo semanal según backlog priorizado">Flujo continuo semanal (Bajo demanda)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="prf-metodo-reuniones">Seguimiento & Coordinación con el Cliente *</label>
+                <select id="prf-metodo-reuniones" required onchange="updateProformaPreview()">
+                  <option value="Sprint Planning + Sprint Review semanal + Canal Slack/Teams prioritario" selected>Sprint Review semanal + Canal directo (Slack/Teams)</option>
+                  <option value="Reuniones bisemanales de demo y avances con Product Owner">Reuniones bisemanales con Product Owner</option>
+                  <option value="Dailies internas + Reporte ejecutivo semanal de avances">Reporte ejecutivo semanal + Dailies</option>
+                  <option value="Comité de seguimiento quincenal con acta de acuerdos">Comité quincenal con actas</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-grid-2" style="margin-top:14px">
+              <div class="form-group">
+                <label for="prf-metodo-herramientas">Herramientas de Tablero & Gestión Ágil</label>
+                <input type="text" id="prf-metodo-herramientas" value="Jira Software / Trello / GitHub Projects con acceso de visualización al cliente" oninput="updateProformaPreview()" placeholder="Ej. Jira Software, Azure DevOps, ClickUp, Trello">
+              </div>
+
+              <div class="form-group">
+                <label for="prf-metodo-roles">Roles y Acompañamiento Qubira</label>
+                <input type="text" id="prf-metodo-roles" value="Scrum Master, Product Owner técnico, Desarrolladores Full Stack y QA Engineer" oninput="updateProformaPreview()" placeholder="Ej. Scrum Master, Tech Lead, Desarrolladores">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top:14px">
+              <label for="prf-metodo-detalle">Descripción del Método Operativo y Dinámica de Trabajo *</label>
+              <textarea id="prf-metodo-detalle" rows="3" required oninput="updateProformaPreview()" placeholder="Detalla cómo se trabajará con el cliente..."></textarea>
+              <span class="form-help">Explicación para el cliente sobre cómo se planifican los sprints, las demostraciones y el feedback continuo.</span>
+            </div>
+
+            <!-- SECCIÓN 4: Condiciones Comerciales y Entregables -->
             <div class="form-section-title">
               <svg class="icon" style="width:15px;height:15px"><use href="#icon-file-text"></use></svg>
-              3. Condiciones Comerciales y Términos
+              4. Condiciones Comerciales y Términos
             </div>
 
             <div class="form-grid-3">
@@ -1615,6 +1674,10 @@
               <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
                 <span style="color:var(--text-muted);font-weight:600">Total Propuesta:</span>
                 <strong style="font-size:17px;color:var(--primary)" id="prev-prf-total">$ 0.00</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
+                <span style="color:var(--text-muted)">Método de Trabajo:</span>
+                <span id="prev-prf-metodo" style="font-size:12px;text-align:right;max-width:170px;font-weight:700;color:var(--primary)">Scrum (Ágil)</span>
               </div>
               <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
                 <span style="color:var(--text-muted)">Condición de Pago:</span>
@@ -4361,6 +4424,52 @@ async function deleteContract(id) {
 let _currentProformaItems = [];
 let _currentProformaTechItems = [];
 
+function onMetodoTrabajoChange() {
+  const sel = document.getElementById('prf-metodo-trabajo');
+  const val = sel?.value || 'Scrum';
+  const detalleEl = document.getElementById('prf-metodo-detalle');
+  const sprintEl = document.getElementById('prf-metodo-sprint');
+  const reunionesEl = document.getElementById('prf-metodo-reuniones');
+  const toolsEl = document.getElementById('prf-metodo-herramientas');
+  const rolesEl = document.getElementById('prf-metodo-roles');
+
+  if (val.includes('Scrum')) {
+    if (detalleEl && (!detalleEl.value || detalleEl.value.includes('marco Scrum') || detalleEl.value.includes('metodología ágil') || detalleEl.value.includes('Design Sprint') || detalleEl.value.includes('Metodología estructurada'))) {
+      detalleEl.value = 'Se trabajará bajo el marco Scrum con Sprints iterativos de 1 a 2 semanas. Al inicio de cada ciclo se planifican los requerimientos priorizados (Sprint Planning), se desarrollan los entregables técnicos y funcionales, y se realizan demostraciones periódicas (Sprint Review) junto al cliente para validar avances y recopilar retroalimentación continua antes de la puesta en producción.';
+    }
+    if (sprintEl) sprintEl.value = 'Sprints de 2 semanas con entregables funcionales y demostración';
+    if (reunionesEl) reunionesEl.value = 'Sprint Planning + Sprint Review semanal + Canal Slack/Teams prioritario';
+    if (toolsEl && !toolsEl.value) toolsEl.value = 'Jira Software / Trello / GitHub Projects con acceso de visualización al cliente';
+    if (rolesEl && !rolesEl.value) rolesEl.value = 'Scrum Master, Product Owner técnico, Desarrolladores Full Stack y QA Engineer';
+  } else if (val.includes('Kanban')) {
+    if (detalleEl) {
+      detalleEl.value = 'Se trabajará bajo metodología ágil Kanban orientada a flujo continuo. Los requerimientos y funcionalidades se gestionan y priorizan dinámicamente en un tablero visual (Por hacer, En desarrollo, Control de Calidad y Listo), permitiendo entregas frecuentes y flexibles sin bloqueo de calendario.';
+    }
+    if (sprintEl) sprintEl.value = 'Flujo continuo semanal según backlog priorizado';
+    if (reunionesEl) reunionesEl.value = 'Dailies internas + Reporte ejecutivo semanal de avances';
+    if (toolsEl && !toolsEl.value) toolsEl.value = 'Tablero Kanban en Jira / Trello / ClickUp';
+    if (rolesEl && !rolesEl.value) rolesEl.value = 'Tech Lead, Desarrolladores y Especialista QA';
+  } else if (val.includes('Scrumban')) {
+    if (detalleEl) {
+      detalleEl.value = 'Se implementará un marco híbrido Scrumban que combina la cadencia de sprints planificados con la flexibilidad de un tablero visual Kanban, optimizando el tiempo de respuesta ante cambios de alcance y garantizando entregas continuas con demostraciones periódicas.';
+    }
+    if (sprintEl) sprintEl.value = 'Sprints de 2 semanas con entregables funcionales y demostración';
+    if (reunionesEl) reunionesEl.value = 'Sprint Planning + Sprint Review semanal + Canal Slack/Teams prioritario';
+  } else if (val.includes('Design Sprint')) {
+    if (detalleEl) {
+      detalleEl.value = 'Metodología ágil en 5 fases de Design Sprint orientada a prototipado veloz y validación de MVP. Se construyen iteraciones rápidas de UX/UI y módulos core para validar el valor de negocio de forma temprana con usuarios reales.';
+    }
+    if (sprintEl) sprintEl.value = 'Sprints de 1 semana para despliegue acelerado';
+    if (reunionesEl) reunionesEl.value = 'Reuniones bisemanales de demo y avances con Product Owner';
+  } else if (val.includes('Cascada')) {
+    if (detalleEl) {
+      detalleEl.value = 'Metodología estructurada por fases e hitos técnicos clave (Análisis, Arquitectura, Desarrollo, Pruebas y Despliegue), con revisiones ágiles y actas de conformidad al término de cada entrega.';
+    }
+    if (sprintEl) sprintEl.value = 'Sprints de 3 a 4 semanas para módulos de alta complejidad';
+    if (reunionesEl) reunionesEl.value = 'Comité de seguimiento quincenal con acta de acuerdos';
+  }
+}
+
 async function renderCrearProforma() {
   const clientes = getStoredClientes();
   const selectCli = document.getElementById('prf-cliente-sel');
@@ -4442,6 +4551,7 @@ async function renderCrearProforma() {
   const obsEl = document.getElementById('prf-observaciones');
   if (obsEl) obsEl.value = '';
 
+  onMetodoTrabajoChange();
   renderProformaItemsTable();
   renderProformaTechItemsTable();
   calcProformaTotals();
@@ -6498,6 +6608,13 @@ function updateProformaPreview(subVal, descVal, igvVal, totalVal) {
   const prevTot = document.getElementById('prev-prf-total');
   if (prevTot) prevTot.textContent = formatCurrency(totalVal, moneda);
 
+  const prevMetodo = document.getElementById('prev-prf-metodo');
+  if (prevMetodo) {
+    const rawMetodo = document.getElementById('prf-metodo-trabajo')?.value || 'Scrum';
+    const cleanMetodo = rawMetodo.split('—')[0].trim() || 'Scrum';
+    prevMetodo.textContent = cleanMetodo;
+  }
+
   const prevMod = document.getElementById('prev-prf-modalidad');
   if (prevMod) prevMod.textContent = modalidad;
 
@@ -6549,6 +6666,12 @@ async function handleGuardarProforma(e) {
   const garantia = document.getElementById('prf-garantia')?.value;
   const alcance = document.getElementById('prf-alcance')?.value.trim();
   const observaciones = document.getElementById('prf-observaciones')?.value.trim();
+  const metodoTrabajo = document.getElementById('prf-metodo-trabajo')?.value || 'Scrum — Marco Ágil por Sprints con entregables continuos y feedback iterativo';
+  const metodoSprint = document.getElementById('prf-metodo-sprint')?.value || 'Sprints de 2 semanas con entregables funcionales y demostración';
+  const metodoReuniones = document.getElementById('prf-metodo-reuniones')?.value || 'Sprint Planning + Sprint Review semanal + Canal Slack/Teams prioritario';
+  const metodoHerramientas = document.getElementById('prf-metodo-herramientas')?.value.trim() || 'Jira Software / Trello / GitHub Projects con acceso de visualización al cliente';
+  const metodoRoles = document.getElementById('prf-metodo-roles')?.value.trim() || 'Scrum Master, Product Owner técnico, Desarrolladores Full Stack y QA Engineer';
+  const metodoDetalle = document.getElementById('prf-metodo-detalle')?.value.trim() || 'Desarrollo iterativo bajo marco Scrum con validaciones continuas.';
   const estado = document.getElementById('prf-estado')?.value || 'enviada';
   const responsable = document.getElementById('prf-responsable')?.value;
 
@@ -6607,7 +6730,10 @@ async function handleGuardarProforma(e) {
         cliente_id: cliente.id, cliente_contacto: contacto, cliente_email: email, cliente_telefono: tel,
         tipo, producto_nombre: prod, moneda, items: itemsClean,
         descuento_pct: descPct, igv_tipo: impOpcion, modalidad_pago: modPago, tiempo_entrega: tEntrega,
-        garantia, alcance, observaciones, fecha_emision: fEmision, validez_dias: validezDias,
+        garantia, alcance, observaciones,
+        metodo_trabajo: metodoTrabajo, metodo_sprint: metodoSprint, metodo_reuniones: metodoReuniones,
+        metodo_herramientas: metodoHerramientas, metodo_roles: metodoRoles, metodo_detalle: metodoDetalle,
+        fecha_emision: fEmision, validez_dias: validezDias,
         fecha_vencimiento: fVenc, estado, responsable,
       }),
     });
@@ -6690,6 +6816,12 @@ function previewCurrentProformaDraft() {
     igv_tipo: impOpcion,
     igv_monto: igvMonto,
     total,
+    metodo_trabajo: document.getElementById('prf-metodo-trabajo')?.value || 'Scrum — Marco Ágil por Sprints con entregables continuos y feedback iterativo',
+    metodo_sprint: document.getElementById('prf-metodo-sprint')?.value || 'Sprints de 2 semanas con entregables funcionales y demostración',
+    metodo_reuniones: document.getElementById('prf-metodo-reuniones')?.value || 'Sprint Planning + Sprint Review semanal + Canal Slack/Teams prioritario',
+    metodo_herramientas: document.getElementById('prf-metodo-herramientas')?.value || 'Jira Software / Trello / GitHub Projects con acceso de visualización al cliente',
+    metodo_roles: document.getElementById('prf-metodo-roles')?.value || 'Scrum Master, Product Owner técnico, Desarrolladores Full Stack y QA Engineer',
+    metodo_detalle: document.getElementById('prf-metodo-detalle')?.value || 'Desarrollo iterativo bajo marco Scrum con validaciones continuas.',
     modalidad_pago: document.getElementById('prf-modalidad-pago')?.value || '50% anticipo, 50% entrega',
     tiempo_entrega: document.getElementById('prf-tiempo-entrega')?.value || '15 días hábiles',
     garantia: document.getElementById('prf-garantia')?.value || '12 meses',
@@ -6975,9 +7107,31 @@ function renderProformaOfficialModal(p) {
         </table>
       </div>
 
-      <!-- Términos y Condiciones Comerciales -->
-      <div style="margin-top:22px;border-top:1px solid #e2e8f0;padding-top:14px;font-size:12px;color:#334155;line-height:1.6">
-        <div style="font-weight:700;color:#0f766e;text-transform:uppercase;margin-bottom:6px">Términos y Condiciones Comerciales:</div>
+      <!-- 3. Método de Trabajo (Metodología de Desarrollo Ágil) -->
+      <div style="margin-top:20px;border-top:1px solid #e2e8f0;padding-top:14px;font-size:12px;color:#334155;line-height:1.6">
+        <div style="font-weight:700;color:#0f766e;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+          <span>3. Método de Trabajo (Metodología de Desarrollo Ágil):</span>
+          <span style="background:#ccfbf1;color:#0f766e;font-size:10px;padding:2px 8px;border-radius:12px;font-weight:700">MARCO ÁGIL / SCRUM</span>
+        </div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:3px solid #0f766e;border-radius:6px;padding:10px 14px;margin-bottom:10px">
+          <div style="font-size:12px;color:#0f172a;margin-bottom:4px">
+            <strong>Marco de Trabajo:</strong> ${esc(p.metodo_trabajo || 'Scrum — Marco Ágil por Sprints con entregables continuos y feedback iterativo')}
+          </div>
+          <div style="font-size:11px;color:#475569;margin-bottom:6px">
+            ${esc(p.metodo_detalle || 'Desarrollo iterativo e incremental bajo metodología ágil Scrum. Cada sprint concluye con un entregable funcional sujeto a revisión y aprobación del cliente para garantizar alineamiento continuo.')}
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;color:#334155;padding-top:6px;border-top:1px dashed #cbd5e1">
+            <div>• <strong>Ciclos / Sprints:</strong> ${esc(p.metodo_sprint || 'Sprints de 2 semanas con entregables funcionales')}</div>
+            <div>• <strong>Reuniones & Coordinación:</strong> ${esc(p.metodo_reuniones || 'Sprint Planning + Sprint Review semanal + Canal Slack/Teams')}</div>
+            <div>• <strong>Herramientas Ágiles:</strong> ${esc(p.metodo_herramientas || 'Jira Software / Trello / GitHub Projects')}</div>
+            <div>• <strong>Roles Involucrados:</strong> ${esc(p.metodo_roles || 'Scrum Master, Product Owner técnico, Desarrolladores y QA')}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Condiciones Comerciales y Términos -->
+      <div style="margin-top:12px;border-top:1px solid #e2e8f0;padding-top:12px;font-size:12px;color:#334155;line-height:1.6">
+        <div style="font-weight:700;color:#0f766e;text-transform:uppercase;margin-bottom:6px">4. Condiciones Comerciales y Términos:</div>
         <div>• <strong>Forma de Pago:</strong> ${esc(p.modalidad_pago || '50% anticipo, 50% contra entrega final')}.</div>
         <div>• <strong>Tiempo de Entrega / Despliegue:</strong> ${esc(p.tiempo_entrega || '15 días hábiles')}.</div>
         <div>• <strong>Garantía y Nivel de Servicio (SLA):</strong> ${esc(p.garantia || '12 meses de soporte técnico y estabilidad')}.</div>
