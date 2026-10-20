@@ -6600,8 +6600,8 @@ function updateProformaPreview(subVal, descVal, igvVal, totalVal) {
   const codigo = document.getElementById('prf-codigo')?.value || 'PRF-2026-0000';
   const prod = document.getElementById('prf-producto-sel')?.value || 'Solución Tecnológica Qubira';
   const moneda = document.getElementById('prf-moneda')?.value || 'USD';
-  const modalidad = document.getElementById('prf-modalidad-pago')?.value || '50% anticipo, 50% contra entrega';
-  const plazo = document.getElementById('prf-tiempo-entrega')?.value || '15 días hábiles';
+  const modalidad = document.getElementById('prf-modalidad-pago')?.value || '—';
+  const plazo = document.getElementById('prf-tiempo-entrega')?.value.trim() || '—';
   const contacto = document.getElementById('prf-contacto')?.value || cliente.contacto_nombre || 'Representante Legal';
   const fVenc = document.getElementById('prf-fecha-vencimiento')?.value || '—';
   const validezDias = document.getElementById('prf-validez-dias')?.value || '30';
@@ -6669,9 +6669,9 @@ function updateProformaPreview(subVal, descVal, igvVal, totalVal) {
 
   const prevMetodo = document.getElementById('prev-prf-metodo');
   if (prevMetodo) {
-    const rawMetodo = document.getElementById('prf-metodo-trabajo')?.value || 'Scrum';
-    const cleanMetodo = rawMetodo.split('—')[0].trim() || 'Scrum';
-    prevMetodo.textContent = cleanMetodo;
+    const rawMetodo = document.getElementById('prf-metodo-trabajo')?.value || '';
+    const cleanMetodo = rawMetodo.split('—')[0].trim();
+    prevMetodo.textContent = cleanMetodo || '—';
   }
 
   const prevMod = document.getElementById('prev-prf-modalidad');
@@ -6876,17 +6876,17 @@ function previewCurrentProformaDraft() {
     igv_tipo: impOpcion,
     igv_monto: igvMonto,
     total,
-    metodo_trabajo: document.getElementById('prf-metodo-trabajo')?.value || 'Scrum — Marco Ágil por Sprints con entregables continuos y feedback iterativo',
-    metodo_sprint: document.getElementById('prf-metodo-sprint')?.value || 'Sprints de 2 semanas con entregables funcionales y demostración',
-    metodo_reuniones: document.getElementById('prf-metodo-reuniones')?.value || 'Sprint Planning + Sprint Review semanal + Canal Slack/Teams prioritario',
-    metodo_herramientas: document.getElementById('prf-metodo-herramientas')?.value.trim() || 'Jira Software / Trello / GitHub Projects con acceso de visualización al cliente',
-    metodo_roles: document.getElementById('prf-metodo-roles')?.value.trim() || 'Scrum Master, Product Owner técnico, Desarrolladores Full Stack y QA Engineer',
-    metodo_detalle: document.getElementById('prf-metodo-detalle')?.value.trim() || 'Se trabajará bajo el marco Scrum con Sprints iterativos de 1 a 2 semanas. Al inicio de cada ciclo se planifican los requerimientos priorizados (Sprint Planning), se desarrollan los entregables técnicos y funcionales, y se realizan demostraciones periódicas (Sprint Review) junto al cliente para validar avances y recopilar retroalimentación continua.',
-    modalidad_pago: document.getElementById('prf-modalidad-pago')?.value || '50% anticipo, 50% contra entrega final',
-    tiempo_entrega: document.getElementById('prf-tiempo-entrega')?.value.trim() || '15 días hábiles tras confirmación',
-    garantia: document.getElementById('prf-garantia')?.value || '12 meses de soporte técnico y mantenimiento',
-    alcance: document.getElementById('prf-alcance')?.value.trim() || 'Configuración, personalización y puesta en marcha de la solución tecnológica, incluyendo manuales y soporte continuo.',
-    observaciones: document.getElementById('prf-observaciones')?.value.trim() || 'Precios cotizados en condición neta comercial según régimen tributario y condiciones ODN Qubira.',
+    metodo_trabajo: document.getElementById('prf-metodo-trabajo')?.value || '',
+    metodo_sprint: document.getElementById('prf-metodo-sprint')?.value || '',
+    metodo_reuniones: document.getElementById('prf-metodo-reuniones')?.value || '',
+    metodo_herramientas: document.getElementById('prf-metodo-herramientas')?.value.trim() || '',
+    metodo_roles: document.getElementById('prf-metodo-roles')?.value.trim() || '',
+    metodo_detalle: document.getElementById('prf-metodo-detalle')?.value.trim() || '',
+    modalidad_pago: document.getElementById('prf-modalidad-pago')?.value || '',
+    tiempo_entrega: document.getElementById('prf-tiempo-entrega')?.value.trim() || '',
+    garantia: document.getElementById('prf-garantia')?.value || '',
+    alcance: document.getElementById('prf-alcance')?.value.trim() || '',
+    observaciones: document.getElementById('prf-observaciones')?.value.trim() || '',
     fecha_emision: document.getElementById('prf-fecha-emision')?.value || new Date().toISOString().split('T')[0],
     validez_dias: parseInt(document.getElementById('prf-validez-dias')?.value || '30', 10),
     fecha_vencimiento: document.getElementById('prf-fecha-vencimiento')?.value || '2026-11-19',
@@ -7067,6 +7067,10 @@ function renderProformaOfficialModal(p) {
   const hoyFormato = new Date().toLocaleDateString('es-PE', { year: 'numeric', month: 'long', day: 'numeric' });
   const sym = p.moneda === 'PEN' ? 'S/' : '$';
 
+  const hasMetodo = !!(p.metodo_trabajo || p.metodo_detalle || p.metodo_sprint || p.metodo_reuniones || p.metodo_herramientas || p.metodo_roles);
+  const cleanFramework = (p.metodo_trabajo || '').split('—')[0].trim();
+  const badgeText = cleanFramework ? cleanFramework.toUpperCase() : 'POR DEFINIR';
+
   const itemsRows = (p.items || []).map((it, idx) => `
     <tr>
       <td style="text-align:center;color:#64748b">${idx + 1}</td>
@@ -7174,36 +7178,58 @@ function renderProformaOfficialModal(p) {
         </table>
       </div>
 
-      <!-- 3. Método de Trabajo (Metodología de Desarrollo Ágil) -->
+      <!-- 3. Método de Trabajo (Metodología de Desarrollo) -->
+      ${hasMetodo ? `
       <div style="margin-top:20px;border-top:1px solid #e2e8f0;padding-top:14px;font-size:12px;color:#334155;line-height:1.6">
         <div style="font-weight:700;color:#0f766e;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
-          <span>3. Método de Trabajo (Metodología de Desarrollo Ágil):</span>
-          <span style="background:#ccfbf1;color:#0f766e;font-size:10px;padding:2px 8px;border-radius:12px;font-weight:700">MARCO ÁGIL / SCRUM</span>
+          <span>3. Método de Trabajo (Metodología de Desarrollo):</span>
+          <span style="background:#ccfbf1;color:#0f766e;font-size:10px;padding:2px 8px;border-radius:12px;font-weight:700">${esc(badgeText)}</span>
         </div>
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:3px solid #0f766e;border-radius:6px;padding:10px 14px;margin-bottom:10px">
+          ${p.metodo_trabajo ? `
           <div style="font-size:12px;color:#0f172a;margin-bottom:4px">
-            <strong>Marco de Trabajo:</strong> ${esc(p.metodo_trabajo || 'Scrum — Marco Ágil por Sprints con entregables continuos y feedback iterativo')}
-          </div>
+            <strong>Marco de Trabajo:</strong> ${esc(p.metodo_trabajo)}
+          </div>` : ''}
+          ${p.metodo_detalle ? `
           <div style="font-size:11px;color:#475569;margin-bottom:6px">
-            ${esc(p.metodo_detalle || 'Desarrollo iterativo e incremental bajo metodología ágil Scrum. Cada ciclo concluye con un entregable funcional sujeto a revisión y aprobación del cliente para garantizar alineamiento continuo.')}
-          </div>
+            ${esc(p.metodo_detalle)}
+          </div>` : ''}
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;color:#334155;padding-top:6px;border-top:1px dashed #cbd5e1">
-            <div>• <strong>Ciclos / Sprints:</strong> ${esc(p.metodo_sprint || 'Sprints de 2 semanas con entregables funcionales')}</div>
-            <div>• <strong>Reuniones & Coordinación:</strong> ${esc(p.metodo_reuniones || 'Sprint Planning + Sprint Review semanal + Canal Slack/Teams prioritario')}</div>
-            <div>• <strong>Herramientas Ágiles:</strong> ${esc(p.metodo_herramientas || 'Jira Software / Trello / GitHub Projects con acceso de visualización al cliente')}</div>
-            <div>• <strong>Roles Involucrados:</strong> ${esc(p.metodo_roles || 'Scrum Master, Product Owner técnico, Desarrolladores Full Stack y QA Engineer')}</div>
+            <div>• <strong>Ciclos / Sprints:</strong> ${esc(p.metodo_sprint || '—')}</div>
+            <div>• <strong>Reuniones & Coordinación:</strong> ${esc(p.metodo_reuniones || '—')}</div>
+            <div>• <strong>Herramientas Ágiles:</strong> ${esc(p.metodo_herramientas || '—')}</div>
+            <div>• <strong>Roles Involucrados:</strong> ${esc(p.metodo_roles || '—')}</div>
           </div>
         </div>
       </div>
+      ` : `
+      <div style="margin-top:20px;border-top:1px solid #e2e8f0;padding-top:14px;font-size:12px;color:#334155;line-height:1.6">
+        <div style="font-weight:700;color:#0f766e;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+          <span>3. Método de Trabajo (Metodología de Desarrollo):</span>
+          <span style="background:#f1f5f9;color:#64748b;font-size:10px;padding:2px 8px;border-radius:12px;font-weight:700">POR DEFINIR</span>
+        </div>
+        <div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:6px;padding:10px 14px;margin-bottom:10px;color:#64748b;font-size:11.5px">
+          <div style="font-size:12px;color:#64748b;margin-bottom:4px">
+            <strong>Marco de Trabajo:</strong> —
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;color:#64748b;padding-top:6px;border-top:1px dashed #e2e8f0">
+            <div>• <strong>Ciclos / Sprints:</strong> —</div>
+            <div>• <strong>Reuniones & Coordinación:</strong> —</div>
+            <div>• <strong>Herramientas Ágiles:</strong> —</div>
+            <div>• <strong>Roles Involucrados:</strong> —</div>
+          </div>
+        </div>
+      </div>
+      `}
 
       <!-- 4. Condiciones Comerciales y Términos -->
       <div style="margin-top:12px;border-top:1px solid #e2e8f0;padding-top:12px;font-size:12px;color:#334155;line-height:1.6">
         <div style="font-weight:700;color:#0f766e;text-transform:uppercase;margin-bottom:6px">4. Condiciones Comerciales y Términos:</div>
-        <div>• <strong>Forma de Pago:</strong> ${esc(p.modalidad_pago || '50% anticipo, 50% contra entrega final')}.</div>
-        <div>• <strong>Tiempo de Entrega / Despliegue:</strong> ${esc(p.tiempo_entrega || '15 días hábiles tras confirmación')}.</div>
-        <div>• <strong>Garantía y Nivel de Servicio (SLA):</strong> ${esc(p.garantia || '12 meses de soporte técnico y mantenimiento')}.</div>
-        <div>• <strong>Alcance Técnico:</strong> ${esc(p.alcance || 'Configuración, personalización y puesta en marcha de la solución tecnológica, incluyendo manuales y soporte continuo.')}</div>
-        <div>• <strong>Observaciones:</strong> ${esc(p.observaciones || 'Precios cotizados en condición neta según régimen tributario y condiciones comerciales ODN Qubira.')}</div>
+        <div>• <strong>Forma de Pago:</strong> ${esc(p.modalidad_pago || '—')}.</div>
+        <div>• <strong>Tiempo de Entrega / Despliegue:</strong> ${esc(p.tiempo_entrega || '—')}.</div>
+        <div>• <strong>Garantía y Nivel de Servicio (SLA):</strong> ${esc(p.garantia || '—')}.</div>
+        <div>• <strong>Alcance Técnico:</strong> ${esc(p.alcance || '—')}.</div>
+        ${p.observaciones ? `<div>• <strong>Observaciones:</strong> ${esc(p.observaciones)}</div>` : ''}
       </div>
 
       <!-- Información Bancaria para Pagos -->
