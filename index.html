@@ -4322,7 +4322,7 @@ function renderContractOfficialModal(c) {
           <img src="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" alt="Qubira Logo" style="width:48px;height:48px;border-radius:8px;object-fit:contain">
           <div>
             <div style="font-size:16px;font-weight:800;letter-spacing:1px;color:#0f766e">QUBIRA S.A.C.</div>
-            <div style="font-size:11px;color:#6b7280">RUC: 20608932145 · Tecnologías de la Información</div>
+            <div style="font-size:11px;color:#6b7280">RUC: 10764275981 · Tecnologías de la Información</div>
           </div>
         </div>
         <div style="text-align:right">
@@ -4336,7 +4336,7 @@ function renderContractOfficialModal(c) {
 
       <div class="contract-clause">
         <strong>CLÁUSULA PRIMERA: DE LAS PARTES</strong>
-        <p>Conste por el presente documento el contrato que celebran de una parte <strong>QUBIRA S.A.C.</strong>, con RUC N° 20608932145, con domicilio legal en Lima, debidamente representada por su Apoderado Legal; y de otra parte <strong>${esc(c.cliente_nombre)}</strong>, con Registro Único de Contribuyente (RUC) / DNI N° <strong>${esc(c.cliente_ruc || '—')}</strong>, con domicilio en ${esc(c.cliente_direccion || 'domicilio fijado por el cliente')}, debidamente representada por su representante legal <strong>${esc(c.cliente_contacto || 'EL CLIENTE')}</strong>, en su calidad de ${esc(c.cliente_cargo || 'Representante Autorizado')}, a quienes en adelante se denominará simplemente como <strong>EL CLIENTE</strong>.</p>
+        <p>Conste por el presente documento el contrato que celebran de una parte <strong>QUBIRA S.A.C.</strong>, con RUC N° 10764275981, con domicilio legal en Lima, debidamente representada por su Apoderado Legal; y de otra parte <strong>${esc(c.cliente_nombre)}</strong>, con Registro Único de Contribuyente (RUC) / DNI N° <strong>${esc(c.cliente_ruc || '—')}</strong>, con domicilio en ${esc(c.cliente_direccion || 'domicilio fijado por el cliente')}, debidamente representada por su representante legal <strong>${esc(c.cliente_contacto || 'EL CLIENTE')}</strong>, en su calidad de ${esc(c.cliente_cargo || 'Representante Autorizado')}, a quienes en adelante se denominará simplemente como <strong>EL CLIENTE</strong>.</p>
       </div>
 
       <div class="contract-clause">
@@ -4376,7 +4376,7 @@ function renderContractOfficialModal(c) {
             [Firma Digital Qubira S.A.C.]
           </div>
           <div class="sign-name">QUBIRA S.A.C.</div>
-          <div class="sign-role">RUC: 20608932145 · Oficina Desarrollo de Negocios</div>
+          <div class="sign-role">RUC: 10764275981 · Oficina Desarrollo de Negocios</div>
         </div>
 
         <div class="signature-box">
@@ -6598,11 +6598,11 @@ function updateProformaPreview(subVal, descVal, igvVal, totalVal) {
   const cliente = clientes.find(c => c.id === cliId) || {};
 
   const codigo = document.getElementById('prf-codigo')?.value || 'PRF-2026-0000';
-  const prod = document.getElementById('prf-producto-sel')?.value || 'Solución Tecnológica Qubira';
+  const prod = document.getElementById('prf-producto-sel')?.value || document.getElementById('prf-producto-search')?.value.trim() || '—';
   const moneda = document.getElementById('prf-moneda')?.value || 'USD';
   const modalidad = document.getElementById('prf-modalidad-pago')?.value || '—';
   const plazo = document.getElementById('prf-tiempo-entrega')?.value.trim() || '—';
-  const contacto = document.getElementById('prf-contacto')?.value || cliente.contacto_nombre || 'Representante Legal';
+  const contacto = document.getElementById('prf-contacto')?.value.trim() || cliente.contacto_nombre || '—';
   const fVenc = document.getElementById('prf-fecha-vencimiento')?.value || '—';
   const validezDias = document.getElementById('prf-validez-dias')?.value || '30';
   const estado = document.getElementById('prf-estado')?.value || 'enviada';
@@ -6632,7 +6632,7 @@ function updateProformaPreview(subVal, descVal, igvVal, totalVal) {
   if (prevRuc) prevRuc.textContent = `RUC: ${cliente.ruc || '—'}`;
 
   const prevContacto = document.getElementById('prev-prf-contacto');
-  if (prevContacto) prevContacto.textContent = `Atenc: ${contacto}`;
+  if (prevContacto) prevContacto.textContent = contacto && contacto !== '—' ? `Atenc: ${contacto}` : 'Atenc: —';
 
   const prevProd = document.getElementById('prev-prf-producto');
   if (prevProd) prevProd.textContent = prod;
@@ -6816,22 +6816,25 @@ function resetCrearProformaForm() {
 function previewCurrentProformaDraft() {
   const clientes = getStoredClientes();
   const cliId = document.getElementById('prf-cliente-sel')?.value;
-  const cliente = clientes.find(c => c.id === cliId) || { razon_social: 'Cliente Destinatario', ruc: '20000000001', direccion: 'Dirección Comercial Lima' };
+  const cliente = clientes.find(c => c.id === cliId) || {};
 
   let subtotal = 0;
   const items = [];
 
   _currentProformaItems.forEach(it => {
-    const cant = Number(it.cantidad) || 1;
+    const desc = (it.descripcion || '').trim();
+    const cant = Number(it.cantidad) || 0;
     const prec = Number(it.precio) || 0;
     const subt = cant * prec;
-    subtotal += subt;
-    items.push({
-      descripcion: it.descripcion || 'Servicio Tecnológico Qubira',
-      cantidad: cant,
-      precio: prec,
-      subtotal: subt
-    });
+    if (desc || prec > 0) {
+      subtotal += subt;
+      items.push({
+        descripcion: desc || '—',
+        cantidad: cant || 1,
+        precio: prec,
+        subtotal: subt
+      });
+    }
   });
 
   _currentProformaTechItems.forEach(it => {
@@ -6855,19 +6858,19 @@ function previewCurrentProformaDraft() {
   const total = subNeto + igvMonto;
 
   const draft = {
-    id: document.getElementById('prf-codigo')?.value || 'PRF-2026-001',
+    id: document.getElementById('prf-codigo')?.value || 'PRF-2026-0001',
     isDraft: true,
-    cliente_id: cliente.id || 'CLI-000',
-    cliente_nombre: document.getElementById('prf-cliente-search')?.value.trim() || cliente.razon_social || 'Cliente Destinatario',
-    cliente_ruc: cliente.ruc || '20000000001',
-    cliente_contacto: document.getElementById('prf-contacto')?.value.trim() || cliente.contacto_nombre || 'Representante Legal',
-    cliente_cargo: cliente.contacto_cargo || 'Gerente',
-    cliente_email: document.getElementById('prf-email')?.value.trim() || cliente.email || 'contacto@empresa.pe',
-    cliente_telefono: document.getElementById('prf-telefono')?.value.trim() || cliente.telefono || '+51 999 000 111',
-    cliente_direccion: cliente.direccion || 'Lima, Perú',
-    tipo: document.getElementById('prf-tipo')?.value || 'Venta de Licencia',
-    producto_nombre: document.getElementById('prf-producto-sel')?.value || 'Solución Tecnológica Qubira',
-    moneda: document.getElementById('prf-moneda')?.value || 'USD',
+    cliente_id: cliente.id || '',
+    cliente_nombre: document.getElementById('prf-cliente-search')?.value.trim() || cliente.razon_social || '',
+    cliente_ruc: cliente.ruc || '',
+    cliente_contacto: document.getElementById('prf-contacto')?.value.trim() || cliente.contacto_nombre || '',
+    cliente_cargo: cliente.contacto_cargo || '',
+    cliente_email: document.getElementById('prf-email')?.value.trim() || cliente.email || '',
+    cliente_telefono: document.getElementById('prf-telefono')?.value.trim() || cliente.telefono || '',
+    cliente_direccion: cliente.direccion || '',
+    tipo: document.getElementById('prf-tipo')?.value || '',
+    producto_nombre: document.getElementById('prf-producto-sel')?.value || document.getElementById('prf-producto-search')?.value.trim() || '',
+    moneda: document.getElementById('prf-moneda')?.value || '',
     items,
     subtotal,
     descuento_pct: descPct,
@@ -6888,10 +6891,10 @@ function previewCurrentProformaDraft() {
     alcance: document.getElementById('prf-alcance')?.value.trim() || '',
     observaciones: document.getElementById('prf-observaciones')?.value.trim() || '',
     fecha_emision: document.getElementById('prf-fecha-emision')?.value || new Date().toISOString().split('T')[0],
-    validez_dias: parseInt(document.getElementById('prf-validez-dias')?.value || '30', 10),
-    fecha_vencimiento: document.getElementById('prf-fecha-vencimiento')?.value || '2026-11-19',
+    validez_dias: parseInt(document.getElementById('prf-validez-dias')?.value || '0', 10),
+    fecha_vencimiento: document.getElementById('prf-fecha-vencimiento')?.value || '',
     estado: document.getElementById('prf-estado')?.value || 'enviada',
-    responsable: document.getElementById('prf-responsable')?.value || 'Abraham Aranda Cerna (ODN Qubira)'
+    responsable: document.getElementById('prf-responsable')?.value || ''
   };
 
   _activeViewingProformaId = null;
@@ -7048,10 +7051,10 @@ function viewProforma(id) {
 
 function renderProformaOfficialModal(p) {
   const codeEl = document.getElementById('proforma-modal-code');
-  if (codeEl) codeEl.textContent = `${p.id} · Qubira ODN Cotización`;
+  if (codeEl) codeEl.textContent = `${p.id || 'PRF-2026-0001'} · Qubira ODN Cotización`;
 
   const titleEl = document.getElementById('proforma-modal-title');
-  if (titleEl) titleEl.textContent = `Proforma Comercial: ${p.cliente_nombre}`;
+  if (titleEl) titleEl.textContent = p.cliente_nombre ? `Proforma Comercial: ${p.cliente_nombre}` : 'Proforma Comercial';
 
   const statusSel = document.getElementById('proforma-modal-status-select');
   if (statusSel) statusSel.value = p.estado || 'enviada';
@@ -7071,19 +7074,24 @@ function renderProformaOfficialModal(p) {
   const cleanFramework = (p.metodo_trabajo || '').split('—')[0].trim();
   const badgeText = cleanFramework ? cleanFramework.toUpperCase() : 'POR DEFINIR';
 
-  const itemsRows = (p.items || []).map((it, idx) => `
+  const validItems = (p.items || []).filter(it => (it.descripcion || '').trim());
+  const itemsRows = validItems.length > 0 ? validItems.map((it, idx) => `
     <tr>
       <td style="text-align:center;color:#64748b">${idx + 1}</td>
       <td>
         <strong style="color:#0f172a;display:block">${esc(it.descripcion)}</strong>
       </td>
-      <td style="text-align:center;font-weight:600">${it.cantidad}</td>
+      <td style="text-align:center;font-weight:600">${it.cantidad || 1}</td>
       <td style="text-align:right">${sym} ${Number(it.precio || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
       <td style="text-align:right;font-weight:700;color:#0f766e">
         ${sym} ${(Number(it.cantidad || 0) * Number(it.precio || 0)).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </td>
     </tr>
-  `).join('');
+  `).join('') : `
+    <tr>
+      <td colspan="5" style="text-align:center;color:#94a3b8;padding:16px;font-style:italic">No hay ítems agregados en esta proforma.</td>
+    </tr>
+  `;
 
   body.innerHTML = `
     <div class="proforma-paper" id="official-proforma-sheet">
@@ -7093,8 +7101,8 @@ function renderProformaOfficialModal(p) {
           <img src="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" alt="Qubira Logo" style="width:52px;height:52px;border-radius:10px;object-fit:contain">
           <div>
             <div style="font-size:17px;font-weight:800;letter-spacing:1px;color:#0f766e">QUBIRA S.A.C.</div>
-            <div style="font-size:11px;color:#6b7280">RUC: 20608932145 · Tecnologías de la Información & Software</div>
-            <div style="font-size:11px;color:#6b7280">contacto@qubira.com · www.qubira.pe · Lima, Perú</div>
+            <div style="font-size:11px;color:#6b7280">RUC: 10764275981 · Tecnologías de la Información & Software</div>
+            <div style="font-size:11px;color:#6b7280">qubira@gmail.com · www.qubira.vercel.app · Lima, Perú</div>
           </div>
         </div>
         <div style="text-align:right;background:#f8fafc;padding:10px 16px;border-radius:8px;border:1px solid #e2e8f0">
@@ -7104,8 +7112,7 @@ function renderProformaOfficialModal(p) {
         </div>
       </div>
 
-      <h2>COTIZACIÓN Y PROPUESTA ECONÓMICA OFICIAL</h2>
-      <div class="proforma-subtitle">OFICINA DE DESARROLLO DE NEGOCIOS (ODN) · DOCUMENTO FORMAL DE OFERTA</div>
+      <h2 style="margin-bottom:16px">COTIZACIÓN Y PROPUESTA ECONÓMICA OFICIAL</h2>
 
       <!-- Cuadro de Información Contraparte / Emisión -->
       <div style="font-size:12px;font-weight:700;color:#0f766e;text-transform:uppercase;margin:16px 0 6px 0">
@@ -7114,20 +7121,20 @@ function renderProformaOfficialModal(p) {
       <div class="proforma-meta-box">
         <div class="proforma-meta-col">
           <strong>DATOS DEL CLIENTE / DESTINATARIO:</strong>
-          <div style="font-size:14px;font-weight:700;color:#0f172a">${esc(p.cliente_nombre)}</div>
+          <div style="font-size:14px;font-weight:700;color:#0f172a">${esc(p.cliente_nombre || '—')}</div>
           <div style="color:#475569">RUC / DNI: <strong>${esc(p.cliente_ruc || '—')}</strong></div>
-          <div style="color:#475569">Atención: <strong>${esc(p.cliente_contacto || 'Representante Legal')}</strong> ${p.cliente_cargo ? `(${esc(p.cliente_cargo)})` : ''}</div>
+          <div style="color:#475569">Atención: <strong>${esc(p.cliente_contacto || '—')}</strong> ${p.cliente_cargo ? `(${esc(p.cliente_cargo)})` : ''}</div>
           <div style="color:#475569">Email: ${esc(p.cliente_email || '—')} · Tel: ${esc(p.cliente_telefono || '—')}</div>
-          <div style="color:#475569">Dirección: ${esc(p.cliente_direccion || 'Lima, Perú')}</div>
+          <div style="color:#475569">Dirección: ${esc(p.cliente_direccion || '—')}</div>
         </div>
         <div class="proforma-meta-col">
           <strong>CONDICIONES GENERALES DE LA OFERTA:</strong>
-          <div>Solución: <strong style="color:#0f766e">${esc(p.producto_nombre)}</strong></div>
-          <div>Modalidad: <strong>${esc(p.tipo || 'Venta de Licencia')}</strong></div>
-          <div>Moneda: <strong>${p.moneda === 'PEN' ? 'Soles Peruanos (PEN)' : 'Dólares Americanos (USD)'}</strong></div>
-          <div>Validez de Oferta: <strong>${p.validez_dias || 30} días calendario</strong></div>
+          <div>Solución: <strong style="color:#0f766e">${esc(p.producto_nombre || '—')}</strong></div>
+          <div>Modalidad: <strong>${esc(p.tipo || '—')}</strong></div>
+          <div>Moneda: <strong>${p.moneda === 'PEN' ? 'Soles Peruanos (PEN)' : (p.moneda === 'USD' ? 'Dólares Americanos (USD)' : '—')}</strong></div>
+          <div>Validez de Oferta: <strong>${p.validez_dias ? `${p.validez_dias} días calendario` : '—'}</strong></div>
           <div>Vencimiento: <strong style="color:#dc2626">${esc(p.fecha_vencimiento || '—')}</strong></div>
-          <div>Asesor Comercial: <strong>${esc(p.responsable || 'ODN Qubira')}</strong></div>
+          <div>Asesor Comercial: <strong>${esc(p.responsable || '—')}</strong></div>
         </div>
       </div>
 
@@ -7232,39 +7239,22 @@ function renderProformaOfficialModal(p) {
         ${p.observaciones ? `<div>• <strong>Observaciones:</strong> ${esc(p.observaciones)}</div>` : ''}
       </div>
 
-      <!-- Información Bancaria para Pagos -->
-      <div class="proforma-bank-info">
-        <strong style="color:#0f766e;display:block;margin-bottom:4px">CUENTAS BANCARIAS OFICIALES RECAUDADORAS — QUBIRA S.A.C.</strong>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div>
-            <strong>Banco de Crédito del Perú (BCP):</strong><br>
-            Cta. Cte. Soles: 191-98765432-0-45 (CCI: 00219100987654320045)<br>
-            Cta. Cte. Dólares: 191-87654321-1-56 (CCI: 00219100876543211056)
-          </div>
-          <div>
-            <strong>BBVA Perú:</strong><br>
-            Cta. Cte. Soles: 0011-0345-0100098765 (CCI: 01134500010009876512)<br>
-            <em>Titular: QUBIRA S.A.C. · RUC: 20608932145</em>
-          </div>
-        </div>
-      </div>
-
       <!-- Bloque de Firmas -->
-      <div class="contract-signatures">
+      <div class="contract-signatures" style="margin-top:24px">
         <div class="signature-box">
           <div style="height:35px;display:flex;align-items:center;justify-content:center;color:#0f766e;font-size:11px;font-weight:700">
             [Firma y Sello Digital Qubira S.A.C.]
           </div>
           <div class="sign-name">QUBIRA S.A.C.</div>
-          <div class="sign-role">RUC: 20608932145 · Oficina de Desarrollo de Negocios</div>
+          <div class="sign-role">RUC: 10764275981 · Oficina de Desarrollo de Negocios</div>
         </div>
 
         <div class="signature-box">
           <div style="height:35px;display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:11px">
             [Aceptación y Conformidad del Cliente]
           </div>
-          <div class="sign-name">${esc(p.cliente_contacto || p.cliente_nombre)}</div>
-          <div class="sign-role">${esc(p.cliente_cargo || 'Representante Autorizado')} · ${esc(p.cliente_nombre)}</div>
+          <div class="sign-name">${esc(p.cliente_contacto || p.cliente_nombre || '—')}</div>
+          <div class="sign-role">${p.cliente_cargo ? `${esc(p.cliente_cargo)} · ` : ''}${esc(p.cliente_nombre || '—')}</div>
         </div>
       </div>
     </div>
