@@ -1837,7 +1837,7 @@
           <div class="card-header">
             <h3 class="card-title">
               <svg class="icon" style="color:var(--primary)"><use href="#icon-clipboard"></use></svg>
-              Generador de Proformas y Cotizaciones Oficiales
+              <span id="prf-titulo-form">Generador de Proformas y Cotizaciones Oficiales</span>
             </h3>
             <span class="badge b-borrador" id="prf-badge-state">Modo Edición</span>
           </div>
@@ -2163,11 +2163,11 @@
             </div>
 
             <div style="display:flex;gap:12px;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
-              <button type="submit" class="btn btn-primary" style="flex:1">
+              <button type="submit" class="btn btn-primary" style="flex:1" id="prf-btn-guardar">
                 <svg class="icon" style="color:#fff"><use href="#icon-check"></use></svg>
-                Guardar y Registrar Proforma
+                <span id="prf-btn-guardar-texto">Guardar y Registrar Proforma</span>
               </button>
-              <button type="button" class="btn btn-outline" onclick="resetCrearProformaForm()">
+              <button type="button" class="btn btn-outline" id="prf-btn-limpiar" onclick="_prfEditandoId ? cancelarEdicionProforma() : resetCrearProformaForm()">
                 Limpiar
               </button>
             </div>
@@ -4502,8 +4502,8 @@ async function ensureComercialData(force) {
       ...catalogTypes.map(tipo => qcApiFetch('/api/comercial/catalog/' + tipo)),
     ]);
     _clientesCache = cliData.clients || [];
-    _contratosCache = ctrData.contracts || [];
-    _proformasCache = prfData.proformas || [];
+    _contratosCache = (ctrData.contracts || []).map(normalizarFechasDoc);
+    _proformasCache = (prfData.proformas || []).map(normalizarFechasDoc);
     catalogTypes.forEach((tipo, i) => { _catalogCache[tipo] = catalogResults[i].items || []; });
     _comercialDataLoaded = true;
   } catch (err) {
@@ -4512,8 +4512,15 @@ async function ensureComercialData(force) {
 }
 
 async function reloadClientes() { _clientesCache = (await qcApiFetch('/api/comercial/clients')).clients || []; return _clientesCache; }
-async function reloadContratos() { _contratosCache = (await qcApiFetch('/api/comercial/contracts')).contracts || []; return _contratosCache; }
-async function reloadProformas() { _proformasCache = (await qcApiFetch('/api/comercial/proformas')).proformas || []; return _proformasCache; }
+// Las columnas DATE llegan como "2026-10-21T00:00:00.000Z": se dejan en "2026-10-21"
+function normalizarFechasDoc(d) {
+  Object.keys(d).forEach(k => {
+    if (k.startsWith('fecha_') && typeof d[k] === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(d[k])) d[k] = d[k].slice(0, 10);
+  });
+  return d;
+}
+async function reloadContratos() { _contratosCache = ((await qcApiFetch('/api/comercial/contracts')).contracts || []).map(normalizarFechasDoc); return _contratosCache; }
+async function reloadProformas() { _proformasCache = ((await qcApiFetch('/api/comercial/proformas')).proformas || []).map(normalizarFechasDoc); return _proformasCache; }
 async function reloadCatalog(tipo) { _catalogCache[tipo] = (await qcApiFetch('/api/comercial/catalog/' + tipo)).items || []; return _catalogCache[tipo]; }
 
 function getStoredClientes() { return _clientesCache; }
@@ -6077,7 +6084,128 @@ function cargarPlantillaMetodo() {
   updateProformaPreview();
 }
 
+let _proformaParaEditar = null; // proforma elegida en "Consultar" para editar
+let _prfEditandoId = null;      // id de la proforma que se está editando (null = nueva)
+
+function editarProforma(id) {
+  const p = getStoredProformas().find(x => x.id === id);
+  if (!p) return;
+  _proformaParaEditar = p;
+  navigate('crear-proforma');
+}
+
+function cancelarEdicionProforma() {
+  _prfEditandoId = null;
+  document.getElementById('form-crear-proforma')?.reset();
+  navigate('consultar-proforma');
+}
+
+function modoFormularioProforma(p) {
+  const titulo = document.getElementById('prf-titulo-form');
+  const badge = document.getElementById('prf-badge-state');
+  const btnTxt = document.getElementById('prf-btn-guardar-texto');
+  const btnLimpiar = document.getElementById('prf-btn-limpiar');
+  if (titulo) titulo.textContent = p ? `Editar cotización ${p.id}` : 'Generador de Proformas y Cotizaciones Oficiales';
+  if (badge) badge.textContent = p ? `Editando ${p.id}` : 'Modo Edición';
+  if (btnTxt) btnTxt.textContent = p ? 'Guardar cambios de la proforma' : 'Guardar y Registrar Proforma';
+  if (btnLimpiar) btnLimpiar.textContent = p ? 'Cancelar edición' : 'Limpiar';
+}
+
+function asegurarOpcion(sel, valor, texto) {
+  if (!sel || valor === null || valor === undefined || valor === '') return;
+  if (!Array.from(sel.options).some(o => o.value === String(valor))) {
+    const op = document.createElement('option');
+    op.value = valor; op.textContent = texto || valor;
+    sel.appendChild(op);
+  }
+  sel.value = String(valor);
+}
+
+// Rellena el formulario con una proforma guardada para editarla
+function cargarProformaEnFormulario(p) {
+  const set = (id, v) => { const el = document.getElementById(id); if (el && v !== null && v !== undefined) el.value = v; };
+  const cliente = getStoredClientes().find(c => c.id === p.cliente_id);
+  set('prf-codigo', p.id);
+  set('prf-cliente-sel', p.cliente_id);
+  set('prf-cliente-search', cliente ? `${cliente.razon_social} (${cliente.ruc})` : (p.cliente_nombre || ''));
+  set('prf-contacto', p.cliente_contacto || '');
+  set('prf-email', p.cliente_email || '');
+  set('prf-telefono', p.cliente_telefono || '');
+  asegurarOpcion(document.getElementById('prf-tipo'), p.tipo);
+  set('prf-producto-sel', p.producto_nombre || '');
+  const opProd = (_productOptionsCache['prf-producto-search'] || []).find(o => o.value === p.producto_nombre);
+  set('prf-producto-search', opProd ? opProd.label : (p.producto_nombre || ''));
+  asegurarOpcion(document.getElementById('prf-moneda'), p.moneda, `${p.moneda}`);
+  _prfMonedaPrev = p.moneda || null;
+
+  const items = Array.isArray(p.items) ? p.items : [];
+  _currentProformaItems = items.filter(it => !it.is_tech_variable).map(it => ({ descripcion: it.descripcion || '', cantidad: Number(it.cantidad) || 1, precio: Number(it.precio) || 0 }));
+  if (!_currentProformaItems.length) _currentProformaItems = [{ descripcion: '', cantidad: 1, precio: '' }];
+  _currentProformaTechItems = items.filter(it => it.is_tech_variable).map((it, i) => {
+    const m = /^\[(Herramienta|Lenguaje)\]\s*(.+?)(?:\s*\(Plan:\s*(.+)\))?$/.exec(it.descripcion || '') || [];
+    const esTool = (it.category || '').toLowerCase() === 'tool' || m[1] === 'Herramienta';
+    const cat = (_techCatalogCache && (esTool ? _techCatalogCache.tool : _techCatalogCache.language)) || [];
+    const enCatalogo = cat.find(x => x.id === it.tech_id);
+    return {
+      id: 'tech_var_ed_' + i + '_' + Date.now(),
+      tech_id: it.tech_id || null,
+      category: it.category || (esTool ? 'tool' : 'language'),
+      name: it.name || m[2] || it.descripcion,
+      image_url: it.image_url || enCatalogo?.image_url || '',
+      plan_name: it.plan_name || m[3] || '',
+      costo: it.costo_base ?? null,
+      margen_min: it.margen_min ?? null,
+      margen_max: it.margen_max ?? null,
+      propuesta: it.propuesta ?? Number(it.precio) ?? 0,
+      // Los montos guardados ya están en la moneda de la proforma
+      moneda: p.moneda,
+      moneda_catalogo: it.moneda || p.moneda,
+      periodo: it.periodo || 'mes',
+      plans: Array.isArray(enCatalogo?.plans) ? enCatalogo.plans : []
+    };
+  });
+
+  set('prf-descuento-pct', Number(p.descuento_pct) || 0);
+  asegurarOpcion(document.getElementById('prf-impuesto-opcion'), p.igv_tipo || 'igv_18');
+  asegurarOpcion(document.getElementById('prf-modalidad-pago'), p.modalidad_pago);
+  set('prf-tiempo-entrega', p.tiempo_entrega || '');
+  asegurarOpcion(document.getElementById('prf-garantia'), p.garantia);
+  set('prf-alcance', p.alcance || '');
+  set('prf-observaciones', p.observaciones || '');
+  asegurarOpcion(document.getElementById('prf-metodo-trabajo'), p.metodo_trabajo);
+  onMetodoTrabajoChange();
+  const selSprint = document.getElementById('prf-metodo-sprint');
+  if (selSprint) { selSprint.querySelectorAll('option[data-agenda], option[data-guardado]').forEach(o => o.remove()); }
+  if (p.metodo_sprint && selSprint) {
+    const op = document.createElement('option');
+    op.value = p.metodo_sprint; op.textContent = p.metodo_sprint; op.dataset.guardado = '1';
+    selSprint.appendChild(op);
+    selSprint.value = p.metodo_sprint;
+  }
+  asegurarOpcion(document.getElementById('prf-metodo-reuniones'), p.metodo_reuniones);
+  set('prf-metodo-herramientas', p.metodo_herramientas || '');
+  set('prf-metodo-roles', p.metodo_roles || '');
+  set('prf-metodo-detalle', p.metodo_detalle || '');
+  if (p.fecha_emision) set('prf-fecha-emision', String(p.fecha_emision).slice(0, 10));
+  asegurarOpcion(document.getElementById('prf-validez-dias'), String(p.validez_dias || 30), `${p.validez_dias} días calendario`);
+  onProformaDateChange();
+  asegurarOpcion(document.getElementById('prf-estado'), p.estado, p.estado);
+  if (p.responsable) set('prf-responsable', p.responsable);
+
+  renderProformaItemsTable();
+  renderProformaTechItemsTable();
+  calcProformaTotals();
+  if (['convertida', 'aprobada'].includes(p.estado)) {
+    toast('info', 'Proforma ' + p.estado, 'Puedes editarla; los contratos ya generados desde ella no cambian.');
+  }
+}
+
 async function renderCrearProforma() {
+  const editar = _proformaParaEditar;
+  _proformaParaEditar = null;
+  _prfEditandoId = editar ? editar.id : null;
+  modoFormularioProforma(editar);
+  if (!editar) { const c = document.getElementById('prf-codigo'); if (c) c.value = ''; }
   const clientes = getStoredClientes();
   const selectCli = document.getElementById('prf-cliente-sel');
   const searchCli = document.getElementById('prf-cliente-search');
@@ -6181,6 +6309,11 @@ async function renderCrearProforma() {
   renderProformaItemsTable();
   renderProformaTechItemsTable();
   calcProformaTotals();
+
+  if (editar) {
+    await ensureTechCatalogLoaded().catch(() => {});
+    cargarProformaEnFormulario(editar);
+  }
 }
 
 function onProformaClientSelected(cliId) {
@@ -8856,6 +8989,10 @@ async function handleGuardarProforma(e) {
       margen_min: it.margen_min,
       margen_max: it.margen_max,
       propuesta: Number(it.propuesta) || 0,
+      name: it.name,
+      moneda: it.moneda_catalogo || it.moneda,
+      periodo: it.periodo,
+      image_url: it.image_url,
     });
   });
 
@@ -8878,8 +9015,9 @@ async function handleGuardarProforma(e) {
   const btn = document.querySelector('#form-crear-proforma button[type="submit"]');
   if (btn) btn.disabled = true;
   try {
-    const { proforma } = await qcApiFetch('/api/comercial/proformas', {
-      method: 'POST',
+    const editando = _prfEditandoId;
+    const { proforma } = await qcApiFetch(editando ? `/api/comercial/proformas/${encodeURIComponent(editando)}` : '/api/comercial/proformas', {
+      method: editando ? 'PUT' : 'POST',
       body: JSON.stringify({
         cliente_id: cliente.id, cliente_contacto: contacto, cliente_email: email, cliente_telefono: tel,
         tipo, producto_nombre: prod, moneda, items: itemsClean,
@@ -8894,7 +9032,12 @@ async function handleGuardarProforma(e) {
     });
     await agendarReunionesOti({ ...proforma, cliente_id: cliente.id, producto_nombre: proforma.producto_nombre || prod });
     await reloadProformas();
-    toast('success', 'Proforma Registrada', `La proforma ${proforma.id} para ${cliente.razon_social} ha sido guardada exitosamente.`);
+    if (editando) {
+      toast('success', 'Proforma actualizada', `Los cambios de ${proforma.id} para ${cliente.razon_social} se guardaron.`);
+    } else {
+      toast('success', 'Proforma Registrada', `La proforma ${proforma.id} para ${cliente.razon_social} ha sido guardada exitosamente.`);
+    }
+    _prfEditandoId = null;
     navigate('consultar-proforma');
   } catch (err) {
     if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo guardar la proforma', err.message);
@@ -9111,6 +9254,9 @@ function renderConsultarProformaTable() {
           <div class="table-actions" style="justify-content:flex-end">
             <button class="btn-icon" title="Ver documento formal" onclick="viewProforma('${esc(p.id)}')">
               <svg class="icon"><use href="#icon-eye"></use></svg>
+            </button>
+            <button class="btn-icon" title="Editar cotización" onclick="editarProforma('${esc(p.id)}')">
+              <svg class="icon"><use href="#icon-edit-2"></use></svg>
             </button>
             <button class="btn-icon" title="Imprimir proforma" onclick="quickPrintProforma('${esc(p.id)}')">
               <svg class="icon"><use href="#icon-printer"></use></svg>
