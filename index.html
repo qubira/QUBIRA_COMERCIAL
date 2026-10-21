@@ -234,6 +234,89 @@
 
     /* ── FORM ── */
     .form-group { display: flex; flex-direction: column; gap: 6px; }
+
+    /* ── Agenda OTI (duración del sprint + disponibilidad en tiempo real) ── */
+    .select-oculto { position: absolute; left: 50%; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+    .agenda-oti-trigger {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;
+      text-align: left; background: #fff; border: 1px solid var(--border); border-radius: 8px;
+      padding: 9px 12px; font: inherit; font-size: 13px; color: var(--text); cursor: pointer; min-height: 40px;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .agenda-oti-trigger:hover { border-color: var(--primary); }
+    .agenda-oti-trigger:focus-visible { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(15,118,110,.15); }
+    .agenda-oti-trigger .vacio { color: var(--text-muted); }
+    .agenda-oti-trigger .ico { flex-shrink: 0; font-size: 16px; }
+    .agenda-oti-trigger small { display: block; color: var(--primary); font-weight: 600; font-size: 11.5px; margin-top: 2px; }
+
+    .aoti-overlay { position: fixed; inset: 0; z-index: 9000; background: rgba(17,24,39,.55); backdrop-filter: blur(3px);
+      display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .aoti-box { background: #fff; border-radius: 16px; width: min(1080px, 100%); max-height: 94vh; display: flex; flex-direction: column;
+      overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,.35); }
+    .aoti-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .aoti-head h3 { font-size: 16px; font-weight: 800; }
+    .aoti-head p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .aoti-vivo { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; color: var(--success);
+      background: #ecfdf5; border: 1px solid #a7f3d0; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+    .aoti-vivo::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--success); animation: aotiPulso 1.6s infinite; }
+    .aoti-vivo.error { color: var(--danger); background: #fef2f2; border-color: #fecaca; }
+    .aoti-vivo.error::before { background: var(--danger); animation: none; }
+    @keyframes aotiPulso { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+    .aoti-cerrar { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: #fff; cursor: pointer; font-size: 18px; color: var(--text-muted); }
+    .aoti-cerrar:hover { background: #fef2f2; color: var(--danger); }
+    .aoti-body { padding: 16px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+    .aoti-paso { font-size: 11px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    .aoti-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .aoti-chip { border: 1px solid var(--border); background: #fff; border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+    .aoti-chip:hover { border-color: var(--primary); }
+    .aoti-chip.activo { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .aoti-grid { display: grid; grid-template-columns: minmax(280px, 340px) 1fr; gap: 16px; }
+    @media (max-width: 820px) { .aoti-grid { grid-template-columns: 1fr; } }
+    .aoti-card { border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+    .aoti-nav { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 10px; }
+    .aoti-nav button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border); background: #fff; cursor: pointer; font-size: 15px; }
+    .aoti-nav button:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+    .aoti-nav button:disabled { opacity: .35; cursor: default; }
+    .aoti-nav select { border: 1px solid var(--border); border-radius: 8px; padding: 5px 6px; font: inherit; font-size: 13px; font-weight: 700; }
+    .aoti-mes { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .aoti-dow { font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-align: center; padding: 2px 0; }
+    .aoti-dia { border: 1px solid var(--border); border-radius: 8px; background: #fff; min-height: 44px; padding: 4px; font: inherit;
+      font-size: 12.5px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .aoti-dia .barra { width: 70%; height: 4px; border-radius: 4px; background: #e5e7eb; }
+    .aoti-dia.libre .barra { background: #10b981; }
+    .aoti-dia.parcial .barra { background: #f59e0b; }
+    .aoti-dia.ocupado .barra { background: #ef4444; }
+    .aoti-dia.ocupado { background: #fef2f2; }
+    .aoti-dia:disabled { opacity: .35; cursor: default; background: #f9fafb; }
+    .aoti-dia.hoy { border-color: var(--primary); }
+    .aoti-dia.sel { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .aoti-dia.sel .barra { background: #fff; }
+    .aoti-dia.fuera { visibility: hidden; }
+    .aoti-leyenda { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; font-size: 11px; color: var(--text-muted); }
+    .aoti-leyenda i { display: inline-block; width: 10px; height: 4px; border-radius: 3px; margin-right: 4px; vertical-align: middle; }
+    .aoti-horas { display: flex; flex-direction: column; gap: 4px; max-height: 330px; overflow-y: auto; }
+    .aoti-hora { display: grid; grid-template-columns: 92px 1fr auto; align-items: center; gap: 10px; border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 10px; background: #fff; cursor: pointer; font: inherit; font-size: 12.5px; text-align: left; }
+    .aoti-hora:hover { border-color: var(--primary); }
+    .aoti-hora.sel { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(15,118,110,.2); background: var(--primary-light); }
+    .aoti-hora.nadie { background: #fef2f2; }
+    .aoti-puntos { display: flex; flex-wrap: wrap; gap: 3px; }
+    .aoti-punto { width: 10px; height: 10px; border-radius: 50%; background: #10b981; }
+    .aoti-punto.ocu { background: #ef4444; }
+    .aoti-cuenta { font-size: 11.5px; font-weight: 700; color: var(--success); white-space: nowrap; }
+    .aoti-hora.nadie .aoti-cuenta { color: var(--danger); }
+    .aoti-detalle { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    @media (max-width: 600px) { .aoti-detalle { grid-template-columns: 1fr; } }
+    .aoti-detalle h4 { font-size: 12px; font-weight: 800; margin-bottom: 6px; }
+    .aoti-persona { font-size: 12.5px; padding: 6px 8px; border-radius: 8px; margin-bottom: 4px; }
+    .aoti-persona.libre { background: #ecfdf5; color: #065f46; }
+    .aoti-persona.ocu { background: #fef2f2; color: #991b1b; }
+    .aoti-persona small { display: block; font-size: 11px; opacity: .85; }
+    .aoti-vacio { font-size: 12.5px; color: var(--text-muted); padding: 18px 8px; text-align: center; }
+    .aoti-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 20px;
+      border-top: 1px solid var(--border); background: #f9fafb; }
+    .aoti-resumen { font-size: 12.5px; color: var(--text); flex: 1; min-width: 220px; }
+    .aoti-resumen strong { color: var(--primary); }
     label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
     input:not([type="checkbox"]):not([type="radio"]), select, textarea {
       background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
@@ -1942,9 +2025,13 @@
                 <span class="form-help">Forma operativa y dinámica en la que el equipo de Qubira ejecutará la solución.</span>
               </div>
 
-              <div class="form-group">
-                <label for="prf-metodo-sprint">Duración del Sprint / Ciclo de Entrega *</label>
-                <select id="prf-metodo-sprint" required onchange="updateProformaPreview()">
+              <div class="form-group" style="position:relative;">
+                <label for="prf-sprint-trigger">Duración del Sprint / Ciclo de Entrega *</label>
+                <button type="button" class="agenda-oti-trigger" id="prf-sprint-trigger" onclick="abrirAgendaOti()" title="Elegir duración e inicio del sprint según la disponibilidad real de OTI">
+                  <span id="prf-sprint-trigger-texto"><span class="vacio">Selecciona duración e inicio en la agenda de OTI…</span></span>
+                  <span class="ico">📅</span>
+                </button>
+                <select id="prf-metodo-sprint" class="select-oculto" required tabindex="-1" aria-hidden="true" onchange="updateProformaPreview()">
                   <option value="" disabled selected hidden>Selecciona duración del sprint...</option>
                   <option value="Sprints de 2 semanas con entregables funcionales y demostración">Sprints de 2 semanas (Recomendado Scrum)</option>
                   <option value="Sprints de 1 semana para despliegue acelerado">Sprints de 1 semana (Rápida iteración)</option>
@@ -7969,7 +8056,275 @@ function calcProformaTotals() {
   updateProformaPreview(subtotal, descuentoMonto, igvMonto, total);
 }
 
+// ══════════ AGENDA OTI: disponibilidad en tiempo real para iniciar sprints ══════════
+// En lugar de un menú desplegable, la duración del sprint se elige en una
+// ventana con el calendario del equipo OTI (área TI): se ve qué días y horas
+// están libres y, si alguien está ocupado, quiénes de OTI sí están disponibles.
+const AOTI_HORA_INI = 8;   // jornada laboral 08:00–18:00
+const AOTI_HORA_FIN = 18;
+const AOTI_REFRESCO_MS = 20000;
+const AOTI_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const AOTI_SEPARADOR = ' · Inicio propuesto: ';
+const aoti = { anio: 0, mes: 0, dia: null, hora: null, duracion: '', datos: null, error: null, actualizado: null, timer: null, pidiendo: 0 };
+
+const pad2 = n => String(n).padStart(2, '0');
+const isoDia = (a, m, d) => `${a}-${pad2(m + 1)}-${pad2(d)}`;
+const hoyIso = () => { const h = new Date(); return isoDia(h.getFullYear(), h.getMonth(), h.getDate()); };
+
+function opcionesSprint() {
+  return Array.from(document.querySelectorAll('#prf-metodo-sprint option'))
+    .filter(o => o.value && !o.dataset.agenda)
+    .map(o => ({ valor: o.value, texto: o.textContent.trim() }));
+}
+
+// Duración base de un valor (el valor puede incluir el inicio propuesto)
+function duracionBase(valor) {
+  return String(valor || '').split(AOTI_SEPARADOR)[0];
+}
+
+function actualizarTriggerSprint() {
+  const sel = document.getElementById('prf-metodo-sprint');
+  const cont = document.getElementById('prf-sprint-trigger-texto');
+  if (!sel || !cont) return;
+  const valor = sel.value;
+  if (!valor) { cont.innerHTML = '<span class="vacio">Selecciona duración e inicio en la agenda de OTI…</span>'; return; }
+  const base = opcionesSprint().find(o => o.valor === duracionBase(valor));
+  const partes = valor.split(AOTI_SEPARADOR);
+  cont.innerHTML = esc(base ? base.texto : partes[0]) + (partes[1] ? `<small>📍 Inicio: ${esc(partes[1])}</small>` : '');
+}
+
+async function abrirAgendaOti() {
+  const sel = document.getElementById('prf-metodo-sprint');
+  const h = new Date();
+  aoti.anio = h.getFullYear(); aoti.mes = h.getMonth(); aoti.dia = null; aoti.hora = null;
+  aoti.duracion = duracionBase(sel?.value || '');
+  aoti.datos = null; aoti.error = null;
+  if (!document.getElementById('aoti-overlay')) {
+    const ov = document.createElement('div');
+    ov.id = 'aoti-overlay';
+    ov.className = 'aoti-overlay';
+    ov.addEventListener('click', e => { if (e.target === ov) cerrarAgendaOti(); });
+    document.body.appendChild(ov);
+    document.addEventListener('keydown', aotiTeclas);
+  }
+  renderAgendaOti();
+  await cargarAgendaOti();
+  clearInterval(aoti.timer);
+  aoti.timer = setInterval(() => cargarAgendaOti(true), AOTI_REFRESCO_MS);
+}
+
+function aotiTeclas(e) { if (e.key === 'Escape') cerrarAgendaOti(); }
+
+function cerrarAgendaOti() {
+  clearInterval(aoti.timer); aoti.timer = null;
+  document.removeEventListener('keydown', aotiTeclas);
+  document.getElementById('aoti-overlay')?.remove();
+  document.getElementById('prf-sprint-trigger')?.focus();
+}
+
+async function cargarAgendaOti(silencioso = false) {
+  const pedido = ++aoti.pidiendo;
+  const ultimo = new Date(aoti.anio, aoti.mes + 1, 0).getDate();
+  try {
+    const datos = await qcApiFetch(`/api/calendar/team-availability?area=TI&from=${isoDia(aoti.anio, aoti.mes, 1)}&to=${isoDia(aoti.anio, aoti.mes, ultimo)}`);
+    if (pedido !== aoti.pidiendo) return; // llegó otra respuesta más nueva
+    aoti.datos = datos; aoti.error = null; aoti.actualizado = new Date();
+  } catch (e) {
+    if (pedido !== aoti.pidiendo || e.message === 'SESSION_EXPIRED') return;
+    aoti.error = e.message || 'No se pudo consultar la agenda de OTI';
+    if (silencioso && aoti.datos) { renderAgendaOti(); return; }
+  }
+  if (document.getElementById('aoti-overlay')) renderAgendaOti();
+}
+
+// Integrantes ocupados en una franja [hora, hora+1) de un día
+function ocupadosEnFranja(fecha, hora) {
+  const ini = `${pad2(hora)}:00`, fin = `${pad2(hora + 1)}:00`;
+  const res = new Map();
+  (aoti.datos?.busy || []).forEach(b => {
+    if (b.date === fecha && b.start_time < fin && b.end_time > ini) {
+      if (!res.has(b.user_id)) res.set(b.user_id, []);
+      res.get(b.user_id).push(b);
+    }
+  });
+  return res;
+}
+
+function estadoDia(fecha) {
+  const miembros = aoti.datos?.members || [];
+  if (!miembros.length) return '';
+  let franjasLibres = 0, franjasSinNadie = 0, total = 0;
+  for (let h = AOTI_HORA_INI; h < AOTI_HORA_FIN; h++) {
+    const ocu = ocupadosEnFranja(fecha, h).size;
+    total++;
+    if (ocu === 0) franjasLibres++;
+    if (ocu >= miembros.length) franjasSinNadie++;
+  }
+  if (franjasLibres === total) return 'libre';
+  if (franjasSinNadie === total) return 'ocupado';
+  return 'parcial';
+}
+
+function nombrePersona(m) { return [m.nombre, m.apellidos].filter(Boolean).join(' '); }
+
+function textoInicio() {
+  if (!aoti.dia || aoti.hora === null) return '';
+  const [a, m, d] = aoti.dia.split('-').map(Number);
+  const f = new Date(a, m - 1, d);
+  const dia = f.toLocaleDateString('es-PE', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+  const miembros = aoti.datos?.members || [];
+  const ocu = ocupadosEnFranja(aoti.dia, aoti.hora);
+  const libres = miembros.filter(x => !ocu.has(x.user_id)).map(nombrePersona);
+  return `${dia} ${pad2(aoti.hora)}:00–${pad2(aoti.hora + 1)}:00` + (libres.length ? ` · Equipo OTI disponible: ${libres.join(', ')}` : '');
+}
+
+function renderAgendaOti() {
+  const ov = document.getElementById('aoti-overlay');
+  if (!ov) return;
+  const miembros = aoti.datos?.members || [];
+  const hoy = hoyIso();
+  const h = new Date();
+  const esMesActual = aoti.anio === h.getFullYear() && aoti.mes === h.getMonth();
+
+  // Calendario del mes
+  const primerDow = (new Date(aoti.anio, aoti.mes, 1).getDay() + 6) % 7; // lunes = 0
+  const diasMes = new Date(aoti.anio, aoti.mes + 1, 0).getDate();
+  let celdas = '';
+  for (let i = 0; i < primerDow; i++) celdas += '<button type="button" class="aoti-dia fuera" disabled></button>';
+  for (let d = 1; d <= diasMes; d++) {
+    const f = isoDia(aoti.anio, aoti.mes, d);
+    const dow = new Date(aoti.anio, aoti.mes, d).getDay();
+    const pasado = f < hoy, finde = dow === 0 || dow === 6;
+    const est = (!pasado && !finde && aoti.datos) ? estadoDia(f) : '';
+    const clases = ['aoti-dia', est, f === hoy ? 'hoy' : '', f === aoti.dia ? 'sel' : ''].join(' ');
+    const tit = pasado ? 'Fecha pasada' : finde ? 'Fin de semana' : est === 'libre' ? 'Todo el equipo OTI libre' : est === 'parcial' ? 'Hay reuniones: revisa las horas' : est === 'ocupado' ? 'Todo el equipo OTI ocupado' : '';
+    celdas += `<button type="button" class="${clases}" ${pasado || finde ? 'disabled' : ''} title="${tit}" onclick="aotiElegirDia('${f}')">${d}<span class="barra"></span></button>`;
+  }
+  const anios = [];
+  for (let a = h.getFullYear(); a <= h.getFullYear() + 2; a++) anios.push(a);
+
+  // Horas del día elegido
+  let panelDia;
+  if (aoti.error && !aoti.datos) {
+    panelDia = `<div class="aoti-vacio">⚠️ ${esc(aoti.error)}<br><br><button type="button" class="btn btn-outline" onclick="cargarAgendaOti()">Reintentar</button></div>`;
+  } else if (!aoti.datos) {
+    panelDia = '<div class="aoti-vacio">Consultando la agenda de OTI…</div>';
+  } else if (!miembros.length) {
+    panelDia = '<div class="aoti-vacio">No hay integrantes activos del área OTI (TI) registrados en RR.HH.</div>';
+  } else if (!aoti.dia) {
+    panelDia = `<div class="aoti-vacio">Elige un día en el calendario para ver sus horas libres.<br><small>Equipo OTI: ${miembros.map(m => esc(nombrePersona(m))).join(', ')}</small></div>`;
+  } else {
+    let filas = '';
+    for (let hr = AOTI_HORA_INI; hr < AOTI_HORA_FIN; hr++) {
+      const ocu = ocupadosEnFranja(aoti.dia, hr);
+      const libres = miembros.length - ocu.size;
+      const puntos = miembros.map(m => `<span class="aoti-punto ${ocu.has(m.user_id) ? 'ocu' : ''}" title="${esc(nombrePersona(m))}: ${ocu.has(m.user_id) ? 'ocupado' : 'libre'}"></span>`).join('');
+      const pasada = aoti.dia === hoy && hr <= h.getHours();
+      filas += `<button type="button" class="aoti-hora ${libres === 0 ? 'nadie' : ''} ${aoti.hora === hr ? 'sel' : ''}" ${pasada ? 'disabled style="opacity:.4;cursor:default"' : ''} onclick="aotiElegirHora(${hr})">
+        <strong>${pad2(hr)}:00 – ${pad2(hr + 1)}:00</strong>
+        <span class="aoti-puntos">${puntos}</span>
+        <span class="aoti-cuenta">${libres === miembros.length ? 'Todos libres' : libres === 0 ? 'Nadie libre' : `${libres} de ${miembros.length} libres`}</span>
+      </button>`;
+    }
+    let detalle = '';
+    if (aoti.hora !== null) {
+      const ocu = ocupadosEnFranja(aoti.dia, aoti.hora);
+      const libres = miembros.filter(m => !ocu.has(m.user_id));
+      const ocupados = miembros.filter(m => ocu.has(m.user_id));
+      detalle = `<div class="aoti-detalle">
+        <div><h4>✅ Disponibles de OTI (${libres.length})</h4>${libres.length ? libres.map(m => `<div class="aoti-persona libre">${esc(nombrePersona(m))}${m.cargo ? `<small>${esc(m.cargo)}</small>` : ''}</div>`).join('') : '<div class="aoti-vacio">Nadie de OTI está libre a esta hora.</div>'}</div>
+        <div><h4>⛔ Ocupados (${ocupados.length})</h4>${ocupados.length ? ocupados.map(m => `<div class="aoti-persona ocu">${esc(nombrePersona(m))}${ocu.get(m.user_id).map(b => `<small>${esc(b.title)} · ${b.start_time}–${b.end_time} · ${esc(b.area || '')} · ${esc(b.modality || '')}</small>`).join('')}</div>`).join('') : '<div class="aoti-vacio">Nadie ocupado: hora ideal.</div>'}</div>
+      </div>`;
+    }
+    const [a, m, d] = aoti.dia.split('-').map(Number);
+    panelDia = `<div class="aoti-paso">Horas del ${new Date(a, m - 1, d).toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+      <div class="aoti-horas">${filas}</div>${detalle}`;
+  }
+
+  const vivo = aoti.error
+    ? `<span class="aoti-vivo error" title="${esc(aoti.error)}">Sin conexión con la agenda</span>`
+    : `<span class="aoti-vivo">En vivo${aoti.actualizado ? ' · ' + aoti.actualizado.toLocaleTimeString('es-PE') : ''}</span>`;
+  const inicio = textoInicio();
+  const durTexto = opcionesSprint().find(o => o.valor === aoti.duracion)?.texto;
+
+  ov.innerHTML = `
+    <div class="aoti-box" role="dialog" aria-modal="true" aria-label="Agenda de OTI">
+      <div class="aoti-head">
+        <div><h3>📅 Duración del sprint y agenda de OTI</h3><p>Disponibilidad real del equipo OTI para proponer el inicio sin cruces de reuniones.</p></div>
+        <div style="display:flex; align-items:center; gap:8px;">${vivo}
+          <button type="button" class="aoti-cerrar" title="Actualizar ahora" onclick="cargarAgendaOti()">↻</button>
+          <button type="button" class="aoti-cerrar" title="Cerrar (Esc)" onclick="cerrarAgendaOti()">×</button>
+        </div>
+      </div>
+      <div class="aoti-body">
+        <div>
+          <div class="aoti-paso">1. Duración del sprint / ciclo de entrega</div>
+          <div class="aoti-chips">${opcionesSprint().map(o => `<button type="button" class="aoti-chip ${o.valor === aoti.duracion ? 'activo' : ''}" onclick="aotiElegirDuracion(this.dataset.v)" data-v="${esc(o.valor)}">${esc(o.texto)}</button>`).join('')}</div>
+        </div>
+        <div>
+          <div class="aoti-paso">2. Inicio propuesto según la agenda de OTI (opcional)</div>
+          <div class="aoti-grid">
+            <div class="aoti-card">
+              <div class="aoti-nav">
+                <button type="button" onclick="aotiMoverMes(-1)" ${esMesActual ? 'disabled' : ''} title="Mes anterior">‹</button>
+                <div style="display:flex; gap:6px;">
+                  <select onchange="aotiIrA(aoti.anio, +this.value)" aria-label="Mes">${AOTI_MESES.map((n, i) => `<option value="${i}" ${i === aoti.mes ? 'selected' : ''} ${aoti.anio === h.getFullYear() && i < h.getMonth() ? 'disabled' : ''}>${n}</option>`).join('')}</select>
+                  <select onchange="aotiIrA(+this.value, aoti.mes)" aria-label="Año">${anios.map(a => `<option value="${a}" ${a === aoti.anio ? 'selected' : ''}>${a}</option>`).join('')}</select>
+                </div>
+                <button type="button" onclick="aotiMoverMes(1)" title="Mes siguiente">›</button>
+              </div>
+              <div class="aoti-mes">${['L','M','M','J','V','S','D'].map(x => `<div class="aoti-dow">${x}</div>`).join('')}${celdas}</div>
+              <div class="aoti-leyenda"><span><i style="background:#10b981"></i>Todos libres</span><span><i style="background:#f59e0b"></i>Con reuniones</span><span><i style="background:#ef4444"></i>Todos ocupados</span></div>
+            </div>
+            <div class="aoti-card">${panelDia}</div>
+          </div>
+        </div>
+      </div>
+      <div class="aoti-foot">
+        <div class="aoti-resumen">${durTexto ? `<strong>${esc(durTexto)}</strong>` : 'Elige la duración del sprint.'}${inicio ? `<br>📍 Inicio: ${esc(inicio)}` : ''}</div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-outline" onclick="cerrarAgendaOti()">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="aotiConfirmar()" ${aoti.duracion ? '' : 'disabled'}>Usar esta selección</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function aotiElegirDuracion(v) { aoti.duracion = v; renderAgendaOti(); }
+function aotiElegirDia(f) { aoti.dia = f; aoti.hora = null; renderAgendaOti(); }
+function aotiElegirHora(hr) { aoti.hora = hr; renderAgendaOti(); }
+function aotiIrA(anio, mes) {
+  const h = new Date();
+  if (anio < h.getFullYear() || (anio === h.getFullYear() && mes < h.getMonth())) { anio = h.getFullYear(); mes = h.getMonth(); }
+  aoti.anio = anio; aoti.mes = mes; aoti.dia = null; aoti.hora = null; aoti.datos = null;
+  renderAgendaOti();
+  cargarAgendaOti();
+}
+function aotiMoverMes(delta) {
+  const f = new Date(aoti.anio, aoti.mes + delta, 1);
+  aotiIrA(f.getFullYear(), f.getMonth());
+}
+
+function aotiConfirmar() {
+  if (!aoti.duracion) return;
+  const sel = document.getElementById('prf-metodo-sprint');
+  const inicio = textoInicio();
+  const valor = inicio ? aoti.duracion + AOTI_SEPARADOR + inicio : aoti.duracion;
+  sel.querySelectorAll('option[data-agenda]').forEach(o => o.remove());
+  if (!Array.from(sel.options).some(o => o.value === valor)) {
+    const op = document.createElement('option');
+    op.value = valor; op.textContent = valor; op.dataset.agenda = '1';
+    sel.appendChild(op);
+  }
+  sel.value = valor;
+  sel.dispatchEvent(new Event('change'));
+  actualizarTriggerSprint();
+  cerrarAgendaOti();
+  toast('success', 'Sprint definido', inicio ? 'Duración e inicio propuesto según la agenda de OTI.' : 'Duración del sprint seleccionada.');
+}
+
 function updateProformaPreview(subVal, descVal, igvVal, totalVal) {
+  actualizarTriggerSprint();
   const clientes = getStoredClientes();
   const cliId = document.getElementById('prf-cliente-sel')?.value;
   const cliente = clientes.find(c => c.id === cliId) || {};
