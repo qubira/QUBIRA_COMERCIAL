@@ -431,6 +431,83 @@
       background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 18px; margin-top: 22px; font-size: 11.5px; color: #334155; line-height: 1.6;
     }
 
+    /* ── ODACL LEGAL TEMPLATES & WORD FORMATTING ── */
+    .qubira-official-header {
+      border-bottom: 2px solid #0f766e; padding-bottom: 12px; margin-bottom: 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .qubira-official-header .header-brand { display: flex; align-items: center; gap: 12px; }
+    .qubira-official-header img { width: 44px; height: 44px; object-fit: contain; border-radius: 8px; }
+    .qubira-official-header .header-info {
+      font-size: 11px; color: #475569; text-align: right; line-height: 1.45; font-family: 'Inter', sans-serif;
+    }
+    .word-signature-block {
+      margin-top: 36px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; text-align: center;
+      font-family: 'Inter', sans-serif; font-size: 11.5px; page-break-inside: avoid;
+    }
+    .signature-line { border-top: 1px solid #334155; padding-top: 6px; margin-top: 44px; }
+    .a4-page-export {
+      margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px dashed #cbd5e1;
+    }
+    .a4-page-export:last-child {
+      border-bottom: none; margin-bottom: 0; padding-bottom: 0;
+    }
+    .filled-field {
+      font-weight: 700; color: #0f172a; background: rgba(15, 118, 110, 0.07); padding: 0 3px; border-radius: 3px;
+    }
+    .unfilled-field {
+      background: #fef08a; color: #854d0e; padding: 1px 6px; border-radius: 4px;
+      font-family: monospace; font-size: 12px; font-weight: 700; border: 1px dashed #ca8a04;
+      display: inline-block; margin: 1px 0;
+    }
+    .template-badge-status {
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 6px;
+      font-size: 11.5px; font-weight: 700; margin-top: 8px; line-height: 1.4;
+    }
+    .template-badge-status.oficial {
+      background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;
+    }
+    .template-badge-status.base {
+      background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;
+    }
+    .contract-official-stamp {
+      background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 10px 14px;
+      color: #166534; font-size: 12px; font-weight: 700; display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 18px;
+    }
+    .placeholders-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; margin-top: 10px;
+    }
+    .placeholder-item {
+      background: var(--bg-card2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+      transition: all .15s ease;
+    }
+    .placeholder-item:focus-within {
+      border-color: #0f766e; box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.15);
+    }
+    .placeholder-item.is-unfilled {
+      border-color: #fde047; background: #fefce8;
+    }
+    .placeholder-label {
+      font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: .4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .placeholder-tag {
+      font-family: monospace; font-size: 10px; color: #0f766e; text-transform: none; background: rgba(15,118,110,0.08);
+      padding: 1px 5px; border-radius: 4px;
+    }
+    .placeholder-input {
+      width: 100%; font-size: 12.5px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px;
+      background: var(--bg-card); color: var(--text); font-family: inherit;
+    }
+    .placeholder-input:focus {
+      outline: none; border-color: #0f766e;
+    }
+    .placeholders-category-title {
+      font-size: 12px; font-weight: 800; color: #0f766e; text-transform: uppercase; letter-spacing: .5px;
+      margin-top: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;
+    }
+
     /* ── PRINT RULES ── */
     @media print {
       body * { visibility: hidden !important; }
@@ -452,6 +529,14 @@
       }
       .contract-paper, .proforma-paper {
         border: none !important; box-shadow: none !important; padding: 20px !important;
+      }
+      .unfilled-field {
+        background: transparent !important; color: #000 !important;
+        border-bottom: 1px solid #000 !important; border-top: none !important;
+        border-left: none !important; border-right: none !important;
+      }
+      .filled-field {
+        background: transparent !important; color: #000 !important;
       }
     }
 
@@ -999,10 +1084,34 @@
           </div>
 
           <form id="form-crear-contrato" onsubmit="handleGuardarContrato(event)">
-            <!-- SECCIÓN 1: Identificación y Cliente -->
+            <!-- 🏛️ PASO 1: SELECCIÓN DE PLANTILLA LEGAL DE ODACL -->
+            <div style="background:linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);border:2px solid #0f766e;border-radius:12px;padding:16px 18px;margin-bottom:22px;box-shadow:0 3px 10px rgba(15,118,110,0.1)">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:22px">🏛️</span>
+                  <div>
+                    <label for="ctr-plantilla-sel" style="font-weight:800;color:#0f766e;font-size:14px;margin:0;display:block;text-transform:uppercase;letter-spacing:.5px">
+                      1. Plantilla Legal Oficial Aprobada por ODACL *
+                    </label>
+                    <span style="font-size:11.5px;color:#475569">Jalada directamente del Catálogo Legal Corporativo de ODACL (100% oficial)</span>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" onclick="reloadOdaclTemplatesFromUi()" style="font-size:11.5px;padding:4px 12px;gap:6px;background:#fff;font-weight:700" title="Sincronizar plantillas oficiales de ODACL en tiempo real">
+                  <span>🔄</span> Sincronizar ODACL
+                </button>
+              </div>
+              
+              <select id="ctr-plantilla-sel" required onchange="onContractTemplateSelected(this.value)" style="width:100%;font-weight:700;font-size:14px;color:#0f172a;padding:10px 14px;border:2px solid #0f766e;border-radius:8px;background:#fff;cursor:pointer">
+                <option value="" disabled hidden>Selecciona una plantilla oficial de ODACL...</option>
+              </select>
+
+              <div id="ctr-plantilla-status-badge" style="margin-top:10px"></div>
+            </div>
+
+            <!-- SECCIÓN 2: Identificación y Cliente -->
             <div class="form-section-title">
               <svg class="icon" style="width:15px;height:15px"><use href="#icon-users"></use></svg>
-              1. Identificación y Contraparte
+              2. Identificación y Contraparte
             </div>
             
             <div class="form-grid-2">
@@ -1060,10 +1169,10 @@
               </div>
             </div>
 
-            <!-- SECCIÓN 2: Términos Económicos y Plazos -->
+            <!-- SECCIÓN 3: Términos Económicos y Plazos -->
             <div class="form-section-title">
               <svg class="icon" style="width:15px;height:15px"><use href="#icon-tag"></use></svg>
-              2. Términos Económicos y Cronograma
+              3. Términos Económicos y Cronograma
             </div>
 
             <div class="form-grid-3">
@@ -1117,11 +1226,11 @@
               </div>
             </div>
 
-            <!-- SECCIÓN 3: Alcance y Cláusulas del Modelo Qubira -->
+            <!-- SECCIÓN 4: Alcance y Cláusulas del Modelo Qubira -->
             <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
               <div style="display:flex;align-items:center;gap:6px">
                 <svg class="icon" style="width:15px;height:15px"><use href="#icon-file-text"></use></svg>
-                <span>3. Alcance, Metodología Ágil y Cláusulas del Modelo Qubira</span>
+                <span>4. Alcance, Metodología Ágil y Respaldo Técnico</span>
               </div>
               <button type="button" class="btn btn-outline btn-sm" onclick="cargarPlantillaContratoModelo()" style="font-size:11px;padding:3px 10px;display:inline-flex;align-items:center;gap:4px">
                 <span>📑</span> Cargar Plantilla Modelo Qubira
@@ -1149,6 +1258,27 @@
               <label for="ctr-entregables">Requerimientos Funcionales, Módulos y Entregables Clave (Product Backlog) *</label>
               <textarea id="ctr-entregables" rows="4" required oninput="updateContractPreview()"></textarea>
               <span class="form-help">Módulos del sistema, pantallas, base de datos y entregables (Cláusulas Tercera y Octava).</span>
+            </div>
+
+            <!-- SECCIÓN 5: Rellenado de Campos en Corchetes [ ... ] -->
+            <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:20px">
+              <div style="display:flex;align-items:center;gap:6px">
+                <svg class="icon" style="width:15px;height:15px"><use href="#icon-edit-3"></use></svg>
+                <span>5. Campos Personalizables de la Plantilla [ ... ] (Llenado Manual & Asistido)</span>
+              </div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <span class="badge b-vigente" id="ctr-placeholders-badge" style="font-size:11px">0 campos detectados</span>
+                <button type="button" class="btn btn-outline btn-sm" onclick="autoFillPlaceholdersFromForm(true)" style="font-size:11px;padding:3px 8px" title="Completar campos automáticamente con los datos del formulario">
+                  ⚡ Autocompletar
+                </button>
+              </div>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5">
+              Las partes de la plantilla marcadas con corchetes <code>[ ... ]</code> se rellenan aquí manualmente. Los datos del cliente, montos y fechas se completan automáticamente según los datos ingresados pero puedes modificarlos libremente. Lo demás conserva el formato y redacción aprobados por ODACL.
+            </div>
+
+            <div id="ctr-placeholders-container">
+              <!-- Se renderiza dinámicamente según la plantilla seleccionada -->
             </div>
 
             <div class="form-grid-2" style="margin-top:12px">
@@ -1196,7 +1326,23 @@
               <div style="font-size:12px;color:var(--text-muted)" id="prev-ruc">RUC: —</div>
             </div>
 
+            <div style="background:linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);border:1.5px solid #86efac;border-radius:10px;padding:12px 14px;margin-bottom:14px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                <span style="font-size:10.5px;font-weight:800;color:#065f46;text-transform:uppercase;letter-spacing:.5px">Plantilla ODACL Seleccionada</span>
+                <span id="prev-plantilla-badge" class="badge" style="background:#10b981;color:#fff;font-size:9.5px;padding:2px 7px">Oficial</span>
+              </div>
+              <div id="prev-plantilla-name" style="font-size:13px;font-weight:800;color:#0f766e;line-height:1.35">Contrato de Desarrollo de Software - QUBIRA S.A.C.</div>
+            </div>
+
             <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;margin-bottom:18px">
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
+                <span style="color:var(--text-muted)">Plantilla ODACL:</span>
+                <strong id="prev-plantilla" style="font-size:11.5px;color:#0f766e;text-align:right;max-width:180px">—</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
+                <span style="color:var(--text-muted)">Campos [ ... ]:</span>
+                <span id="prev-placeholders-fill" style="font-size:11.5px;font-weight:700;color:var(--text)">—</span>
+              </div>
               <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px">
                 <span style="color:var(--text-muted)">Producto:</span>
                 <strong id="prev-producto" style="max-width:180px;text-align:right">—</strong>
@@ -1223,8 +1369,8 @@
               </div>
             </div>
 
-            <button type="button" class="btn btn-outline" style="width:100%;justify-content:center" onclick="previewCurrentDraft()">
-              <svg class="icon"><use href="#icon-eye"></use></svg>
+            <button type="button" class="btn btn-primary" id="btn-ver-doc-completo" style="width:100%;justify-content:center;padding:12px 16px;font-weight:700;font-size:13.5px;gap:8px;box-shadow:0 4px 12px rgba(15,118,110,0.25)" onclick="previewCurrentDraft()">
+              <svg class="icon" style="color:#fff;width:18px;height:18px"><use href="#icon-file-text"></use></svg>
               Ver Documento Completo
             </button>
           </div>
@@ -2146,11 +2292,17 @@
 
 <!-- ═══ MODAL REVISAR CONTRATO (DOCUMENTO OFICIAL) ═══ -->
 <div class="modal-overlay" id="contract-view-modal">
-  <div class="modal" style="max-width:920px">
-    <div class="modal-header">
-      <div>
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px" id="contract-modal-code">CTR-2026-0000</div>
-        <div style="font-size:18px;font-weight:700" id="contract-modal-title">Visualización Oficial del Contrato</div>
+  <div class="modal" style="max-width:980px">
+    <div class="modal-header" style="flex-wrap:wrap;gap:12px;align-items:center">
+      <div style="flex:1;min-width:240px">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px" id="contract-modal-code">CTR-2026-0000</div>
+        <div style="font-size:17px;font-weight:700" id="contract-modal-title">Visualización Oficial del Contrato</div>
+      </div>
+      <!-- Selector de plantilla ODACL directo en el modal -->
+      <div id="modal-template-switcher-box" style="display:flex;align-items:center;gap:8px;background:#f0fdf4;border:1.5px solid #86efac;padding:5px 12px;border-radius:8px">
+        <span style="font-size:11.5px;font-weight:800;color:#0f766e;white-space:nowrap">🏛️ Plantilla ODACL:</span>
+        <select id="modal-template-sel" onchange="onModalTemplateSelected(this.value)" style="font-size:12px;font-weight:700;color:#0f172a;border:1px solid #cbd5e1;border-radius:6px;padding:4px 8px;background:#fff;max-width:320px;cursor:pointer">
+        </select>
       </div>
       <button class="close-btn" onclick="closeContractModal()"><svg class="icon"><use href="#icon-x"></use></svg></button>
     </div>
@@ -2343,6 +2495,7 @@
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script src="js/tech-stack-odn.js?v=12"></script>
+<script src="js/odacl-templates.js?v=1"></script>
 <script>
 'use strict';
 
@@ -4041,6 +4194,543 @@ function calcularDiasCalendario(inicioStr, finStr) {
   }
 }
 
+// ══════════════════════════════════════════════════════
+// PLANTILLAS LEGALES OFICIALES (CATÁLOGO APROBADO POR ODACL)
+// ══════════════════════════════════════════════════════
+let _odaclTemplatesCache = (typeof window !== 'undefined' && Array.isArray(window._BUILTIN_ODACL_TEMPLATES)) ? window._BUILTIN_ODACL_TEMPLATES.slice() : [];
+let _selectedTemplateKey = 'desarrollo_software';
+let _templatePlaceholdersValues = {};
+
+async function loadOdaclTemplates(force = false) {
+  if (!_odaclTemplatesCache || _odaclTemplatesCache.length === 0) {
+    if (typeof window !== 'undefined' && Array.isArray(window._BUILTIN_ODACL_TEMPLATES)) {
+      _odaclTemplatesCache = window._BUILTIN_ODACL_TEMPLATES.slice();
+    }
+  }
+
+  try {
+    const data = await qcApiFetch('/api/comercial/contract-templates');
+    if (data && data.templates && data.templates.length > 0) {
+      _odaclTemplatesCache = data.templates;
+      try { localStorage.setItem('odn_odacl_templates', JSON.stringify(_odaclTemplatesCache)); } catch(_) {}
+      return _odaclTemplatesCache;
+    }
+  } catch (err) {
+    console.warn('[ODN] No se pudo cargar plantillas de API comercial, usando catálogo integrado:', err.message);
+  }
+
+  // Fallback a localStorage
+  try {
+    const local = JSON.parse(localStorage.getItem('odn_odacl_templates') || '[]');
+    if (local && local.length > 0) {
+      _odaclTemplatesCache = local;
+      return _odaclTemplatesCache;
+    }
+  } catch (_) {}
+
+  return _odaclTemplatesCache;
+}
+
+async function reloadOdaclTemplatesFromUi() {
+  const badgeEl = document.getElementById('ctr-plantilla-status-badge');
+  if (badgeEl) badgeEl.innerHTML = '<span style="font-size:12px;color:var(--text-muted)">Sincronizando catálogo con ODACL...</span>';
+  try {
+    await loadOdaclTemplates(true);
+    populateTemplatesDropdown();
+    toast('success', 'Catálogo ODACL Sincronizado', 'Se han obtenido las últimas versiones de plantillas aprobadas por ODACL.');
+  } catch (e) {
+    toast('error', 'Error al sincronizar', e.message);
+  }
+}
+
+function populateTemplatesDropdown() {
+  if (!_odaclTemplatesCache || _odaclTemplatesCache.length === 0) {
+    if (typeof window !== 'undefined' && Array.isArray(window._BUILTIN_ODACL_TEMPLATES)) {
+      _odaclTemplatesCache = window._BUILTIN_ODACL_TEMPLATES.slice();
+    }
+  }
+
+  const sel = document.getElementById('ctr-plantilla-sel');
+  const modalSel = document.getElementById('modal-template-sel');
+  if (!sel && !modalSel) return;
+
+  if (!_odaclTemplatesCache || _odaclTemplatesCache.length === 0) {
+    if (sel) sel.innerHTML = '<option value="">Cargando catálogo de plantillas...</option>';
+    if (modalSel) modalSel.innerHTML = '<option value="">Cargando...</option>';
+    return;
+  }
+
+  // Agrupar por categoría
+  const groups = {};
+  _odaclTemplatesCache.forEach(t => {
+    const cat = t.categoria || 'Plantillas Generales';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(t);
+  });
+
+  let html = '<option value="" disabled hidden>Selecciona una plantilla oficial de ODACL...</option>';
+  for (const [cat, tpls] of Object.entries(groups)) {
+    html += `<optgroup label="${esc(cat)}">`;
+    for (const t of tpls) {
+      const oficialTag = t.oficial ? ' ★ (Actualizada por ODACL)' : '';
+      html += `<option value="${esc(t.clave)}" ${t.clave === _selectedTemplateKey ? 'selected' : ''}>${esc(t.titulo)}${oficialTag}</option>`;
+    }
+    html += `</optgroup>`;
+  }
+
+  if (sel) {
+    sel.innerHTML = html;
+    if (_selectedTemplateKey) sel.value = _selectedTemplateKey;
+  }
+  if (modalSel) {
+    modalSel.innerHTML = html;
+    if (_selectedTemplateKey) modalSel.value = _selectedTemplateKey;
+  }
+
+  if (_selectedTemplateKey) {
+    onContractTemplateSelected(_selectedTemplateKey, false);
+  }
+}
+
+function onModalTemplateSelected(clave) {
+  _selectedTemplateKey = clave;
+  const mainSel = document.getElementById('ctr-plantilla-sel');
+  if (mainSel) mainSel.value = clave;
+  onContractTemplateSelected(clave, false);
+  previewCurrentDraft();
+}
+
+function onContractTemplateSelected(key, resetPlaceholders = false) {
+  _selectedTemplateKey = key;
+  const tpl = (_odaclTemplatesCache || []).find(t => t.clave === key);
+  if (!tpl) return;
+
+  // Actualizar badge de estado oficial
+  const badgeEl = document.getElementById('ctr-plantilla-status-badge');
+  if (badgeEl) {
+    if (tpl.oficial) {
+      badgeEl.innerHTML = `
+        <div class="template-badge-status oficial">
+          <span>✓</span>
+          <div>
+            <strong>Plantilla Oficial Actualizada por ODACL</strong>
+            <div style="font-size:10.5px;font-weight:500;opacity:.9">
+              Modificada ${formatContractDateSpanish(tpl.oficial.fecha)}${tpl.oficial.por ? ' por ' + esc(tpl.oficial.por) : ''}
+              ${tpl.oficial.origenTitulo ? `· Origen: ${esc(tpl.oficial.origenTitulo)}${tpl.oficial.origenVersion ? ` (v${tpl.oficial.origenVersion})` : ''}` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      badgeEl.innerHTML = `
+        <div class="template-badge-status base">
+          <span>📑</span>
+          <div>
+            <strong>Plantilla Oficial Aprobada por ODACL</strong>
+            <div style="font-size:10.5px;font-weight:500;opacity:.9">
+              ${esc(tpl.descripcion || 'Redacción oficial corporativa de Qubira S.A.C.')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // Ajustar el tipo de contrato según la plantilla si coincide
+  const tipoEl = document.getElementById('ctr-tipo');
+  if (tipoEl && tpl.tipo) {
+    let matchFound = false;
+    for (const opt of tipoEl.options) {
+      if (opt.value === tpl.tipo || opt.text.toLowerCase().includes(tpl.tipo.toLowerCase())) {
+        tipoEl.value = opt.value;
+        matchFound = true;
+        break;
+      }
+    }
+    if (!matchFound && tpl.tipo) {
+      const newOpt = new Option(tpl.tipo, tpl.tipo, true, true);
+      tipoEl.add(newOpt);
+      tipoEl.value = tpl.tipo;
+    }
+  }
+
+  // Extraer placeholders y renderizar formulario
+  const placeholders = tpl.placeholders || extractPlaceholdersClient(tpl.contenido_html);
+  renderPlaceholdersForm(placeholders, resetPlaceholders);
+  updateContractPreview();
+}
+
+function extractPlaceholdersClient(html) {
+  if (!html || typeof html !== 'string') return [];
+  const matches = html.match(/\[[^\]\n\r]{2,80}\]/g) || [];
+  return Array.from(new Set(matches));
+}
+
+function humanizePlaceholderToken(token) {
+  const clean = token.replace(/^\[/, '').replace(/\]$/, '').trim();
+  const map = {
+    'CODIGO_CONTRATO': 'Código de Contrato',
+    'FECHA_DIA_MES_AÑO': 'Fecha de Emisión (Día, Mes y Año)',
+    'RAZON_SOCIAL_QUBIRA': 'Razón Social de Qubira',
+    'RUC_QUBIRA': 'RUC de Qubira',
+    'DOMICILIO_QUBIRA': 'Domicilio Legal Qubira',
+    'DISTRITO_QUBIRA': 'Distrito Legal Qubira',
+    'NOMBRE_REPRESENTANTE_QUBIRA': 'Representantes Legales Qubira',
+    'DNI_REPRESENTANTE_QUBIRA': 'DNI Representante Qubira',
+    'CARGO_REPRESENTANTE_QUBIRA': 'Cargo Representante Qubira',
+    'PARTIDA_QUBIRA': 'Partida Registral Qubira',
+    'NOMBRE_EMPRESA': 'Nombre o Razón Social del Cliente',
+    'RUC_CLIENTE': 'RUC / DNI del Cliente',
+    'RUBRO_EMPRESA': 'Rubro / Sector del Cliente',
+    'DIRECCION_COMPLETA_EMPRESA': 'Dirección Completa del Cliente',
+    'NOMBRE_COMPLETO_CLIENTE': 'Representante Autorizado del Cliente',
+    'NUMERO_DNI_CE': 'DNI / Carnet de Extranjería Representante',
+    'CARGO_REPRESENTANTE_CLIENTE': 'Cargo del Representante del Cliente',
+    'PARTIDA_CLIENTE': 'Partida Registral del Cliente (opcional)',
+    'NECESIDAD_DEL_CLIENTE': 'Necesidad / Alcance del Cliente',
+    'CODIGO_PROPUESTA': 'Código de Propuesta / Proforma',
+    'FECHA_PROPUESTA': 'Fecha de la Propuesta Comercial',
+    'TIPO_DE_SISTEMA': 'Tipo de Solución / Sistema',
+    'NOMBRE_PROYECTO': 'Nombre del Software / Proyecto',
+    'MODULOS_FUNCIONALES': 'Módulos Funcionales Principales',
+    'REQUERIMIENTOS_FUNCIONALES': 'Requerimientos Funcionales (RF)',
+    'REQUERIMIENTOS_NO_FUNCIONALES': 'Requerimientos No Funcionales (RNF)',
+    'USUARIOS_CONCURRENTES': 'Usuarios Concurrentes Estimados',
+    'NAVEGADORES_Y_DISPOSITIVOS': 'Compatibilidad Navegadores & Dispositivos',
+    'STACK_HERRAMIENTAS': 'Herramientas de Desarrollo',
+    'STACK_LENGUAJES': 'Lenguajes, Frameworks y BD',
+    'INCLUIDO_EN_ALCANCE': 'Incluido en el Alcance',
+    'FUERA_DE_ALCANCE': 'Fuera del Alcance',
+    'NOMBRE_PRODUCT_OWNER': 'Nombre del Product Owner Designado',
+    'RESPONSABLE_PROYECTO_QUBIRA': 'Responsable Técnico del Proyecto (Qubira)',
+    'DURACION_SPRINT': 'Duración de cada Sprint',
+    'DIA_REUNION_SEMANAL': 'Día de Reunión Semanal / Review',
+    'CANAL_COMUNICACION': 'Canal de Comunicación Oficial',
+    'HORARIO_ATENCION': 'Horario de Atención y Coordinación',
+    'HERRAMIENTA_GESTION': 'Herramienta de Gestión Ágil (Jira / Trello)',
+    'TOTAL_DIAS': 'Plazo Total en Días Calendario',
+    'INSUMOS_INICIALES': 'Insumos / Accesos requeridos del Cliente',
+    'NUM_TOTAL_SPRINTS': 'Número Total de Sprints',
+    'DETALLES_SPRINTS': 'Detalle y Planificación de Sprints',
+    'CRONOGRAMA_REUNIONES': 'Cronograma de Reuniones y Demos',
+    'INICIO_RECESO': 'Fecha Inicio Receso (si aplica)',
+    'FIN_RECESO': 'Fecha Fin Receso (si aplica)',
+    'DIAS_TOLERANCIA': 'Días de Tolerancia para Observaciones',
+    'PLAZO_COTIZACION_CAMBIO': 'Plazo para Cotizar Cambios',
+    'VIGENCIA_COTIZACION': 'Vigencia de Cotización de Cambios',
+    'TARIFA_HORA_ADICIONAL': 'Tarifa por Hora Adicional de Desarrollo',
+    'HORAS_CAMBIOS_MENORES': 'Bolsa de Horas para Cambios Menores',
+    'NUM_RONDAS_CORRECCION': 'Número de Rondas de Corrección por Sprint',
+    'PRECIO_ACORDADO': 'Monto Total Pactado',
+    'PRECIO_EN_LETRAS': 'Precio Total en Letras',
+    'INCLUYE_O_NO_IGV': 'Indicación de IGV',
+    'MONEDA': 'Moneda del Contrato',
+    'DETALLE_DE_PAGOS': 'Forma y Cronograma de Pagos',
+    'NUMERO_CUENTA': 'Número de Cuenta Bancaria Qubira',
+    'BANCO': 'Entidad Bancaria Qubira',
+    'CCI': 'Código de Cuenta Interbancaria (CCI)',
+    'TITULAR_CUENTA_COBRO': 'Titular de la Cuenta Bancaria',
+    'NUMERO_YAPE_PLIN': 'Número Móvil Yape / Plin',
+    'CUENTA_DETRACCIONES': 'Cuenta de Detracciones Banco de la Nación',
+    'RESPONSABLE_COSTOS_TERCEROS': 'Responsable de Costos de Terceros (Hosting)',
+    'PORCENTAJE_GESTION': 'Porcentaje de Gestión Operativa',
+    'PLAZO_ENTREGA_INFORMACION': 'Plazo para Entrega de Información del Cliente',
+    'MONTO_PENALIDAD_NO_CAPTACION': 'Monto de Penalidad por No Captación',
+    'TITULAR_REPOSITORIO': 'Titular del Repositorio de Código Fuente',
+    'MODULOS_PANEL_ADMIN': 'Módulos del Panel Administrativo (Dashboard)',
+    'HORAS_CAPACITACION': 'Horas de Capacitación / Inducción',
+    'MESES_CUSTODIA': 'Meses de Custodia de Backups',
+    'ANOS_CONFIDENCIALIDAD': 'Años de Vigencia de Confidencialidad',
+    'DIAS_GARANTIA': 'Días de Garantía Post-Lanzamiento',
+    'PLAZO_RESPUESTA_GARANTIA': 'Tiempo de Respuesta en Garantía',
+    'HORAS_CRITICO': 'Horas de Respuesta ante Fallo Crítico',
+    'DIAS_MAYOR': 'Días de Solución ante Incidencia Mayor',
+    'HORAS_DIAGNOSTICO': 'Horas para Diagnóstico Técnico',
+    'TARIFA_MANTENIMIENTO_MENSUAL': 'Tarifa Mensual de Soporte / Mantenimiento',
+    'MESES_LIMITE_RESPONSABILIDAD': 'Meses Límite de Responsabilidad',
+    'PLAZO_REANUDACION': 'Plazo de Reanudación de Servicios',
+    'COSTO_REACTIVACION': 'Costo de Reactivación de Proyecto',
+    'PORCENTAJE_PENALIDAD': 'Porcentaje de Penalidad por Demora',
+    'CORREO_QUBIRA': 'Correo Electrónico de Contacto Qubira',
+    'CORREO_CLIENTE': 'Correo Electrónico del Cliente',
+    'NUMERO_WHATSAPP_CLIENTE': 'Número de WhatsApp / Teléfono del Cliente',
+    'OBJETO_SERVICIO': 'Descripción del Servicio Contratado',
+    'FECHA_INICIO': 'Fecha de Inicio de Servicios',
+    'FECHA_FIN': 'Fecha de Culminación de Servicios',
+    'CANTIDAD_USUARIOS': 'Cantidad de Usuarios Activos Permitidos',
+    'PORCENTAJE_DISPONIBILIDAD': 'Porcentaje de Disponibilidad (Uptime SLA)',
+    'CARGO_TRABAJADOR': 'Cargo / Puesto del Trabajador',
+    'CENTRO_FORMATIVO': 'Universidad / Instituto Formativo',
+    'TITULO_DOCUMENTO_LEGAL': 'Título del Documento Legal',
+    'CONTENIDO_DOCUMENTO_LEGAL': 'Contenido Específico del Documento',
+    'NOMBRE O RAZÓN SOCIAL DEL CLIENTE': 'Nombre / Razón Social del Cliente',
+    'NÚMERO DE DOCUMENTO': 'RUC / DNI del Cliente',
+    'DIRECCIÓN COMPLETA': 'Dirección del Cliente',
+    'REPRESENTANTE LEGAL': 'Representante Legal Autorizado',
+    'NOMBRE DEL PROYECTO': 'Nombre del Proyecto / Software',
+    'MONTO TOTAL': 'Monto Total Pactado',
+    'PLAZO EN DÍAS': 'Plazo de Ejecución en Días',
+    'DOCUMENTO': 'Número de Documento (RUC / DNI)',
+    'DIRECCIÓN': 'Dirección',
+    'DNI': 'Número de DNI',
+    'NOMBRE DEL TRABAJADOR': 'Nombre del Trabajador',
+    'MONTO MENSUAL': 'Remuneración Mensual',
+    'NOMBRE DEL LOCADOR / EMPRESA': 'Nombre del Locador / Empresa',
+    'HONORARIOS TOTALES': 'Honorarios Totales',
+    'NOMBRE DEL CLIENTE': 'Nombre del Cliente',
+    'NOMBRE DE LA PLATAFORMA': 'Nombre de la Plataforma Cloud',
+    'CANTIDAD': 'Cantidad de Usuarios / Recursos',
+    'NOMBRE DEL PROFESIONAL': 'Nombre del Profesional Independiente',
+    'MONTO': 'Monto Pactado',
+    'NOMBRE DEL ESTUDIANTE': 'Nombre del Estudiante / Practicante',
+    'UNIVERSIDAD O INSTITUTO SUPERIOR': 'Universidad / Instituto Superior',
+    'NOMBRE DEL PROVEEDOR': 'Nombre del Proveedor Cloud',
+  };
+
+  if (map[clean]) return map[clean];
+  return clean.replace(/_/g, ' ').toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase());
+}
+
+function getAutoFillValueForToken(token) {
+  const clean = token.replace(/^\[/, '').replace(/\]$/, '').trim().toUpperCase();
+  const clientes = getStoredClientes();
+  const cliId = document.getElementById('ctr-cliente-sel')?.value;
+  const cliente = clientes.find(c => c.id === cliId) || {};
+
+  const codigo = document.getElementById('ctr-codigo')?.value || getNextContractCode();
+  const producto = document.getElementById('ctr-producto-sel')?.value || 'Sistema de Software Qubira';
+  const tipo = document.getElementById('ctr-tipo')?.value || 'Desarrollo de Software a Medida';
+  const moneda = document.getElementById('ctr-moneda')?.value || 'USD';
+  const monto = parseFloat(document.getElementById('ctr-monto')?.value) || 0;
+  const modalidad = document.getElementById('ctr-modalidad')?.value || '50% anticipo y 50% contra entrega final';
+  const fInicio = document.getElementById('ctr-fecha-inicio')?.value || new Date().toISOString().split('T')[0];
+  const fFin = document.getElementById('ctr-fecha-fin')?.value || new Date(Date.now() + 90*86400000).toISOString().split('T')[0];
+  const garantia = document.getElementById('ctr-garantia')?.value || '12 meses';
+  const objeto = document.getElementById('ctr-objeto')?.value || 'Prestación de servicios de desarrollo y puesta en producción de software.';
+  const entregables = document.getElementById('ctr-entregables')?.value || '1. Código fuente en GitHub.\n2. Despliegue cloud en producción.\n3. Base de datos relacional PostgreSQL (Neon).\n4. Panel administrativo funcional.\n5. Documentación y sesión de inducción.';
+  const diasProyecto = calcularDiasCalendario(fInicio, fFin);
+
+  // Mapeos institucionales
+  if (['CODIGO_CONTRATO'].includes(clean)) return codigo;
+  if (['FECHA_DIA_MES_AÑO'].includes(clean)) return formatContractDateSpanish(fInicio);
+  if (['RAZON_SOCIAL_QUBIRA'].includes(clean)) return 'QUBIRA S.A.C.';
+  if (['RUC_QUBIRA'].includes(clean)) return '10764275981';
+  if (['DOMICILIO_QUBIRA'].includes(clean)) return 'Lima, República del Perú';
+  if (['DISTRITO_QUBIRA'].includes(clean)) return 'Santiago de Surco';
+  if (['NOMBRE_REPRESENTANTE_QUBIRA'].includes(clean)) return 'Melani A. Luyo R. / Abraham Aranda Cerna';
+  if (['DNI_REPRESENTANTE_QUBIRA'].includes(clean)) return '76427598 / 76543210';
+  if (['CARGO_REPRESENTANTE_QUBIRA'].includes(clean)) return 'CEO Comercial / CEO de TI';
+  if (['PARTIDA_QUBIRA'].includes(clean)) return 'Partida Electrónica N° 14892011';
+  if (['CORREO_QUBIRA'].includes(clean)) return 'qubirasac@gmail.com';
+  if (['BANCO'].includes(clean)) return 'Banco de Crédito del Perú (BCP)';
+  if (['TITULAR_CUENTA_COBRO'].includes(clean)) return 'QUBIRA S.A.C.';
+  if (['NUMERO_CUENTA'].includes(clean)) return '191-98765432-0-45';
+  if (['CCI'].includes(clean)) return '002-191-009876543204-51';
+  if (['NUMERO_YAPE_PLIN'].includes(clean)) return '910 827 344';
+  if (['CUENTA_DETRACCIONES'].includes(clean)) return '00-068-123456 (Banco de la Nación)';
+  if (['RESPONSABLE_PROYECTO_QUBIRA'].includes(clean)) return 'Abraham Aranda Cerna (CEO TI)';
+
+  // Cliente
+  if (['NOMBRE_EMPRESA', 'NOMBRE O RAZÓN SOCIAL DEL CLIENTE', 'NOMBRE DEL CLIENTE', 'NOMBRE DEL LOCADOR / EMPRESA'].includes(clean)) {
+    return cliente.razon_social || '';
+  }
+  if (['RUC_CLIENTE', 'NÚMERO DE DOCUMENTO', 'RUC/DNI', 'RUC', 'DOCUMENTO'].includes(clean)) {
+    return cliente.ruc || '';
+  }
+  if (['RUBRO_EMPRESA'].includes(clean)) return cliente.sector || 'Tecnología y Comercio';
+  if (['DIRECCION_COMPLETA_EMPRESA', 'DIRECCIÓN COMPLETA', 'DIRECCIÓN'].includes(clean)) {
+    return cliente.direccion || (cliente.pais ? `${cliente.distrito || ''} ${cliente.provincia || ''}, ${cliente.pais}`.trim() : 'Lima, Perú');
+  }
+  if (['NOMBRE_COMPLETO_CLIENTE', 'REPRESENTANTE LEGAL', 'NOMBRE DEL TRABAJADOR', 'NOMBRE DEL PROFESIONAL', 'NOMBRE DEL ESTUDIANTE'].includes(clean)) {
+    return cliente.contacto_nombre || 'Representante Autorizado';
+  }
+  if (['CARGO_REPRESENTANTE_CLIENTE'].includes(clean)) return cliente.contacto_cargo || 'Gerente General / Representante Legal';
+  if (['NUMERO_DNI_CE', 'DNI'].includes(clean)) return cliente.ruc ? cliente.ruc.slice(0, 8) : '';
+  if (['CORREO_CLIENTE'].includes(clean)) return cliente.email || '';
+  if (['NUMERO_WHATSAPP_CLIENTE'].includes(clean)) return cliente.telefono || '';
+  if (['NOMBRE_PRODUCT_OWNER'].includes(clean)) return cliente.contacto_nombre || 'Representante del Cliente';
+
+  // Económicos y cronograma
+  if (['PRECIO_ACORDADO', 'MONTO TOTAL', 'MONTO', 'HONORARIOS TOTALES', 'MONTO MENSUAL'].includes(clean)) {
+    return monto > 0 ? formatCurrency(monto, moneda) : '$ 3,500.00';
+  }
+  if (['PRECIO_EN_LETRAS'].includes(clean)) return numeroALetras(monto, moneda);
+  if (['MONEDA'].includes(clean)) return moneda === 'PEN' ? 'Soles Peruanos (PEN)' : 'Dólares Americanos (USD)';
+  if (['INCLUYE_O_NO_IGV'].includes(clean)) return 'No incluye IGV (valor neto)';
+  if (['DETALLE_DE_PAGOS'].includes(clean)) return modalidad;
+  if (['TOTAL_DIAS', 'PLAZO EN DÍAS'].includes(clean)) return String(diasProyecto);
+  if (['FECHA_INICIO'].includes(clean)) return fInicio;
+  if (['FECHA_FIN'].includes(clean)) return fFin;
+  if (['DIAS_GARANTIA'].includes(clean)) return garantia;
+  if (['PORCENTAJE_DISPONIBILIDAD'].includes(clean)) return '99.9%';
+  if (['ANOS_CONFIDENCIALIDAD'].includes(clean)) return '3';
+
+  // Técnico y proyecto
+  if (['NOMBRE_PROYECTO', 'NOMBRE DE LA PLATAFORMA'].includes(clean)) return producto;
+  if (['TIPO_DE_SISTEMA'].includes(clean)) return tipo;
+  if (['NECESIDAD_DEL_CLIENTE', 'OBJETO_SERVICIO', 'OBJETO'].includes(clean)) return objeto;
+  if (['MODULOS_FUNCIONALES', 'REQUERIMIENTOS_FUNCIONALES', 'ENTREGABLES'].includes(clean)) return entregables;
+  if (['STACK_HERRAMIENTAS'].includes(clean)) return 'Node.js, Express, PostgreSQL (Neon Cloud), Cloudinary, Git, GitHub';
+  if (['STACK_LENGUAJES'].includes(clean)) return 'JavaScript ES6+, HTML5, CSS3, SQL';
+  if (['INCLUIDO_EN_ALCANCE'].includes(clean)) return 'Desarrollo, base de datos relacional, subida de archivos cloud y despliegue productivo';
+  if (['FUERA_DE_ALCANCE'].includes(clean)) return 'Mantenimiento posterior a garantía, dominios de internet privados y pagos de infraestructura externa';
+  if (['DURACION_SPRINT'].includes(clean)) return '1 a 2 semanas por Sprint';
+  if (['NUM_TOTAL_SPRINTS'].includes(clean)) return '4 Sprints iterativos';
+  if (['DIA_REUNION_SEMANAL'].includes(clean)) return 'Viernes 4:00 p.m.';
+  if (['CANAL_COMUNICACION'].includes(clean)) return 'WhatsApp corporativo y Google Meet';
+  if (['HORARIO_ATENCION'].includes(clean)) return 'Lunes a Viernes de 9:00 a.m. a 6:00 p.m.';
+  if (['HERRAMIENTA_GESTION'].includes(clean)) return 'GitHub Projects / Jira';
+  if (['DIAS_TOLERANCIA'].includes(clean)) return '3 días hábiles';
+  if (['TARIFA_HORA_ADICIONAL'].includes(clean)) return '$ 25.00 USD';
+  if (['NUM_RONDAS_CORRECCION'].includes(clean)) return '2 rondas de ajuste por entregable';
+  if (['HORAS_CAPACITACION'].includes(clean)) return '4 horas de sesión virtual de inducción';
+  if (['MESES_CUSTODIA'].includes(clean)) return '6 meses';
+  if (['HORAS_CRITICO'].includes(clean)) return 'Menor a 1 hora';
+  if (['DIAS_MAYOR'].includes(clean)) return 'Menor a 24 horas';
+  if (['HORAS_DIAGNOSTICO'].includes(clean)) return '4 horas';
+  if (['TARIFA_MANTENIMIENTO_MENSUAL'].includes(clean)) return '$ 150.00 USD / mes';
+  if (['MESES_LIMITE_RESPONSABILIDAD'].includes(clean)) return '3 meses';
+  if (['PORCENTAJE_PENALIDAD'].includes(clean)) return '1% por cada día de retraso hasta un tope de 10%';
+  if (['TITULAR_REPOSITORIO'].includes(clean)) return 'EL CLIENTE (tras cancelación total)';
+  if (['MODULOS_PANEL_ADMIN'].includes(clean)) return 'Dashboard con métricas, gestión de datos, roles de usuario y subida multimedia';
+  if (['CARGO_TRABAJADOR'].includes(clean)) return 'Desarrollador Full Stack / Programador TI';
+  if (['CENTRO_FORMATIVO'].includes(clean)) return 'Universidad Nacional / Instituto Superior';
+  if (['CANTIDAD_USUARIOS'].includes(clean)) return '10';
+
+  return '';
+}
+
+function autoFillPlaceholdersFromForm(overwriteAll = false) {
+  const tpl = (_odaclTemplatesCache || []).find(t => t.clave === _selectedTemplateKey);
+  if (!tpl) return;
+
+  const placeholders = tpl.placeholders || extractPlaceholdersClient(tpl.contenido_html);
+  placeholders.forEach(token => {
+    const autoVal = getAutoFillValueForToken(token);
+    if (overwriteAll || !_templatePlaceholdersValues[token] || _templatePlaceholdersValues[token].trim() === '') {
+      if (autoVal) _templatePlaceholdersValues[token] = autoVal;
+    }
+  });
+
+  renderPlaceholdersForm(placeholders, false);
+  updateContractPreview();
+  if (typeof toast === 'function' && overwriteAll) {
+    toast('info', 'Campos Autocompletados', 'Se han actualizado los campos en corchetes con los datos actuales del formulario.');
+  }
+}
+
+function renderPlaceholdersForm(placeholders, reset = false) {
+  const container = document.getElementById('ctr-placeholders-container');
+  const badge = document.getElementById('ctr-placeholders-badge');
+  if (!container) return;
+
+  if (reset) _templatePlaceholdersValues = {};
+
+  if (!placeholders || placeholders.length === 0) {
+    container.innerHTML = '<div style="padding:16px;background:var(--bg-card2);border-radius:8px;text-align:center;color:var(--text-muted);font-size:12.5px">Esta plantilla no contiene campos en corchetes pendientes de rellenar. Se generará con el formato íntegro oficial de ODACL.</div>';
+    if (badge) badge.textContent = '0 campos';
+    return;
+  }
+
+  // Asegurar que cada placeholder tenga su valor (autocompletado si no existe)
+  let filledCount = 0;
+  placeholders.forEach(token => {
+    if (_templatePlaceholdersValues[token] === undefined) {
+      _templatePlaceholdersValues[token] = getAutoFillValueForToken(token) || '';
+    }
+    if (_templatePlaceholdersValues[token] && _templatePlaceholdersValues[token].trim() !== '') {
+      filledCount++;
+    }
+  });
+
+  if (badge) {
+    badge.textContent = `${filledCount} / ${placeholders.length} completados`;
+    badge.className = filledCount === placeholders.length ? 'badge b-vigente' : 'badge b-pendiente';
+  }
+
+  // Generar HTML de inputs
+  const itemsHtml = placeholders.map((token, idx) => {
+    const val = _templatePlaceholdersValues[token] || '';
+    const label = humanizePlaceholderToken(token);
+    const isUnfilled = !val || val.trim() === '';
+    const inputId = `p_holder_${idx}`;
+
+    return `
+      <div class="placeholder-item ${isUnfilled ? 'is-unfilled' : ''}" id="ph_box_${idx}">
+        <div class="placeholder-label">
+          <span>${esc(label)}</span>
+          <span class="placeholder-tag">${esc(token)}</span>
+        </div>
+        <input type="text" id="${inputId}" class="placeholder-input"
+          value="${esc(val)}"
+          placeholder="Rellenar ${esc(token)}..."
+          oninput="onPlaceholderValueChanged('${esc(token)}', this.value, 'ph_box_${idx}')">
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="placeholders-grid">
+      ${itemsHtml}
+    </div>
+  `;
+}
+
+function onPlaceholderValueChanged(token, value, boxId) {
+  _templatePlaceholdersValues[token] = value;
+  const box = document.getElementById(boxId);
+  if (box) {
+    box.classList.toggle('is-unfilled', !value || value.trim() === '');
+  }
+  updatePlaceholdersProgress();
+  updateContractPreview();
+}
+
+function updatePlaceholdersProgress() {
+  const tpl = (_odaclTemplatesCache || []).find(t => t.clave === _selectedTemplateKey);
+  if (!tpl) return;
+  const placeholders = tpl.placeholders || extractPlaceholdersClient(tpl.contenido_html);
+  let filledCount = 0;
+  placeholders.forEach(t => {
+    if (_templatePlaceholdersValues[t] && _templatePlaceholdersValues[t].trim() !== '') filledCount++;
+  });
+  const badge = document.getElementById('ctr-placeholders-badge');
+  if (badge) {
+    badge.textContent = `${filledCount} / ${placeholders.length} completados`;
+    badge.className = filledCount === placeholders.length ? 'badge b-vigente' : 'badge b-pendiente';
+  }
+  const prevFill = document.getElementById('prev-placeholders-fill');
+  if (prevFill) {
+    prevFill.textContent = `${filledCount} / ${placeholders.length}`;
+    prevFill.style.color = filledCount === placeholders.length ? '#059669' : '#d97706';
+  }
+}
+
+function compileContractTemplate(templateHtml, replacements, highlightUnfilled = false) {
+  if (!templateHtml) return '';
+  let result = templateHtml;
+
+  // Reemplazar cada token encontrado
+  const allTokens = extractPlaceholdersClient(templateHtml);
+  allTokens.forEach(token => {
+    const val = (replacements && replacements[token] !== undefined)
+      ? replacements[token]
+      : getAutoFillValueForToken(token);
+
+    if (val && String(val).trim() !== '') {
+      result = result.split(token).join(String(val));
+    } else {
+      if (highlightUnfilled) {
+        result = result.split(token).join(`<span class="unfilled-field">${esc(token)}</span>`);
+      } else {
+        result = result.split(token).join(token);
+      }
+    }
+  });
+
+  return result;
+}
+
 function cargarPlantillaContratoModelo() {
   const objEl = document.getElementById('ctr-objeto');
   if (objEl) {
@@ -4061,6 +4751,14 @@ function cargarPlantillaContratoModelo() {
   const garEl = document.getElementById('ctr-garantia');
   if (garEl) garEl.value = '30 días calendario soporte correctivo';
 
+  // Seleccionar la plantilla de desarrollo de software si existe
+  const sel = document.getElementById('ctr-plantilla-sel');
+  if (sel) {
+    sel.value = 'desarrollo_software';
+    onContractTemplateSelected('desarrollo_software', false);
+  }
+
+  autoFillPlaceholdersFromForm(false);
   updateContractPreview();
   if (typeof toast === 'function') {
     toast('info', 'Plantilla Qubira Cargada', 'Se han insertado las cláusulas y entregables estándar del contrato modelo Qubira.');
@@ -4115,7 +4813,6 @@ async function renderCrearContrato() {
       ];
   prodOptions = prodOptions.concat([{ value: 'Software a Medida / Consultoría Especializada', label: 'Software a Medida / Consultoría Especializada' }]);
   _productOptionsCache['ctr-producto-search'] = prodOptions;
-  // En blanco por defecto al abrir el módulo, igual que el Cliente.
   if (selectProd) selectProd.value = '';
   if (searchProd) searchProd.value = '';
   const tipoEl0 = document.getElementById('ctr-tipo');
@@ -4154,6 +4851,10 @@ async function renderCrearContrato() {
     entEl.value = '1. Despliegue en ambiente cloud del cliente.\n2. Manual de usuario y guías operativas.\n3. Capacitación remota al equipo designado.\n4. Soporte técnico durante el periodo de garantía.';
   }
 
+  // Cargar catálogo de plantillas oficiales de ODACL
+  await loadOdaclTemplates();
+  populateTemplatesDropdown();
+
   // Si proviene de la conversión de una Proforma
   if (_proformaToConvert) {
     const p = _proformaToConvert;
@@ -4183,10 +4884,12 @@ async function renderCrearContrato() {
     _proformaToConvert = null;
   }
 
+  autoFillPlaceholdersFromForm(false);
   updateContractPreview();
 }
 
 function onContractClientSelected(cliId) {
+  autoFillPlaceholdersFromForm(false);
   updateContractPreview();
 }
 
@@ -4195,6 +4898,7 @@ function onContractProductChange(prodName) {
   if (objEl) {
     objEl.value = `Licenciamiento y despliegue del software corporativo "${prodName}", incluyendo configuración de servidores, pruebas de integración y puesta en marcha para las operaciones del cliente.`;
   }
+  autoFillPlaceholdersFromForm(false);
   updateContractPreview();
 }
 
@@ -4254,6 +4958,25 @@ function updateContractPreview() {
     ctrBadgeState.className = `badge b-${estado}`;
     ctrBadgeState.textContent = estado.toUpperCase();
   }
+
+  // Plantilla seleccionada en el preview
+  const tpl = (_odaclTemplatesCache || []).find(t => t.clave === _selectedTemplateKey);
+  const prevPlantilla = document.getElementById('prev-plantilla');
+  if (prevPlantilla) {
+    prevPlantilla.textContent = tpl ? tpl.titulo : 'Contrato de Desarrollo';
+    prevPlantilla.title = tpl ? `${tpl.titulo} (${tpl.badge || 'ODACL'})` : '';
+  }
+  const prevPlantillaName = document.getElementById('prev-plantilla-name');
+  if (prevPlantillaName) {
+    prevPlantillaName.textContent = tpl ? tpl.titulo : 'Contrato Oficial ODACL';
+  }
+  const prevPlantillaBadge = document.getElementById('prev-plantilla-badge');
+  if (prevPlantillaBadge) {
+    prevPlantillaBadge.textContent = tpl && tpl.oficial ? '✓ Oficial ODACL' : 'Base ODACL';
+    prevPlantillaBadge.style.background = tpl && tpl.oficial ? '#10b981' : '#0f766e';
+  }
+
+  updatePlaceholdersProgress();
 }
 
 async function handleGuardarContrato(e) {
@@ -4281,6 +5004,15 @@ async function handleGuardarContrato(e) {
   const responsable = document.getElementById('ctr-responsable')?.value || 'ODN Qubira';
   const metodo_trabajo = document.getElementById('ctr-metodo-trabajo')?.value || 'SCRUM (Desarrollo Ágil por Sprints)';
 
+  // Plantilla ODACL aprobada
+  const tpl = (_odaclTemplatesCache || []).find(t => t.clave === _selectedTemplateKey);
+  const plantilla_clave = tpl ? tpl.clave : 'desarrollo_software';
+  const plantilla_titulo = tpl ? tpl.titulo : 'Contrato de Desarrollo de Software - QUBIRA S.A.C.';
+  const plantilla_version = (tpl && tpl.oficial && tpl.oficial.origenVersion) ? tpl.oficial.origenVersion : 1;
+
+  // Compilar HTML definitivo (sin marcas amarillas de edición)
+  const finalHtml = compileContractTemplate(tpl ? tpl.contenido_html : '', _templatePlaceholdersValues, false);
+
   const btn = document.querySelector('#form-crear-contrato button[type="submit"]');
   if (btn) btn.disabled = true;
   try {
@@ -4290,10 +5022,15 @@ async function handleGuardarContrato(e) {
         cliente_id: cliente.id, tipo, producto_nombre: producto, moneda, monto, modalidad_pago: modalidad,
         fecha_inicio: fInicio, fecha_fin: fFin, garantia, objeto, entregables, estado, responsable,
         metodo_trabajo,
+        plantilla_clave,
+        plantilla_titulo,
+        plantilla_version,
+        contenido_html: finalHtml,
+        campos_rellenos: _templatePlaceholdersValues,
       }),
     });
     await reloadContratos();
-    toast('success', 'Contrato Registrado', `El contrato ${contract.id} ha sido guardado exitosamente.`);
+    toast('success', 'Contrato Registrado', `El contrato ${contract.id} ha sido guardado exitosamente usando la plantilla oficial de ODACL.`);
     navigate('revisar-contrato');
   } catch (err) {
     if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo guardar el contrato', err.message);
@@ -4304,6 +5041,7 @@ async function handleGuardarContrato(e) {
 
 function resetCrearContratoForm() {
   document.getElementById('form-crear-contrato')?.reset();
+  _templatePlaceholdersValues = {};
   renderCrearContrato();
 }
 
@@ -4318,6 +5056,15 @@ function previewCurrentDraft() {
     direccion: 'Lima, Perú'
   };
 
+  const tpl = (_odaclTemplatesCache || []).find(t => t.clave === _selectedTemplateKey) || {
+    clave: 'desarrollo_software',
+    titulo: 'Contrato de Desarrollo de Software - QUBIRA S.A.C.',
+    contenido_html: ''
+  };
+
+  // Compilar con resaltado de corchetes pendientes
+  const compiledHtml = compileContractTemplate(tpl.contenido_html, _templatePlaceholdersValues, true);
+
   const draftContract = {
     id: document.getElementById('ctr-codigo')?.value || 'CTR-2026-BORRADOR',
     cliente_nombre: cliente.razon_social,
@@ -4325,7 +5072,7 @@ function previewCurrentDraft() {
     cliente_contacto: cliente.contacto_nombre || 'Representante Autorizado',
     cliente_cargo: cliente.contacto_cargo || 'Representante Legal',
     cliente_direccion: cliente.direccion || 'Lima, Perú',
-    tipo: document.getElementById('ctr-tipo')?.value || 'Desarrollo de Software a Medida',
+    tipo: document.getElementById('ctr-tipo')?.value || tpl.tipo || 'Desarrollo de Software a Medida',
     producto_nombre: document.getElementById('ctr-producto-sel')?.value || 'Solución de Software Qubira',
     moneda: document.getElementById('ctr-moneda')?.value || 'USD',
     monto: parseFloat(document.getElementById('ctr-monto')?.value) || 0,
@@ -4337,6 +5084,9 @@ function previewCurrentDraft() {
     entregables: document.getElementById('ctr-entregables')?.value || '',
     metodo_trabajo: document.getElementById('ctr-metodo-trabajo')?.value || 'SCRUM (Desarrollo Ágil por Sprints)',
     estado: document.getElementById('ctr-estado')?.value || 'borrador',
+    plantilla_clave: tpl.clave,
+    plantilla_titulo: tpl.titulo,
+    contenido_html: compiledHtml,
     created_at: new Date().toISOString().split('T')[0]
   };
 
@@ -4402,6 +5152,7 @@ function renderRevisarContratoTable() {
       <td>
         <strong style="font-family:monospace;color:var(--primary);cursor:pointer" onclick="viewContract('${esc(c.id)}')">${esc(c.id)}</strong>
         <div style="font-size:11px;color:var(--text-muted)">${esc(c.tipo || 'Contrato')}</div>
+        ${c.plantilla_titulo ? `<div style="margin-top:3px"><span class="badge" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;font-size:9.5px;padding:2px 6px;border-radius:4px;font-weight:600;display:inline-block" title="Plantilla ODACL: ${esc(c.plantilla_titulo)}">🏛️ ${esc(c.plantilla_titulo.length > 25 ? c.plantilla_titulo.substring(0, 23) + '...' : c.plantilla_titulo)}</span></div>` : ''}
       </td>
       <td>
         <strong>${esc(c.cliente_nombre)}</strong>
@@ -4475,12 +5226,61 @@ function renderContractOfficialModal(c) {
   const statusSel = document.getElementById('contract-modal-status-select');
   if (statusSel) statusSel.value = c.estado || 'borrador';
 
+  const switcherBox = document.getElementById('modal-template-switcher-box');
+  if (switcherBox) {
+    if (c.id && (c.id.includes('BORRADOR') || !_activeViewingContractId)) {
+      switcherBox.style.display = 'flex';
+      const modalSel = document.getElementById('modal-template-sel');
+      if (modalSel) {
+        populateTemplatesDropdown();
+        modalSel.value = _selectedTemplateKey;
+      }
+    } else {
+      switcherBox.style.display = 'none';
+    }
+  }
+
   const body = document.getElementById('contract-modal-body');
   if (!body) return;
 
+  const fechaEmision = formatContractDateSpanish(c.created_at || c.fecha_inicio || new Date());
+
+  // Si cuenta con contenido_html oficial de la plantilla ODACL compilada
+  if (c.contenido_html && c.contenido_html.trim()) {
+    body.innerHTML = `
+      <div class="contract-paper" id="official-contract-sheet" style="padding:28px 36px">
+        <!-- CABECERA INSTITUCIONAL AUDITADA POR ODACL -->
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #0f766e;padding-bottom:14px;margin-bottom:22px">
+          <div style="display:flex;align-items:center;gap:14px">
+            <img src="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" alt="Qubira Logo" style="width:48px;height:48px;border-radius:10px;object-fit:contain">
+            <div>
+              <div style="font-size:16.5px;font-weight:800;letter-spacing:1px;color:#0f766e">QUBIRA S.A.C. · OFICINA DE DESARROLLO DE NEGOCIOS</div>
+              <div style="font-size:11px;color:#475569;font-weight:600">RUC: 10764275981 · Instrumento Jurídico Oficial Vinculante</div>
+              <div style="font-size:11px;color:#059669;display:flex;align-items:center;gap:6px;margin-top:2px">
+                <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981"></span>
+                <span>Plantilla oficial aprobada por ODACL: <strong>${esc(c.plantilla_titulo || 'Plantilla Jurídica')}</strong> (v${esc(c.plantilla_version || '1.0')})</span>
+              </div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:14px;font-weight:800;font-family:monospace;color:#0f766e">${esc(c.id)}</div>
+            <div style="font-size:11.5px;color:#475569;font-weight:600">${fechaEmision}</div>
+            <div style="margin-top:4px"><span class="badge b-${esc(c.estado || 'borrador')}" style="font-size:10px;padding:3px 8px">${esc((c.estado || 'borrador').toUpperCase())}</span></div>
+          </div>
+        </div>
+
+        <!-- CONTENIDO ÍNTEGRO CON FORMATO ORIGINAL ODACL -->
+        <div class="odacl-contract-body" style="font-family:'Segoe UI',system-ui,sans-serif;color:#1e293b;line-height:1.75;font-size:13.5px">
+          ${c.contenido_html}
+        </div>
+      </div>
+    `;
+    document.getElementById('contract-view-modal').classList.add('open');
+    return;
+  }
+
   const fechaInicioFormato = formatContractDateSpanish(c.fecha_inicio || new Date());
   const fechaFinFormato    = formatContractDateSpanish(c.fecha_fin || new Date());
-  const fechaEmision       = formatContractDateSpanish(c.created_at || c.fecha_inicio || new Date());
   const montoFormato       = formatCurrency(c.monto, c.moneda);
   const montoEnLetras      = numeroALetras(c.monto, c.moneda);
   const diasProyecto       = calcularDiasCalendario(c.fecha_inicio, c.fecha_fin);
