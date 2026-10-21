@@ -277,7 +277,8 @@
     .aoti-nav button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border); background: #fff; cursor: pointer; font-size: 15px; }
     .aoti-nav button:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
     .aoti-nav button:disabled { opacity: .35; cursor: default; }
-    .aoti-nav select { border: 1px solid var(--border); border-radius: 8px; padding: 5px 6px; font: inherit; font-size: 13px; font-weight: 700; }
+    .aoti-nav select { border: 1px solid var(--border); border-radius: 8px; padding: 5px 6px; font: inherit; font-size: 13px; font-weight: 700; min-width: 76px; }
+    .aoti-nav select:first-child { min-width: 118px; }
     .aoti-mes { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
     .aoti-dow { font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-align: center; padding: 2px 0; }
     .aoti-dia { border: 1px solid var(--border); border-radius: 8px; background: #fff; min-height: 44px; padding: 4px; font: inherit;
@@ -292,6 +293,28 @@
     .aoti-dia.sel { background: var(--primary); border-color: var(--primary); color: #fff; }
     .aoti-dia.sel .barra { background: #fff; }
     .aoti-dia.fuera { visibility: hidden; }
+    .aoti-dia { position: relative; }
+    .aoti-dia.rango { background: #ecfdf5; border-color: #a7f3d0; }
+    .aoti-dia.inicio, .aoti-dia.entregable { color: #fff; }
+    .aoti-dia.inicio { background: #2563eb; border-color: #2563eb; }
+    .aoti-dia.entregable { background: var(--primary); border-color: var(--primary); }
+    .aoti-dia.final { background: #b45309; border-color: #b45309; }
+    .aoti-dia.inicio .barra, .aoti-dia.entregable .barra { background: rgba(255,255,255,.75); }
+    .aoti-dia.vista { box-shadow: 0 0 0 2px #111827; }
+    .aoti-marca { position: absolute; top: -7px; right: -5px; font-size: 9px; font-weight: 800; line-height: 1; padding: 2px 4px;
+      border-radius: 6px; background: #111827; color: #fff; }
+    .aoti-herr { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .aoti-herr .aoti-chip.inicio.activo { background: #2563eb; border-color: #2563eb; }
+    .aoti-aviso { font-size: 12px; color: var(--warning); background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 6px 10px; }
+    .aoti-stats { display: flex; flex-wrap: wrap; gap: 8px; }
+    .aoti-stat { background: #f9fafb; border: 1px solid var(--border); border-radius: 10px; padding: 6px 12px; font-size: 11.5px; color: var(--text-muted); }
+    .aoti-stat strong { display: block; font-size: 17px; color: var(--text); }
+    .aoti-lista-ent { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .aoti-ent { font-size: 11.5px; font-weight: 600; background: var(--primary-light); color: var(--primary-dark); border: 1px solid #a7f3d0;
+      border-radius: 999px; padding: 3px 10px; display: inline-flex; gap: 6px; align-items: center; }
+    .aoti-ent.ini { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+    .aoti-ent.fin { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+    .aoti-ent button { border: none; background: none; cursor: pointer; color: inherit; font-size: 13px; line-height: 1; padding: 0; }
     .aoti-leyenda { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; font-size: 11px; color: var(--text-muted); }
     .aoti-leyenda i { display: inline-block; width: 10px; height: 4px; border-radius: 3px; margin-right: 4px; vertical-align: middle; }
     .aoti-horas { display: flex; flex-direction: column; gap: 4px; max-height: 330px; overflow-y: auto; }
@@ -2032,11 +2055,7 @@
                   <span class="ico">📅</span>
                 </button>
                 <select id="prf-metodo-sprint" class="select-oculto" required tabindex="-1" aria-hidden="true" onchange="updateProformaPreview()">
-                  <option value="" disabled selected hidden>Selecciona duración del sprint...</option>
-                  <option value="Sprints de 2 semanas con entregables funcionales y demostración">Sprints de 2 semanas (Recomendado Scrum)</option>
-                  <option value="Sprints de 1 semana para despliegue acelerado">Sprints de 1 semana (Rápida iteración)</option>
-                  <option value="Sprints de 3 a 4 semanas para módulos de alta complejidad">Sprints de 3-4 semanas (Módulos complejos)</option>
-                  <option value="Flujo continuo semanal según backlog priorizado">Flujo continuo semanal (Bajo demanda)</option>
+                  <option value="" disabled selected hidden>Marca inicio y entregables en la agenda...</option>
                 </select>
               </div>
 
@@ -5910,25 +5929,21 @@ function cargarPlantillaMetodo() {
 
   if (val.includes('Kanban')) {
     if (detalleEl) detalleEl.value = 'Se trabajará bajo metodología ágil Kanban orientada a flujo continuo. Los requerimientos y funcionalidades se gestionan y priorizan dinámicamente en un tablero visual (Por hacer, En desarrollo, Control de Calidad y Listo), permitiendo entregas frecuentes y flexibles sin bloqueo de calendario.';
-    if (sprintEl) sprintEl.value = 'Flujo continuo semanal según backlog priorizado';
     if (reunionesEl) reunionesEl.value = 'Dailies internas + Reporte ejecutivo semanal de avances';
     if (toolsEl) toolsEl.value = 'Tablero Kanban en Jira / Trello / ClickUp';
     if (rolesEl) rolesEl.value = 'Tech Lead, Desarrolladores y Especialista QA';
   } else if (val.includes('Scrumban')) {
     if (detalleEl) detalleEl.value = 'Se implementará un marco híbrido Scrumban que combina la cadencia de sprints planificados con la flexibilidad de un tablero visual Kanban, optimizando el tiempo de respuesta ante cambios de alcance y garantizando entregas continuas con demostraciones periódicas.';
-    if (sprintEl) sprintEl.value = 'Sprints de 2 semanas con entregables funcionales y demostración';
     if (reunionesEl) reunionesEl.value = 'Sprint Planning + Sprint Review semanal + Canal Slack/Teams prioritario';
     if (toolsEl) toolsEl.value = 'Jira Software / Trello / ClickUp';
     if (rolesEl) rolesEl.value = 'Scrum Master, Desarrolladores y QA';
   } else if (val.includes('Design Sprint')) {
     if (detalleEl) detalleEl.value = 'Metodología ágil en 5 fases de Design Sprint orientada a prototipado veloz y validación de MVP. Se construyen iteraciones rápidas de UX/UI y módulos core para validar el valor de negocio de forma temprana con usuarios reales.';
-    if (sprintEl) sprintEl.value = 'Sprints de 1 semana para despliegue acelerado';
     if (reunionesEl) reunionesEl.value = 'Reuniones bisemanales de demo y avances con Product Owner';
     if (toolsEl) toolsEl.value = 'Figma, Miro, GitHub, Jira';
     if (rolesEl) rolesEl.value = 'Product Designer UX/UI, Tech Lead y Desarrolladores';
   } else if (val.includes('Cascada')) {
     if (detalleEl) detalleEl.value = 'Metodología estructurada por fases e hitos técnicos clave (Análisis, Arquitectura, Desarrollo, Pruebas y Despliegue), con revisiones ágiles y actas de conformidad al término de cada entrega.';
-    if (sprintEl) sprintEl.value = 'Sprints de 3 a 4 semanas para módulos de alta complejidad';
     if (reunionesEl) reunionesEl.value = 'Comité de seguimiento quincenal con acta de acuerdos';
     if (toolsEl) toolsEl.value = 'Microsoft Project, Jira, Azure DevOps';
     if (rolesEl) rolesEl.value = 'Project Manager, Líder Técnico, Desarrolladores y QA';
@@ -5936,7 +5951,6 @@ function cargarPlantillaMetodo() {
     // Scrum
     if (sel && !sel.value) sel.value = 'Scrum — Marco Ágil por Sprints con entregables continuos y feedback iterativo';
     if (detalleEl) detalleEl.value = 'Se trabajará bajo el marco Scrum con Sprints iterativos de 1 a 2 semanas. Al inicio de cada ciclo se planifican los requerimientos priorizados (Sprint Planning), se desarrollan los entregables técnicos y funcionales, y se realizan demostraciones periódicas (Sprint Review) junto al cliente para validar avances y recopilar retroalimentación continua antes de la puesta en producción.';
-    if (sprintEl) sprintEl.value = 'Sprints de 2 semanas con entregables funcionales y demostración';
     if (reunionesEl) reunionesEl.value = 'Sprint Planning + Sprint Review semanal + Canal Slack/Teams prioritario';
     if (toolsEl) toolsEl.value = 'Jira Software / Trello / GitHub Projects con acceso de visualización al cliente';
     if (rolesEl) rolesEl.value = 'Scrum Master, Product Owner técnico, Desarrolladores Full Stack y QA Engineer';
@@ -8056,48 +8070,93 @@ function calcProformaTotals() {
   updateProformaPreview(subtotal, descuentoMonto, igvMonto, total);
 }
 
-// ══════════ AGENDA OTI: disponibilidad en tiempo real para iniciar sprints ══════════
-// En lugar de un menú desplegable, la duración del sprint se elige en una
-// ventana con el calendario del equipo OTI (área TI): se ve qué días y horas
-// están libres y, si alguien está ocupado, quiénes de OTI sí están disponibles.
+// ══════════ AGENDA OTI: plazo del proyecto por días con marcadores ══════════
+// La duración ya no se elige en semanas: en el calendario se marca el día de
+// INICIO y los días de cada ENTREGABLE (sprint). El último entregable es el
+// día en que finaliza el proyecto. Se cuentan los días totales (calendario y
+// hábiles) y se consulta en vivo la agenda del equipo OTI (área TI) para
+// elegir días/horas sin cruces de reuniones.
 const AOTI_HORA_INI = 8;   // jornada laboral 08:00–18:00
 const AOTI_HORA_FIN = 18;
 const AOTI_REFRESCO_MS = 20000;
 const AOTI_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const AOTI_SEPARADOR = ' · Inicio propuesto: ';
-const aoti = { anio: 0, mes: 0, dia: null, hora: null, duracion: '', datos: null, error: null, actualizado: null, timer: null, pidiendo: 0 };
+const aoti = {
+  anio: 0, mes: 0, modo: 'inicio', inicio: null, entregables: [], horas: {}, vista: null, aviso: '',
+  datos: null, error: null, actualizado: null, timer: null, pidiendo: 0
+};
 
 const pad2 = n => String(n).padStart(2, '0');
 const isoDia = (a, m, d) => `${a}-${pad2(m + 1)}-${pad2(d)}`;
 const hoyIso = () => { const h = new Date(); return isoDia(h.getFullYear(), h.getMonth(), h.getDate()); };
+const fechaDeIso = f => { const [a, m, d] = f.split('-').map(Number); return new Date(a, m - 1, d); };
+const fmtCorta = f => fechaDeIso(f).toLocaleDateString('es-PE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
 
-function opcionesSprint() {
-  return Array.from(document.querySelectorAll('#prf-metodo-sprint option'))
-    .filter(o => o.value && !o.dataset.agenda)
-    .map(o => ({ valor: o.value, texto: o.textContent.trim() }));
+// Días calendario (inclusive) y días hábiles (lun–vie) entre dos fechas
+function contarDias(ini, fin) {
+  const a = fechaDeIso(ini), b = fechaDeIso(fin);
+  const total = Math.round((b - a) / 86400000) + 1;
+  let habiles = 0;
+  for (let d = new Date(a); d <= b; d.setDate(d.getDate() + 1)) { const w = d.getDay(); if (w !== 0 && w !== 6) habiles++; }
+  return { total, habiles };
 }
 
-// Duración base de un valor (el valor puede incluir el inicio propuesto)
-function duracionBase(valor) {
-  return String(valor || '').split(AOTI_SEPARADOR)[0];
+function resumenPlazo() {
+  if (!aoti.inicio || !aoti.entregables.length) return null;
+  const fin = aoti.entregables[aoti.entregables.length - 1];
+  return { fin, ...contarDias(aoti.inicio, fin), entregables: aoti.entregables.length };
+}
+
+// Texto que se guarda en la proforma (metodo_sprint)
+function textoPlazo() {
+  const r = resumenPlazo();
+  if (!r) return '';
+  const hora = f => aoti.horas[f] !== undefined ? ` ${pad2(aoti.horas[f])}:00` : '';
+  const partes = [
+    `Plazo total: ${r.total} días calendario (${r.habiles} hábiles)`,
+    `${r.entregables} ${r.entregables === 1 ? 'entregable' : 'entregables'} (sprints)`,
+    `Inicio: ${fmtCorta(aoti.inicio)}${hora(aoti.inicio)}`,
+    ...aoti.entregables.map((f, i) => `Sprint ${i + 1}${i === aoti.entregables.length - 1 ? ' (entrega final)' : ''}: ${fmtCorta(f)}${hora(f)}`)
+  ];
+  const miembros = aoti.datos?.members || [];
+  if (miembros.length && aoti.horas[aoti.inicio] !== undefined) {
+    const ocu = ocupadosEnFranja(aoti.inicio, aoti.horas[aoti.inicio]);
+    const libres = miembros.filter(m => !ocu.has(m.user_id)).map(nombrePersona);
+    if (libres.length) partes.push(`Equipo OTI disponible al inicio: ${libres.join(', ')}`);
+  }
+  return partes.join(' · ');
 }
 
 function actualizarTriggerSprint() {
   const sel = document.getElementById('prf-metodo-sprint');
   const cont = document.getElementById('prf-sprint-trigger-texto');
   if (!sel || !cont) return;
-  const valor = sel.value;
-  if (!valor) { cont.innerHTML = '<span class="vacio">Selecciona duración e inicio en la agenda de OTI…</span>'; return; }
-  const base = opcionesSprint().find(o => o.valor === duracionBase(valor));
-  const partes = valor.split(AOTI_SEPARADOR);
-  cont.innerHTML = esc(base ? base.texto : partes[0]) + (partes[1] ? `<small>📍 Inicio: ${esc(partes[1])}</small>` : '');
+  const op = sel.selectedOptions[0];
+  if (!sel.value || !op) { cont.innerHTML = '<span class="vacio">Marca inicio y entregables en la agenda de OTI…</span>'; return; }
+  let est = null;
+  try { est = op.dataset.agenda ? JSON.parse(op.dataset.agenda) : null; } catch (e) {}
+  if (est && est.inicio && est.entregables?.length) {
+    const fin = est.entregables[est.entregables.length - 1];
+    const c = contarDias(est.inicio, fin);
+    const n = est.entregables.length;
+    cont.innerHTML = `<strong>${c.total} días · ${n} ${n === 1 ? 'entregable' : 'entregables'}</strong>`
+      + `<small>📍 ${esc(fmtCorta(est.inicio))} → ${esc(fmtCorta(fin))} (fin del proyecto) · ${c.habiles} días hábiles</small>`;
+  } else {
+    cont.textContent = sel.value; // valores guardados antes de este cambio
+  }
 }
 
 async function abrirAgendaOti() {
   const sel = document.getElementById('prf-metodo-sprint');
   const h = new Date();
-  aoti.anio = h.getFullYear(); aoti.mes = h.getMonth(); aoti.dia = null; aoti.hora = null;
-  aoti.duracion = duracionBase(sel?.value || '');
+  let est = null;
+  try { est = sel?.selectedOptions[0]?.dataset.agenda ? JSON.parse(sel.selectedOptions[0].dataset.agenda) : null; } catch (e) {}
+  aoti.inicio = est?.inicio || null;
+  aoti.entregables = Array.isArray(est?.entregables) ? est.entregables.slice() : [];
+  aoti.horas = est?.horas || {};
+  aoti.modo = aoti.inicio ? 'entregable' : 'inicio';
+  aoti.vista = aoti.inicio; aoti.aviso = '';
+  const base = aoti.inicio ? fechaDeIso(aoti.inicio) : h;
+  aoti.anio = base.getFullYear(); aoti.mes = base.getMonth();
   aoti.datos = null; aoti.error = null;
   if (!document.getElementById('aoti-overlay')) {
     const ov = document.createElement('div');
@@ -8167,15 +8226,11 @@ function estadoDia(fecha) {
 
 function nombrePersona(m) { return [m.nombre, m.apellidos].filter(Boolean).join(' '); }
 
-function textoInicio() {
-  if (!aoti.dia || aoti.hora === null) return '';
-  const [a, m, d] = aoti.dia.split('-').map(Number);
-  const f = new Date(a, m - 1, d);
-  const dia = f.toLocaleDateString('es-PE', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
-  const miembros = aoti.datos?.members || [];
-  const ocu = ocupadosEnFranja(aoti.dia, aoti.hora);
-  const libres = miembros.filter(x => !ocu.has(x.user_id)).map(nombrePersona);
-  return `${dia} ${pad2(aoti.hora)}:00–${pad2(aoti.hora + 1)}:00` + (libres.length ? ` · Equipo OTI disponible: ${libres.join(', ')}` : '');
+function etiquetaDia(f) {
+  if (f === aoti.inicio) return 'INICIO';
+  const i = aoti.entregables.indexOf(f);
+  if (i < 0) return '';
+  return i === aoti.entregables.length - 1 ? `S${i + 1} · FIN` : `S${i + 1}`;
 }
 
 function renderAgendaOti() {
@@ -8185,8 +8240,9 @@ function renderAgendaOti() {
   const hoy = hoyIso();
   const h = new Date();
   const esMesActual = aoti.anio === h.getFullYear() && aoti.mes === h.getMonth();
+  const fin = aoti.entregables[aoti.entregables.length - 1] || null;
 
-  // Calendario del mes
+  // Calendario del mes con marcadores
   const primerDow = (new Date(aoti.anio, aoti.mes, 1).getDay() + 6) % 7; // lunes = 0
   const diasMes = new Date(aoti.anio, aoti.mes + 1, 0).getDate();
   let celdas = '';
@@ -8196,39 +8252,45 @@ function renderAgendaOti() {
     const dow = new Date(aoti.anio, aoti.mes, d).getDay();
     const pasado = f < hoy, finde = dow === 0 || dow === 6;
     const est = (!pasado && !finde && aoti.datos) ? estadoDia(f) : '';
-    const clases = ['aoti-dia', est, f === hoy ? 'hoy' : '', f === aoti.dia ? 'sel' : ''].join(' ');
-    const tit = pasado ? 'Fecha pasada' : finde ? 'Fin de semana' : est === 'libre' ? 'Todo el equipo OTI libre' : est === 'parcial' ? 'Hay reuniones: revisa las horas' : est === 'ocupado' ? 'Todo el equipo OTI ocupado' : '';
-    celdas += `<button type="button" class="${clases}" ${pasado || finde ? 'disabled' : ''} title="${tit}" onclick="aotiElegirDia('${f}')">${d}<span class="barra"></span></button>`;
+    const esIni = f === aoti.inicio, esEnt = aoti.entregables.includes(f), esFin = f === fin;
+    const enRango = aoti.inicio && fin && f > aoti.inicio && f < fin && !esEnt;
+    const clases = ['aoti-dia', est, f === hoy ? 'hoy' : '', enRango ? 'rango' : '', esIni ? 'inicio' : '', esEnt ? 'entregable' : '', esFin ? 'final' : '', f === aoti.vista ? 'vista' : ''].join(' ');
+    const marca = etiquetaDia(f);
+    const tit = pasado ? 'Fecha pasada' : finde ? 'Fin de semana' : marca ? marca.replace('S', 'Sprint ') : est === 'libre' ? 'OTI libre todo el día' : est === 'parcial' ? 'OTI con reuniones: revisa las horas' : est === 'ocupado' ? 'Todo OTI ocupado' : '';
+    celdas += `<button type="button" class="${clases}" ${pasado || finde ? 'disabled' : ''} title="${tit}" onclick="aotiClicDia('${f}')">${d}<span class="barra"></span>${marca ? `<span class="aoti-marca">${marca}</span>` : ''}</button>`;
   }
   const anios = [];
   for (let a = h.getFullYear(); a <= h.getFullYear() + 2; a++) anios.push(a);
 
-  // Horas del día elegido
+  // Panel de horas del día en foco (inicio o entregable)
   let panelDia;
+  const enMes = aoti.vista && aoti.vista.startsWith(`${aoti.anio}-${pad2(aoti.mes + 1)}`);
   if (aoti.error && !aoti.datos) {
-    panelDia = `<div class="aoti-vacio">⚠️ ${esc(aoti.error)}<br><br><button type="button" class="btn btn-outline" onclick="cargarAgendaOti()">Reintentar</button></div>`;
+    panelDia = `<div class="aoti-vacio">⚠️ ${esc(aoti.error)}<br><br><button type="button" class="btn btn-outline" onclick="cargarAgendaOti()">Reintentar</button><br><br>Puedes marcar inicio y entregables igualmente.</div>`;
   } else if (!aoti.datos) {
     panelDia = '<div class="aoti-vacio">Consultando la agenda de OTI…</div>';
   } else if (!miembros.length) {
-    panelDia = '<div class="aoti-vacio">No hay integrantes activos del área OTI (TI) registrados en RR.HH.</div>';
-  } else if (!aoti.dia) {
-    panelDia = `<div class="aoti-vacio">Elige un día en el calendario para ver sus horas libres.<br><small>Equipo OTI: ${miembros.map(m => esc(nombrePersona(m))).join(', ')}</small></div>`;
+    panelDia = '<div class="aoti-vacio">No hay integrantes activos del área OTI (TI) registrados en RR.HH., por eso no se puede mostrar su agenda.<br><br>Puedes marcar inicio y entregables igualmente.</div>';
+  } else if (!aoti.vista || !enMes) {
+    panelDia = `<div class="aoti-vacio">Marca un día para ver las horas libres de OTI.<br><small>Equipo OTI: ${miembros.map(m => esc(nombrePersona(m))).join(', ')}</small></div>`;
   } else {
+    const horaSel = aoti.horas[aoti.vista];
+    const marcado = aoti.vista === aoti.inicio || aoti.entregables.includes(aoti.vista);
     let filas = '';
     for (let hr = AOTI_HORA_INI; hr < AOTI_HORA_FIN; hr++) {
-      const ocu = ocupadosEnFranja(aoti.dia, hr);
+      const ocu = ocupadosEnFranja(aoti.vista, hr);
       const libres = miembros.length - ocu.size;
       const puntos = miembros.map(m => `<span class="aoti-punto ${ocu.has(m.user_id) ? 'ocu' : ''}" title="${esc(nombrePersona(m))}: ${ocu.has(m.user_id) ? 'ocupado' : 'libre'}"></span>`).join('');
-      const pasada = aoti.dia === hoy && hr <= h.getHours();
-      filas += `<button type="button" class="aoti-hora ${libres === 0 ? 'nadie' : ''} ${aoti.hora === hr ? 'sel' : ''}" ${pasada ? 'disabled style="opacity:.4;cursor:default"' : ''} onclick="aotiElegirHora(${hr})">
+      const pasada = aoti.vista === hoy && hr <= h.getHours();
+      filas += `<button type="button" class="aoti-hora ${libres === 0 ? 'nadie' : ''} ${horaSel === hr ? 'sel' : ''}" ${pasada || !marcado ? 'disabled style="opacity:.55;cursor:default"' : ''} onclick="aotiElegirHora(${hr})">
         <strong>${pad2(hr)}:00 – ${pad2(hr + 1)}:00</strong>
         <span class="aoti-puntos">${puntos}</span>
         <span class="aoti-cuenta">${libres === miembros.length ? 'Todos libres' : libres === 0 ? 'Nadie libre' : `${libres} de ${miembros.length} libres`}</span>
       </button>`;
     }
     let detalle = '';
-    if (aoti.hora !== null) {
-      const ocu = ocupadosEnFranja(aoti.dia, aoti.hora);
+    if (horaSel !== undefined) {
+      const ocu = ocupadosEnFranja(aoti.vista, horaSel);
       const libres = miembros.filter(m => !ocu.has(m.user_id));
       const ocupados = miembros.filter(m => ocu.has(m.user_id));
       detalle = `<div class="aoti-detalle">
@@ -8236,67 +8298,116 @@ function renderAgendaOti() {
         <div><h4>⛔ Ocupados (${ocupados.length})</h4>${ocupados.length ? ocupados.map(m => `<div class="aoti-persona ocu">${esc(nombrePersona(m))}${ocu.get(m.user_id).map(b => `<small>${esc(b.title)} · ${b.start_time}–${b.end_time} · ${esc(b.area || '')} · ${esc(b.modality || '')}</small>`).join('')}</div>`).join('') : '<div class="aoti-vacio">Nadie ocupado: hora ideal.</div>'}</div>
       </div>`;
     }
-    const [a, m, d] = aoti.dia.split('-').map(Number);
-    panelDia = `<div class="aoti-paso">Horas del ${new Date(a, m - 1, d).toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+    const marcaVista = etiquetaDia(aoti.vista);
+    panelDia = `<div class="aoti-paso">${marcaVista ? esc(marcaVista.replace('S', 'Sprint ')) + ' · ' : ''}Horas del ${fechaDeIso(aoti.vista).toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' })}${marcado ? ' (opcional: elige la hora)' : ''}</div>
       <div class="aoti-horas">${filas}</div>${detalle}`;
   }
 
   const vivo = aoti.error
     ? `<span class="aoti-vivo error" title="${esc(aoti.error)}">Sin conexión con la agenda</span>`
     : `<span class="aoti-vivo">En vivo${aoti.actualizado ? ' · ' + aoti.actualizado.toLocaleTimeString('es-PE') : ''}</span>`;
-  const inicio = textoInicio();
-  const durTexto = opcionesSprint().find(o => o.valor === aoti.duracion)?.texto;
+  const r = resumenPlazo();
+  const chipsMarcas = [
+    aoti.inicio ? `<span class="aoti-ent ini">🚩 Inicio: ${esc(fmtCorta(aoti.inicio))}${aoti.horas[aoti.inicio] !== undefined ? ' ' + pad2(aoti.horas[aoti.inicio]) + ':00' : ''}</span>` : '',
+    ...aoti.entregables.map((f, i) => `<span class="aoti-ent ${i === aoti.entregables.length - 1 ? 'fin' : ''}">📦 Sprint ${i + 1}${i === aoti.entregables.length - 1 ? ' (fin)' : ''}: ${esc(fmtCorta(f))}<button type="button" title="Quitar entregable" onclick="aotiQuitarEntregable('${f}')">×</button></span>`)
+  ].join('');
 
   ov.innerHTML = `
-    <div class="aoti-box" role="dialog" aria-modal="true" aria-label="Agenda de OTI">
+    <div class="aoti-box" role="dialog" aria-modal="true" aria-label="Plazo del proyecto y agenda de OTI">
       <div class="aoti-head">
-        <div><h3>📅 Duración del sprint y agenda de OTI</h3><p>Disponibilidad real del equipo OTI para proponer el inicio sin cruces de reuniones.</p></div>
+        <div><h3>📅 Plazo del proyecto y agenda de OTI</h3><p>Marca el día de inicio y los días de cada entregable (sprint). El último entregable es el fin del proyecto.</p></div>
         <div style="display:flex; align-items:center; gap:8px;">${vivo}
           <button type="button" class="aoti-cerrar" title="Actualizar ahora" onclick="cargarAgendaOti()">↻</button>
           <button type="button" class="aoti-cerrar" title="Cerrar (Esc)" onclick="cerrarAgendaOti()">×</button>
         </div>
       </div>
       <div class="aoti-body">
-        <div>
-          <div class="aoti-paso">1. Duración del sprint / ciclo de entrega</div>
-          <div class="aoti-chips">${opcionesSprint().map(o => `<button type="button" class="aoti-chip ${o.valor === aoti.duracion ? 'activo' : ''}" onclick="aotiElegirDuracion(this.dataset.v)" data-v="${esc(o.valor)}">${esc(o.texto)}</button>`).join('')}</div>
+        <div class="aoti-herr">
+          <span class="aoti-paso" style="margin:0">Marcador:</span>
+          <button type="button" class="aoti-chip inicio ${aoti.modo === 'inicio' ? 'activo' : ''}" onclick="aotiModo('inicio')">🚩 Inicio</button>
+          <button type="button" class="aoti-chip ${aoti.modo === 'entregable' ? 'activo' : ''}" onclick="aotiModo('entregable')" ${aoti.inicio ? '' : 'disabled title="Primero marca el inicio"'}>📦 Entregable (sprint)</button>
+          <button type="button" class="aoti-chip" onclick="aotiLimpiar()" ${aoti.inicio || aoti.entregables.length ? '' : 'disabled'}>Limpiar</button>
+          <span style="font-size:12px; color:var(--text-muted);">${aoti.modo === 'inicio' ? 'Haz clic en el día en que comenzará el proyecto.' : 'Haz clic en cada día de entrega; vuelve a hacer clic para quitarlo.'}</span>
         </div>
-        <div>
-          <div class="aoti-paso">2. Inicio propuesto según la agenda de OTI (opcional)</div>
-          <div class="aoti-grid">
-            <div class="aoti-card">
-              <div class="aoti-nav">
-                <button type="button" onclick="aotiMoverMes(-1)" ${esMesActual ? 'disabled' : ''} title="Mes anterior">‹</button>
-                <div style="display:flex; gap:6px;">
-                  <select onchange="aotiIrA(aoti.anio, +this.value)" aria-label="Mes">${AOTI_MESES.map((n, i) => `<option value="${i}" ${i === aoti.mes ? 'selected' : ''} ${aoti.anio === h.getFullYear() && i < h.getMonth() ? 'disabled' : ''}>${n}</option>`).join('')}</select>
-                  <select onchange="aotiIrA(+this.value, aoti.mes)" aria-label="Año">${anios.map(a => `<option value="${a}" ${a === aoti.anio ? 'selected' : ''}>${a}</option>`).join('')}</select>
-                </div>
-                <button type="button" onclick="aotiMoverMes(1)" title="Mes siguiente">›</button>
+        ${aoti.aviso ? `<div class="aoti-aviso">${esc(aoti.aviso)}</div>` : ''}
+        <div class="aoti-stats">
+          <div class="aoti-stat"><strong>${r ? r.total : '—'}</strong>días totales</div>
+          <div class="aoti-stat"><strong>${r ? r.habiles : '—'}</strong>días hábiles</div>
+          <div class="aoti-stat"><strong>${aoti.entregables.length || '—'}</strong>entregables (sprints)</div>
+          <div class="aoti-stat"><strong>${r ? esc(fmtCorta(r.fin)) : '—'}</strong>fin del proyecto</div>
+        </div>
+        ${chipsMarcas ? `<div class="aoti-lista-ent" style="margin-top:0">${chipsMarcas}</div>` : ''}
+        <div class="aoti-grid">
+          <div class="aoti-card">
+            <div class="aoti-nav">
+              <button type="button" onclick="aotiMoverMes(-1)" ${esMesActual ? 'disabled' : ''} title="Mes anterior">‹</button>
+              <div style="display:flex; gap:6px;">
+                <select onchange="aotiIrA(aoti.anio, +this.value)" aria-label="Mes">${AOTI_MESES.map((n, i) => `<option value="${i}" ${i === aoti.mes ? 'selected' : ''} ${aoti.anio === h.getFullYear() && i < h.getMonth() ? 'disabled' : ''}>${n}</option>`).join('')}</select>
+                <select onchange="aotiIrA(+this.value, aoti.mes)" aria-label="Año">${anios.map(a => `<option value="${a}" ${a === aoti.anio ? 'selected' : ''}>${a}</option>`).join('')}</select>
               </div>
-              <div class="aoti-mes">${['L','M','M','J','V','S','D'].map(x => `<div class="aoti-dow">${x}</div>`).join('')}${celdas}</div>
-              <div class="aoti-leyenda"><span><i style="background:#10b981"></i>Todos libres</span><span><i style="background:#f59e0b"></i>Con reuniones</span><span><i style="background:#ef4444"></i>Todos ocupados</span></div>
+              <button type="button" onclick="aotiMoverMes(1)" title="Mes siguiente">›</button>
             </div>
-            <div class="aoti-card">${panelDia}</div>
+            <div class="aoti-mes">${['L','M','M','J','V','S','D'].map(x => `<div class="aoti-dow">${x}</div>`).join('')}${celdas}</div>
+            <div class="aoti-leyenda">
+              <span><i style="background:#2563eb"></i>Inicio</span><span><i style="background:#0f766e"></i>Entregable</span><span><i style="background:#b45309"></i>Fin</span>
+              <span><i style="background:#10b981"></i>OTI libre</span><span><i style="background:#f59e0b"></i>Con reuniones</span><span><i style="background:#ef4444"></i>OTI ocupado</span>
+            </div>
           </div>
+          <div class="aoti-card">${panelDia}</div>
         </div>
       </div>
       <div class="aoti-foot">
-        <div class="aoti-resumen">${durTexto ? `<strong>${esc(durTexto)}</strong>` : 'Elige la duración del sprint.'}${inicio ? `<br>📍 Inicio: ${esc(inicio)}` : ''}</div>
+        <div class="aoti-resumen">${r ? `<strong>${r.total} días · ${r.entregables} ${r.entregables === 1 ? 'entregable' : 'entregables'}</strong><br>${esc(fmtCorta(aoti.inicio))} → ${esc(fmtCorta(r.fin))} (fin del proyecto)` : 'Marca el inicio y al menos un entregable.'}</div>
         <div style="display:flex; gap:8px;">
           <button type="button" class="btn btn-outline" onclick="cerrarAgendaOti()">Cancelar</button>
-          <button type="button" class="btn btn-primary" onclick="aotiConfirmar()" ${aoti.duracion ? '' : 'disabled'}>Usar esta selección</button>
+          <button type="button" class="btn btn-primary" onclick="aotiConfirmar()" ${r ? '' : 'disabled'}>Usar este plazo</button>
         </div>
       </div>
     </div>`;
 }
 
-function aotiElegirDuracion(v) { aoti.duracion = v; renderAgendaOti(); }
-function aotiElegirDia(f) { aoti.dia = f; aoti.hora = null; renderAgendaOti(); }
-function aotiElegirHora(hr) { aoti.hora = hr; renderAgendaOti(); }
+function aotiModo(m) { if (m === 'entregable' && !aoti.inicio) return; aoti.modo = m; aoti.aviso = ''; renderAgendaOti(); }
+
+function aotiClicDia(f) {
+  aoti.aviso = '';
+  if (aoti.modo === 'inicio') {
+    if (aoti.inicio !== f) delete aoti.horas[aoti.inicio];
+    aoti.inicio = f;
+    const quitados = aoti.entregables.filter(x => x <= f);
+    quitados.forEach(x => delete aoti.horas[x]);
+    aoti.entregables = aoti.entregables.filter(x => x > f);
+    if (quitados.length) aoti.aviso = `Se quitaron ${quitados.length} entregable(s) que quedaban antes del nuevo inicio.`;
+    aoti.modo = 'entregable'; // siguiente paso: marcar entregables
+  } else {
+    if (f <= aoti.inicio) { aoti.aviso = 'El entregable debe ser posterior al día de inicio.'; renderAgendaOti(); return; }
+    if (aoti.entregables.includes(f)) { aoti.entregables = aoti.entregables.filter(x => x !== f); delete aoti.horas[f]; }
+    else aoti.entregables = [...aoti.entregables, f].sort();
+  }
+  aoti.vista = f;
+  renderAgendaOti();
+}
+
+function aotiQuitarEntregable(f) {
+  aoti.entregables = aoti.entregables.filter(x => x !== f);
+  delete aoti.horas[f];
+  renderAgendaOti();
+}
+
+function aotiLimpiar() {
+  aoti.inicio = null; aoti.entregables = []; aoti.horas = {}; aoti.vista = null; aoti.modo = 'inicio'; aoti.aviso = '';
+  renderAgendaOti();
+}
+
+function aotiElegirHora(hr) {
+  if (!aoti.vista) return;
+  if (aoti.horas[aoti.vista] === hr) delete aoti.horas[aoti.vista]; else aoti.horas[aoti.vista] = hr;
+  renderAgendaOti();
+}
+
 function aotiIrA(anio, mes) {
   const h = new Date();
   if (anio < h.getFullYear() || (anio === h.getFullYear() && mes < h.getMonth())) { anio = h.getFullYear(); mes = h.getMonth(); }
-  aoti.anio = anio; aoti.mes = mes; aoti.dia = null; aoti.hora = null; aoti.datos = null;
+  aoti.anio = anio; aoti.mes = mes; aoti.datos = null;
   renderAgendaOti();
   cargarAgendaOti();
 }
@@ -8306,21 +8417,20 @@ function aotiMoverMes(delta) {
 }
 
 function aotiConfirmar() {
-  if (!aoti.duracion) return;
+  const r = resumenPlazo();
+  if (!r) return;
   const sel = document.getElementById('prf-metodo-sprint');
-  const inicio = textoInicio();
-  const valor = inicio ? aoti.duracion + AOTI_SEPARADOR + inicio : aoti.duracion;
+  const valor = textoPlazo();
   sel.querySelectorAll('option[data-agenda]').forEach(o => o.remove());
-  if (!Array.from(sel.options).some(o => o.value === valor)) {
-    const op = document.createElement('option');
-    op.value = valor; op.textContent = valor; op.dataset.agenda = '1';
-    sel.appendChild(op);
-  }
+  const op = document.createElement('option');
+  op.value = valor; op.textContent = valor;
+  op.dataset.agenda = JSON.stringify({ inicio: aoti.inicio, entregables: aoti.entregables, horas: aoti.horas });
+  sel.appendChild(op);
   sel.value = valor;
   sel.dispatchEvent(new Event('change'));
   actualizarTriggerSprint();
   cerrarAgendaOti();
-  toast('success', 'Sprint definido', inicio ? 'Duración e inicio propuesto según la agenda de OTI.' : 'Duración del sprint seleccionada.');
+  toast('success', 'Plazo definido', `${r.total} días · ${r.entregables} ${r.entregables === 1 ? 'entregable' : 'entregables'} (fin: ${fmtCorta(r.fin)}).`);
 }
 
 function updateProformaPreview(subVal, descVal, igvVal, totalVal) {
