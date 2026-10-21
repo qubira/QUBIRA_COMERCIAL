@@ -235,6 +235,22 @@
     /* ── FORM ── */
     .form-group { display: flex; flex-direction: column; gap: 6px; }
 
+    /* ── Origen del contrato: desde proforma registrada o creando una ── */
+    .ctr-origen { border: 2px solid #0f766e; border-radius: 12px; padding: 16px 18px; margin-bottom: 22px; background: #fff; }
+    .ctr-origen h4 { font-size: 14px; font-weight: 800; color: #0f766e; text-transform: uppercase; letter-spacing: .5px; }
+    .ctr-origen > p { font-size: 11.5px; color: #475569; margin: 2px 0 12px; }
+    .ctr-origen-opciones { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 760px) { .ctr-origen-opciones { grid-template-columns: 1fr; } }
+    .ctr-origen-op { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: #f9fafb; display: flex; flex-direction: column; gap: 8px; }
+    .ctr-origen-op.activa { border-color: #0f766e; background: #ecfdf5; box-shadow: 0 0 0 1px #0f766e inset; }
+    .ctr-origen-op strong { font-size: 13px; }
+    .ctr-origen-op span { font-size: 11.5px; color: var(--text-muted); }
+    .ctr-origen-vinculo { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+      background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 10px 14px; font-size: 12.5px; color: #065f46; }
+    .ctr-origen-vinculo strong { font-family: monospace; font-size: 13px; }
+    #form-crear-contrato.sin-origen > :not(.ctr-origen) { opacity: .4; pointer-events: none; filter: grayscale(.35); user-select: none; }
+    .prf-aviso-contrato { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; border-radius: 10px; padding: 10px 14px; font-size: 12.5px; margin-bottom: 16px; display: none; }
+
     /* ── Agenda OTI (duración del sprint + disponibilidad en tiempo real) ── */
     .select-oculto { position: absolute; left: 50%; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
     .agenda-oti-trigger {
@@ -1446,7 +1462,28 @@
             <span class="badge b-borrador" id="ctr-badge-state">Modo Edición</span>
           </div>
 
-          <form id="form-crear-contrato" onsubmit="handleGuardarContrato(event)">
+          <form id="form-crear-contrato" class="sin-origen" onsubmit="handleGuardarContrato(event)">
+            <!-- PASO 0: ORIGEN DEL CONTRATO -->
+            <div class="ctr-origen">
+              <h4>0. Origen del contrato *</h4>
+              <p>Todo contrato parte de una proforma: elige una registrada o crea la proforma primero para completar los datos que pide el contrato.</p>
+              <div id="ctr-origen-vinculo" style="display:none"></div>
+              <div class="ctr-origen-opciones" id="ctr-origen-opciones">
+                <div class="ctr-origen-op" id="ctr-origen-op-existente">
+                  <strong>📄 Desde una proforma registrada</strong>
+                  <span>Jala cliente, producto, moneda, monto, condiciones y alcance de una proforma ya guardada.</span>
+                  <select id="ctr-proforma-sel" onchange="if(this.value) seleccionarProformaParaContrato(this.value)">
+                    <option value="">Selecciona una proforma…</option>
+                  </select>
+                </div>
+                <div class="ctr-origen-op" id="ctr-origen-op-nueva">
+                  <strong>➕ Aún no hay proforma</strong>
+                  <span>Crea la proforma ahora; al guardarla volverás aquí con sus datos cargados en el contrato.</span>
+                  <button type="button" class="btn btn-primary btn-sm" onclick="crearProformaParaContrato()">Crear proforma para este contrato</button>
+                </div>
+              </div>
+            </div>
+
             <!-- 🏛️ PASO 1: SELECCIÓN DE PLANTILLA LEGAL DE ODACL -->
             <div style="background:linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);border:2px solid #0f766e;border-radius:12px;padding:16px 18px;margin-bottom:22px;box-shadow:0 3px 10px rgba(15,118,110,0.1)">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
@@ -1842,6 +1879,8 @@
             <span class="badge b-borrador" id="prf-badge-state">Modo Edición</span>
           </div>
 
+          <div class="prf-aviso-contrato" id="prf-aviso-contrato">📄 Estás creando esta proforma para un <strong>contrato</strong>: al guardarla volverás a <strong>Crear Contrato</strong> con sus datos cargados.
+            <button type="button" class="btn btn-outline btn-sm" style="margin-left:8px" onclick="cancelarProformaParaContrato()">Volver al contrato sin proforma</button></div>
           <form id="form-crear-proforma" onsubmit="handleGuardarProforma(event)">
             <!-- SECCIÓN 1: Identificación y Cliente Destinatario -->
             <div class="form-section-title">
@@ -3011,9 +3050,10 @@ async function navigate(page) {
   if (page === 'catalogo')  renderCatalogo();
   if (page === 'costo-herramientas') renderCostoHerramientas();
   if (page === 'info-tecnico') renderInfoTecnico();
-  if (page === 'crear-contrato') renderCrearContrato();
+  if (page === 'crear-contrato') { if (!_proformaToConvert) _ctrProformaId = null; renderCrearContrato(); }
   if (page === 'revisar-contrato') renderRevisarContrato();
   if (page === 'crear-proforma') renderCrearProforma();
+  else if (page !== 'crear-contrato') _contratoTrasProforma = false;
   if (page === 'consultar-proforma') renderConsultarProforma();
   if (page === 'crear-clientes') renderCrearClientes();
   if (page === 'editar-clientes') renderEditarClientes();
@@ -4549,6 +4589,69 @@ let _preselectedProformaClientId = null;
 let _activeViewingContractId = null;
 let _activeViewingProformaId = null;
 let _proformaToConvert = null;
+let _ctrProformaId = null;          // proforma de la que sale el contrato en edición
+let _contratoTrasProforma = false;  // la proforma que se está creando es para un contrato
+
+function etiquetaProformaContrato(p) {
+  return `${p.id} · ${p.cliente_nombre || 'Sin cliente'} · ${formatCurrency(p.total, p.moneda)} · ${p.estado || '—'}${p.estado === 'convertida' ? ' (ya tiene contrato)' : ''}`;
+}
+
+// Llena el selector con las proformas registradas (las más recientes primero)
+function poblarProformasParaContrato() {
+  const sel = document.getElementById('ctr-proforma-sel');
+  if (!sel) return;
+  const lista = getStoredProformas().filter(p => !['rechazada'].includes(p.estado));
+  sel.innerHTML = `<option value="">${lista.length ? 'Selecciona una proforma…' : 'No hay proformas registradas'}</option>`
+    + lista.map(p => `<option value="${esc(p.id)}">${esc(etiquetaProformaContrato(p))}</option>`).join('');
+  sel.value = _ctrProformaId || '';
+}
+
+function mostrarOrigenContrato() {
+  const form = document.getElementById('form-crear-contrato');
+  const vinc = document.getElementById('ctr-origen-vinculo');
+  const ops = document.getElementById('ctr-origen-opciones');
+  const p = _ctrProformaId ? getStoredProformas().find(x => x.id === _ctrProformaId) : null;
+  form?.classList.toggle('sin-origen', !_ctrProformaId);
+  if (vinc && ops) {
+    if (_ctrProformaId) {
+      vinc.style.display = '';
+      vinc.innerHTML = `<div class="ctr-origen-vinculo"><div>✓ Contrato basado en la proforma <strong>${esc(_ctrProformaId)}</strong>${p ? ` · ${esc(p.cliente_nombre || '')} · ${formatCurrency(p.total, p.moneda)}` : ''}</div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="cambiarOrigenContrato()">Cambiar origen</button></div>`;
+      ops.style.display = 'none';
+    } else {
+      vinc.style.display = 'none';
+      ops.style.display = '';
+    }
+  }
+}
+
+function cambiarOrigenContrato() {
+  _ctrProformaId = null;
+  resetCrearContratoForm();
+}
+
+// Opción 1: elegir una proforma ya registrada
+function seleccionarProformaParaContrato(id) {
+  const p = getStoredProformas().find(x => x.id === id);
+  if (!p) return;
+  if (p.estado === 'convertida') toast('info', 'Proforma ya convertida', `${p.id} ya generó un contrato antes; se creará otro contrato a partir de ella.`);
+  _preselectedClientId = p.cliente_id;
+  _proformaToConvert = p;
+  renderCrearContrato();
+}
+
+// Opción 2: crear la proforma primero y volver al contrato
+function crearProformaParaContrato() {
+  _contratoTrasProforma = true;
+  const cliId = document.getElementById('ctr-cliente-sel')?.value;
+  if (cliId) _preselectedProformaClientId = cliId;
+  navigate('crear-proforma');
+}
+
+function cancelarProformaParaContrato() {
+  _contratoTrasProforma = false;
+  navigate('crear-contrato');
+}
 
 // Helpers
 function formatCurrency(monto, moneda) {
@@ -5329,11 +5432,13 @@ async function renderCrearContrato() {
   populateTemplatesDropdown();
 
   // Si proviene de la conversión de una Proforma
+  if (_proformaToConvert) _ctrProformaId = _proformaToConvert.id;
+  poblarProformasParaContrato();
   if (_proformaToConvert) {
     const p = _proformaToConvert;
     if (selectCli) selectCli.value = p.cliente_id;
-    const tipoEl = document.getElementById('ctr-tipo');
-    if (tipoEl && p.tipo) tipoEl.value = p.tipo;
+    // asegurarOpcion: si el valor de la proforma no está entre las opciones del contrato, se agrega
+    asegurarOpcion(document.getElementById('ctr-tipo'), p.tipo);
     if (selectProd && p.producto_nombre) {
       selectProd.value = p.producto_nombre;
       const existing = (_productOptionsCache['ctr-producto-search'] || []).find(o => o.value === p.producto_nombre);
@@ -5343,20 +5448,18 @@ async function renderCrearContrato() {
     if (monEl && p.moneda) { monEl.value = p.moneda; _ctrMonedaPrev = p.moneda; }
     const montoEl = document.getElementById('ctr-monto');
     if (montoEl && p.total) montoEl.value = Number(p.total).toFixed(2);
-    const modEl = document.getElementById('ctr-modalidad');
-    if (modEl && p.modalidad_pago) modEl.value = p.modalidad_pago;
-    const garEl = document.getElementById('ctr-garantia');
-    if (garEl && p.garantia) garEl.value = p.garantia;
+    asegurarOpcion(document.getElementById('ctr-modalidad'), p.modalidad_pago);
+    asegurarOpcion(document.getElementById('ctr-garantia'), p.garantia);
     if (objEl && p.alcance) objEl.value = p.alcance;
     if (entEl && p.items && p.items.length) {
       entEl.value = p.items.map((it, idx) => `${idx + 1}. ${it.descripcion} (Cant: ${it.cantidad})`).join('\n');
     }
-    const metodoEl = document.getElementById('ctr-metodo-trabajo');
-    if (metodoEl && p.metodo_trabajo) metodoEl.value = p.metodo_trabajo;
+    asegurarOpcion(document.getElementById('ctr-metodo-trabajo'), p.metodo_trabajo);
     toast('info', 'Proforma Importada', `Datos de la proforma ${p.id} cargados exitosamente en el contrato.`);
     _proformaToConvert = null;
   }
 
+  mostrarOrigenContrato();
   autoFillPlaceholdersFromForm(false);
   updateContractPreview();
 }
@@ -5478,6 +5581,11 @@ function updateContractPreview() {
 
 async function handleGuardarContrato(e) {
   e.preventDefault();
+  if (!_ctrProformaId) {
+    toast('error', 'Falta el origen', 'Elige una proforma registrada o crea la proforma primero.');
+    document.getElementById('ctr-proforma-sel')?.focus();
+    return;
+  }
   const clientes = getStoredClientes();
   const cliId = document.getElementById('ctr-cliente-sel')?.value;
   const cliente = clientes.find(c => c.id === cliId);
@@ -5525,9 +5633,11 @@ async function handleGuardarContrato(e) {
         plantilla_version,
         contenido_html: finalHtml,
         campos_rellenos: _templatePlaceholdersValues,
+        proforma_id: _ctrProformaId,
       }),
     });
-    await reloadContratos();
+    _ctrProformaId = null;
+    await Promise.all([reloadContratos(), reloadProformas()]);
     toast('success', 'Contrato Registrado', `El contrato ${contract.id} ha sido guardado exitosamente usando la plantilla oficial de ODACL.`);
     navigate('revisar-contrato');
   } catch (err) {
@@ -6205,6 +6315,8 @@ async function renderCrearProforma() {
   _proformaParaEditar = null;
   _prfEditandoId = editar ? editar.id : null;
   modoFormularioProforma(editar);
+  const avisoCtr = document.getElementById('prf-aviso-contrato');
+  if (avisoCtr) avisoCtr.style.display = (_contratoTrasProforma && !editar) ? 'block' : 'none';
   if (!editar) { const c = document.getElementById('prf-codigo'); if (c) c.value = ''; }
   const clientes = getStoredClientes();
   const selectCli = document.getElementById('prf-cliente-sel');
@@ -9038,6 +9150,15 @@ async function handleGuardarProforma(e) {
       toast('success', 'Proforma Registrada', `La proforma ${proforma.id} para ${cliente.razon_social} ha sido guardada exitosamente.`);
     }
     _prfEditandoId = null;
+    if (_contratoTrasProforma && !editando) {
+      _contratoTrasProforma = false;
+      const guardada = getStoredProformas().find(x => x.id === proforma.id) || normalizarFechasDoc({ ...proforma });
+      _preselectedClientId = guardada.cliente_id;
+      _proformaToConvert = guardada;
+      toast('info', 'Volviendo al contrato', `La proforma ${proforma.id} se cargó en el contrato.`);
+      navigate('crear-contrato');
+      return;
+    }
     navigate('consultar-proforma');
   } catch (err) {
     if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo guardar la proforma', err.message);
@@ -9521,11 +9642,7 @@ async function convertProformaToContract(proformaId) {
   }
 
   try {
-    await qcApiFetch(`/api/comercial/proformas/${encodeURIComponent(proformaId)}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ estado: 'convertida' }),
-    });
-    await reloadProformas();
+    // La proforma pasa a "convertida" recién cuando se guarda el contrato
 
     // Precargar los datos en el flujo de Crear Contrato
     _preselectedClientId = prf.cliente_id;
