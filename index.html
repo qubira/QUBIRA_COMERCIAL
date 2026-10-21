@@ -314,6 +314,11 @@
       border-radius: 999px; padding: 3px 10px; display: inline-flex; gap: 6px; align-items: center; }
     .aoti-ent.ini { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
     .aoti-ent.fin { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+    .aoti-persona.libre label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+    .aoti-persona.libre input { margin-top: 2px; accent-color: var(--primary); }
+    .aoti-persona.libre.fuera-reunion { opacity: .6; }
+    .aoti-modal-sel { width: auto !important; flex: 0 0 auto; border: 1px solid var(--border); border-radius: 999px; padding: 6px 10px; font: inherit; font-size: 12.5px; font-weight: 600; }
+    .aoti-nota { font-size: 12px; color: var(--primary-dark); background: var(--primary-light); border: 1px solid #a7f3d0; border-radius: 8px; padding: 6px 10px; }
     .aoti-ent button { border: none; background: none; cursor: pointer; color: inherit; font-size: 13px; line-height: 1; padding: 0; }
     .aoti-leyenda { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; font-size: 11px; color: var(--text-muted); }
     .aoti-leyenda i { display: inline-block; width: 10px; height: 4px; border-radius: 3px; margin-right: 4px; vertical-align: middle; }
@@ -8081,7 +8086,7 @@ const AOTI_HORA_FIN = 18;
 const AOTI_REFRESCO_MS = 20000;
 const AOTI_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const aoti = {
-  anio: 0, mes: 0, modo: 'inicio', inicio: null, entregables: [], horas: {}, vista: null, aviso: '',
+  anio: 0, mes: 0, modo: 'inicio', inicio: null, entregables: [], horas: {}, equipo: {}, modalidad: 'virtual', vista: null, aviso: '',
   datos: null, error: null, actualizado: null, timer: null, pidiendo: 0
 };
 
@@ -8110,19 +8115,18 @@ function resumenPlazo() {
 function textoPlazo() {
   const r = resumenPlazo();
   if (!r) return '';
-  const hora = f => aoti.horas[f] !== undefined ? ` ${pad2(aoti.horas[f])}:00` : '';
+  const hora = f => {
+    if (aoti.horas[f] === undefined) return '';
+    const n = nombresOti(aoti.equipo[f]);
+    return ` ${pad2(aoti.horas[f])}:00–${pad2(aoti.horas[f] + 1)}:00${n.length ? ` (OTI: ${n.join(', ')})` : ''}`;
+  };
   const partes = [
     `Plazo total: ${r.total} días calendario (${r.habiles} hábiles)`,
     `${r.entregables} ${r.entregables === 1 ? 'entregable' : 'entregables'} (sprints)`,
     `Inicio: ${fmtCorta(aoti.inicio)}${hora(aoti.inicio)}`,
     ...aoti.entregables.map((f, i) => `Sprint ${i + 1}${i === aoti.entregables.length - 1 ? ' (entrega final)' : ''}: ${fmtCorta(f)}${hora(f)}`)
   ];
-  const miembros = aoti.datos?.members || [];
-  if (miembros.length && aoti.horas[aoti.inicio] !== undefined) {
-    const ocu = ocupadosEnFranja(aoti.inicio, aoti.horas[aoti.inicio]);
-    const libres = miembros.filter(m => !ocu.has(m.user_id)).map(nombrePersona);
-    if (libres.length) partes.push(`Equipo OTI disponible al inicio: ${libres.join(', ')}`);
-  }
+  if (reunionesPlan().length) partes.push(`Reuniones en agenda OTI: ${aoti.modalidad === 'presencial' ? 'presenciales' : 'virtuales'}`);
   return partes.join(' · ');
 }
 
@@ -8138,8 +8142,11 @@ function actualizarTriggerSprint() {
     const fin = est.entregables[est.entregables.length - 1];
     const c = contarDias(est.inicio, fin);
     const n = est.entregables.length;
+    const hh = f => est.horas && est.horas[f] !== undefined ? ' ' + pad2(est.horas[f]) + ':00' : '';
+    const nReu = [est.inicio, ...est.entregables].filter(f => est.horas?.[f] !== undefined && (est.equipo?.[f] || []).length).length;
     cont.innerHTML = `<strong>${c.total} días · ${n} ${n === 1 ? 'entregable' : 'entregables'}</strong>`
-      + `<small>📍 ${esc(fmtCorta(est.inicio))} → ${esc(fmtCorta(fin))} (fin del proyecto) · ${c.habiles} días hábiles</small>`;
+      + `<small>📍 ${esc(fmtCorta(est.inicio))}${hh(est.inicio)} → ${esc(fmtCorta(fin))}${hh(fin)} (fin del proyecto) · ${c.habiles} días hábiles</small>`
+      + (nReu ? `<small>👥 ${nReu} ${nReu === 1 ? 'reunión' : 'reuniones'} con OTI se agendarán al guardar la proforma</small>` : '');
   } else {
     cont.textContent = sel.value; // valores guardados antes de este cambio
   }
@@ -8153,6 +8160,9 @@ async function abrirAgendaOti() {
   aoti.inicio = est?.inicio || null;
   aoti.entregables = Array.isArray(est?.entregables) ? est.entregables.slice() : [];
   aoti.horas = est?.horas || {};
+  aoti.equipo = est?.equipo || {};
+  aoti.modalidad = est?.modalidad === 'presencial' ? 'presencial' : 'virtual';
+  aoti.nombres = est?.nombres || {};
   aoti.modo = aoti.inicio ? 'entregable' : 'inicio';
   aoti.vista = aoti.inicio; aoti.aviso = '';
   const base = aoti.inicio ? fechaDeIso(aoti.inicio) : h;
@@ -8226,6 +8236,26 @@ function estadoDia(fecha) {
 
 function nombrePersona(m) { return [m.nombre, m.apellidos].filter(Boolean).join(' '); }
 
+function nombresOti(ids) {
+  const miembros = aoti.datos?.members || [];
+  return (ids || []).map(id => {
+    const m = miembros.find(x => x.user_id === id);
+    return m ? nombrePersona(m) : (aoti.nombres?.[id] || '');
+  }).filter(Boolean);
+}
+
+// Reuniones que se crearán en la agenda de OTI: días marcados con hora y equipo
+function reunionesPlan() {
+  const dias = [aoti.inicio, ...aoti.entregables].filter(Boolean);
+  return dias.filter(f => aoti.horas[f] !== undefined && (aoti.equipo[f] || []).length).map(f => {
+    const i = aoti.entregables.indexOf(f);
+    return {
+      fecha: f, tipo: f === aoti.inicio ? 'inicio' : 'entregable', numero: i + 1, final: i >= 0 && i === aoti.entregables.length - 1,
+      hora_inicio: `${pad2(aoti.horas[f])}:00`, hora_fin: `${pad2(aoti.horas[f] + 1)}:00`, participantes: aoti.equipo[f].slice()
+    };
+  });
+}
+
 function etiquetaDia(f) {
   if (f === aoti.inicio) return 'INICIO';
   const i = aoti.entregables.indexOf(f);
@@ -8294,7 +8324,10 @@ function renderAgendaOti() {
       const libres = miembros.filter(m => !ocu.has(m.user_id));
       const ocupados = miembros.filter(m => ocu.has(m.user_id));
       detalle = `<div class="aoti-detalle">
-        <div><h4>✅ Disponibles de OTI (${libres.length})</h4>${libres.length ? libres.map(m => `<div class="aoti-persona libre">${esc(nombrePersona(m))}${m.cargo ? `<small>${esc(m.cargo)}</small>` : ''}</div>`).join('') : '<div class="aoti-vacio">Nadie de OTI está libre a esta hora.</div>'}</div>
+        <div><h4>✅ Disponibles de OTI (${libres.length}) · marca quiénes se agregan</h4>${libres.length ? libres.map(m => {
+          const va = (aoti.equipo[aoti.vista] || []).includes(m.user_id);
+          return `<div class="aoti-persona libre ${va ? '' : 'fuera-reunion'}"><label><input type="checkbox" ${va ? 'checked' : ''} onchange="aotiToggleMiembro(${m.user_id})"><span>${esc(nombrePersona(m))}${m.cargo ? `<small>${esc(m.cargo)}</small>` : ''}</span></label></div>`;
+        }).join('') : '<div class="aoti-vacio">Nadie de OTI está libre a esta hora.</div>'}</div>
         <div><h4>⛔ Ocupados (${ocupados.length})</h4>${ocupados.length ? ocupados.map(m => `<div class="aoti-persona ocu">${esc(nombrePersona(m))}${ocu.get(m.user_id).map(b => `<small>${esc(b.title)} · ${b.start_time}–${b.end_time} · ${esc(b.area || '')} · ${esc(b.modality || '')}</small>`).join('')}</div>`).join('') : '<div class="aoti-vacio">Nadie ocupado: hora ideal.</div>'}</div>
       </div>`;
     }
@@ -8307,10 +8340,13 @@ function renderAgendaOti() {
     ? `<span class="aoti-vivo error" title="${esc(aoti.error)}">Sin conexión con la agenda</span>`
     : `<span class="aoti-vivo">En vivo${aoti.actualizado ? ' · ' + aoti.actualizado.toLocaleTimeString('es-PE') : ''}</span>`;
   const r = resumenPlazo();
+  const extra = f => (aoti.horas[f] !== undefined ? ' ' + pad2(aoti.horas[f]) + ':00' : ' · sin hora')
+    + ((aoti.equipo[f] || []).length ? ` · 👥 ${aoti.equipo[f].length} de OTI` : '');
   const chipsMarcas = [
-    aoti.inicio ? `<span class="aoti-ent ini">🚩 Inicio: ${esc(fmtCorta(aoti.inicio))}${aoti.horas[aoti.inicio] !== undefined ? ' ' + pad2(aoti.horas[aoti.inicio]) + ':00' : ''}</span>` : '',
-    ...aoti.entregables.map((f, i) => `<span class="aoti-ent ${i === aoti.entregables.length - 1 ? 'fin' : ''}">📦 Sprint ${i + 1}${i === aoti.entregables.length - 1 ? ' (fin)' : ''}: ${esc(fmtCorta(f))}<button type="button" title="Quitar entregable" onclick="aotiQuitarEntregable('${f}')">×</button></span>`)
+    aoti.inicio ? `<span class="aoti-ent ini" style="cursor:pointer" onclick="aotiVer('${aoti.inicio}')">🚩 Inicio: ${esc(fmtCorta(aoti.inicio))}${extra(aoti.inicio)}</span>` : '',
+    ...aoti.entregables.map((f, i) => `<span class="aoti-ent ${i === aoti.entregables.length - 1 ? 'fin' : ''}" style="cursor:pointer" onclick="aotiVer('${f}')">📦 Sprint ${i + 1}${i === aoti.entregables.length - 1 ? ' (fin)' : ''}: ${esc(fmtCorta(f))}${extra(f)}<button type="button" title="Quitar entregable" onclick="event.stopPropagation(); aotiQuitarEntregable('${f}')">×</button></span>`)
   ].join('');
+  const nReuniones = reunionesPlan().length;
 
   ov.innerHTML = `
     <div class="aoti-box" role="dialog" aria-modal="true" aria-label="Plazo del proyecto y agenda de OTI">
@@ -8327,6 +8363,10 @@ function renderAgendaOti() {
           <button type="button" class="aoti-chip inicio ${aoti.modo === 'inicio' ? 'activo' : ''}" onclick="aotiModo('inicio')">🚩 Inicio</button>
           <button type="button" class="aoti-chip ${aoti.modo === 'entregable' ? 'activo' : ''}" onclick="aotiModo('entregable')" ${aoti.inicio ? '' : 'disabled title="Primero marca el inicio"'}>📦 Entregable (sprint)</button>
           <button type="button" class="aoti-chip" onclick="aotiLimpiar()" ${aoti.inicio || aoti.entregables.length ? '' : 'disabled'}>Limpiar</button>
+          <select class="aoti-modal-sel" onchange="aoti.modalidad = this.value; renderAgendaOti()" title="Modalidad de las reuniones que se agendarán en OTI">
+            <option value="virtual" ${aoti.modalidad === 'virtual' ? 'selected' : ''}>💻 Reuniones virtuales</option>
+            <option value="presencial" ${aoti.modalidad === 'presencial' ? 'selected' : ''}>🏢 Reuniones presenciales</option>
+          </select>
           <span style="font-size:12px; color:var(--text-muted);">${aoti.modo === 'inicio' ? 'Haz clic en el día en que comenzará el proyecto.' : 'Haz clic en cada día de entrega; vuelve a hacer clic para quitarlo.'}</span>
         </div>
         ${aoti.aviso ? `<div class="aoti-aviso">${esc(aoti.aviso)}</div>` : ''}
@@ -8337,6 +8377,7 @@ function renderAgendaOti() {
           <div class="aoti-stat"><strong>${r ? esc(fmtCorta(r.fin)) : '—'}</strong>fin del proyecto</div>
         </div>
         ${chipsMarcas ? `<div class="aoti-lista-ent" style="margin-top:0">${chipsMarcas}</div>` : ''}
+        ${nReuniones ? `<div class="aoti-nota">👥 Al guardar la proforma se agendarán <strong>${nReuniones} ${nReuniones === 1 ? 'reunión' : 'reuniones'}</strong> en el calendario de OTI con los integrantes marcados (aparecen en "Calendario — OTI" y en la agenda de cada uno).</div>` : (aoti.inicio ? '<div class="aoti-nota">Elige la hora de un día marcado y los integrantes de OTI para agendar esa reunión en el calendario de OTI.</div>' : '')}
         <div class="aoti-grid">
           <div class="aoti-card">
             <div class="aoti-nav">
@@ -8357,7 +8398,7 @@ function renderAgendaOti() {
         </div>
       </div>
       <div class="aoti-foot">
-        <div class="aoti-resumen">${r ? `<strong>${r.total} días · ${r.entregables} ${r.entregables === 1 ? 'entregable' : 'entregables'}</strong><br>${esc(fmtCorta(aoti.inicio))} → ${esc(fmtCorta(r.fin))} (fin del proyecto)` : 'Marca el inicio y al menos un entregable.'}</div>
+        <div class="aoti-resumen">${r ? `<strong>${r.total} días · ${r.entregables} ${r.entregables === 1 ? 'entregable' : 'entregables'}</strong><br>${esc(fmtCorta(aoti.inicio))}${aoti.horas[aoti.inicio] !== undefined ? ' ' + pad2(aoti.horas[aoti.inicio]) + ':00' : ''} → ${esc(fmtCorta(r.fin))}${aoti.horas[r.fin] !== undefined ? ' ' + pad2(aoti.horas[r.fin]) + ':00' : ''} (fin del proyecto)${nReuniones ? ` · 👥 ${nReuniones} ${nReuniones === 1 ? 'reunión' : 'reuniones'} en OTI` : ''}` : 'Marca el inicio y al menos un entregable.'}</div>
         <div style="display:flex; gap:8px;">
           <button type="button" class="btn btn-outline" onclick="cerrarAgendaOti()">Cancelar</button>
           <button type="button" class="btn btn-primary" onclick="aotiConfirmar()" ${r ? '' : 'disabled'}>Usar este plazo</button>
@@ -8371,16 +8412,16 @@ function aotiModo(m) { if (m === 'entregable' && !aoti.inicio) return; aoti.modo
 function aotiClicDia(f) {
   aoti.aviso = '';
   if (aoti.modo === 'inicio') {
-    if (aoti.inicio !== f) delete aoti.horas[aoti.inicio];
+    if (aoti.inicio !== f) { delete aoti.horas[aoti.inicio]; delete aoti.equipo[aoti.inicio]; }
     aoti.inicio = f;
     const quitados = aoti.entregables.filter(x => x <= f);
-    quitados.forEach(x => delete aoti.horas[x]);
+    quitados.forEach(x => { delete aoti.horas[x]; delete aoti.equipo[x]; });
     aoti.entregables = aoti.entregables.filter(x => x > f);
     if (quitados.length) aoti.aviso = `Se quitaron ${quitados.length} entregable(s) que quedaban antes del nuevo inicio.`;
     aoti.modo = 'entregable'; // siguiente paso: marcar entregables
   } else {
     if (f <= aoti.inicio) { aoti.aviso = 'El entregable debe ser posterior al día de inicio.'; renderAgendaOti(); return; }
-    if (aoti.entregables.includes(f)) { aoti.entregables = aoti.entregables.filter(x => x !== f); delete aoti.horas[f]; }
+    if (aoti.entregables.includes(f)) { aoti.entregables = aoti.entregables.filter(x => x !== f); delete aoti.horas[f]; delete aoti.equipo[f]; }
     else aoti.entregables = [...aoti.entregables, f].sort();
   }
   aoti.vista = f;
@@ -8390,18 +8431,40 @@ function aotiClicDia(f) {
 function aotiQuitarEntregable(f) {
   aoti.entregables = aoti.entregables.filter(x => x !== f);
   delete aoti.horas[f];
+  delete aoti.equipo[f];
   renderAgendaOti();
 }
 
 function aotiLimpiar() {
-  aoti.inicio = null; aoti.entregables = []; aoti.horas = {}; aoti.vista = null; aoti.modo = 'inicio'; aoti.aviso = '';
+  aoti.inicio = null; aoti.entregables = []; aoti.horas = {}; aoti.equipo = {}; aoti.vista = null; aoti.modo = 'inicio'; aoti.aviso = '';
   renderAgendaOti();
 }
 
 function aotiElegirHora(hr) {
   if (!aoti.vista) return;
-  if (aoti.horas[aoti.vista] === hr) delete aoti.horas[aoti.vista]; else aoti.horas[aoti.vista] = hr;
+  if (aoti.horas[aoti.vista] === hr) {
+    delete aoti.horas[aoti.vista];
+    delete aoti.equipo[aoti.vista];
+  } else {
+    aoti.horas[aoti.vista] = hr;
+    const ocu = ocupadosEnFranja(aoti.vista, hr);
+    aoti.equipo[aoti.vista] = (aoti.datos?.members || []).filter(m => !ocu.has(m.user_id)).map(m => m.user_id);
+  }
   renderAgendaOti();
+}
+
+function aotiToggleMiembro(id) {
+  const lista = aoti.equipo[aoti.vista] || [];
+  aoti.equipo[aoti.vista] = lista.includes(id) ? lista.filter(x => x !== id) : [...lista, id];
+  renderAgendaOti();
+}
+
+// Ver (y editar hora/equipo de) un día marcado desde su etiqueta
+function aotiVer(f) {
+  aoti.vista = f;
+  const d = fechaDeIso(f);
+  if (d.getFullYear() !== aoti.anio || d.getMonth() !== aoti.mes) aotiIrA(d.getFullYear(), d.getMonth());
+  else renderAgendaOti();
 }
 
 function aotiIrA(anio, mes) {
@@ -8416,6 +8479,33 @@ function aotiMoverMes(delta) {
   aotiIrA(f.getFullYear(), f.getMonth());
 }
 
+// Crea en la agenda de OTI las reuniones del plan de la proforma recién guardada
+async function agendarReunionesOti(proforma) {
+  const sel = document.getElementById('prf-metodo-sprint');
+  let est = null;
+  try { est = sel?.selectedOptions[0]?.dataset.agenda ? JSON.parse(sel.selectedOptions[0].dataset.agenda) : null; } catch (e) {}
+  if (!est || !est.inicio) return;
+  const dias = [est.inicio, ...(est.entregables || [])];
+  const items = dias.filter(f => est.horas?.[f] !== undefined && (est.equipo?.[f] || []).length).map(f => {
+    const i = est.entregables.indexOf(f);
+    return { fecha: f, tipo: f === est.inicio ? 'inicio' : 'entregable', numero: i + 1, final: i >= 0 && i === est.entregables.length - 1,
+      hora_inicio: `${pad2(est.horas[f])}:00`, hora_fin: `${pad2(est.horas[f] + 1)}:00`, participantes: est.equipo[f] };
+  });
+  if (!items.length) return;
+  const cliente = (getStoredClientes().find(c => c.id === proforma.cliente_id) || {}).razon_social || '';
+  const proyecto = [proforma.producto_nombre, cliente].filter(Boolean).join(' · ');
+  try {
+    const r = await qcApiFetch('/api/calendar/team-plan', {
+      method: 'POST',
+      body: JSON.stringify({ area: 'TI', modality: est.modalidad || 'virtual', origen: `Proforma ${proforma.id}`, proyecto, resumen: sel.value, items }),
+    });
+    const n = (r.created || []).length;
+    toast('success', 'Agenda de OTI actualizada', `${n} ${n === 1 ? 'reunión agendada' : 'reuniones agendadas'} en el calendario de OTI para la proforma ${proforma.id}.`);
+  } catch (e) {
+    if (e.message !== 'SESSION_EXPIRED') toast('error', 'No se pudieron agendar las reuniones en OTI', `La proforma sí se guardó. ${e.message}`);
+  }
+}
+
 function aotiConfirmar() {
   const r = resumenPlazo();
   if (!r) return;
@@ -8424,7 +8514,9 @@ function aotiConfirmar() {
   sel.querySelectorAll('option[data-agenda]').forEach(o => o.remove());
   const op = document.createElement('option');
   op.value = valor; op.textContent = valor;
-  op.dataset.agenda = JSON.stringify({ inicio: aoti.inicio, entregables: aoti.entregables, horas: aoti.horas });
+  const nombres = {};
+  Object.values(aoti.equipo).flat().forEach(id => { const n = nombresOti([id])[0]; if (n) nombres[id] = n; });
+  op.dataset.agenda = JSON.stringify({ inicio: aoti.inicio, entregables: aoti.entregables, horas: aoti.horas, equipo: aoti.equipo, modalidad: aoti.modalidad, nombres });
   sel.appendChild(op);
   sel.value = valor;
   sel.dispatchEvent(new Event('change'));
@@ -8638,6 +8730,7 @@ async function handleGuardarProforma(e) {
         fecha_vencimiento: fVenc, estado, responsable,
       }),
     });
+    await agendarReunionesOti({ ...proforma, cliente_id: cliente.id, producto_nombre: proforma.producto_nombre || prod });
     await reloadProformas();
     toast('success', 'Proforma Registrada', `La proforma ${proforma.id} para ${cliente.razon_social} ha sido guardada exitosamente.`);
     navigate('consultar-proforma');
