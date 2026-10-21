@@ -6029,6 +6029,213 @@ function renderOdaclContractSheets(rawHtml, c) {
   `;
 }
 
+// ══════════════════════════════════════════════════════
+// REPAGINACIÓN A4 DEL CONTRATO
+// Las páginas vienen de la plantilla de ODACL, pero al llenar los campos
+// [ ... ] (listas de requerimientos, módulos, etc.) el texto crece y se
+// salía por debajo de la hoja (se montaba sobre el pie y al imprimir salían
+// hojas de más). Aquí se redistribuye todo el contenido en hojas A4 reales:
+// lo que no cabe pasa a la siguiente, las listas se parten por línea y los
+// títulos de cláusula no quedan solos al final de una hoja.
+// ══════════════════════════════════════════════════════
+function mmAPx(mm) {
+  const probe = document.createElement('div');
+  probe.style.cssText = `position:absolute;visibility:hidden;height:${mm}mm;width:1px`;
+  document.body.appendChild(probe);
+  const px = probe.getBoundingClientRect().height;
+  probe.remove();
+  return px;
+}
+
+function esTituloBloque(el) {
+  if (!el || el.nodeType !== 1) return false;
+  if (/^H[1-6]$/.test(el.tagName)) return true;
+  const txt = (el.textContent || '').trim();
+  if (!txt || txt.length > 140) return false;
+  // Párrafo que es solo un título en negrita (p. ej. "CLÁUSULA QUINTA — ...")
+  const negrita = el.querySelector('b, strong');
+  return !!negrita && negrita.textContent.trim().length >= txt.length - 2 && /^CL[ÁA]USULA|^[A-ZÁÉÍÓÚÑ0-9 .—\-:]{6,}$/.test(txt);
+}
+
+// Divide un bloque largo en partes más pequeñas (por <br> o por ítems de lista)
+function trocearBloque(el) {
+  if (!el || el.nodeType !== 1) return null;
+  if ((el.tagName === 'UL' || el.tagName === 'OL') && el.children.length > 1) {
+    return Array.from(el.children).map((li, k) => {
+      const lista = el.cloneNode(false);
+      if (el.tagName === 'OL') lista.setAttribute('start', String((Number(el.getAttribute('start')) || 1) + k));
+      lista.appendChild(li.cloneNode(true));
+      return lista;
+    });
+  }
+  if (el.querySelector(':scope > br, :scope > font > br, :scope > span > br')) {
+    const html = el.innerHTML.split(/<br\s*\/?>/i).filter(h => h.replace(/<[^>]+>/g, '').trim());
+    if (html.length > 1) {
+      return html.map((h, k) => {
+        const parte = el.cloneNode(false);
+        parte.innerHTML = h;
+        if (k < html.length - 1) parte.style.marginBottom = '0';
+        return parte;
+      });
+    }
+  }
+  return null;
+}
+
+// Parte un párrafo por palabras para que la primera parte llene el espacio
+// que queda en la hoja (como un procesador de texto). Devuelve [parte1, parte2] o null.
+function partirParrafoEnHoja(el, hojaContenido, altoUtil, altoContenido) {
+  if (!el || el.nodeType !== 1 || !/^(P|DIV|BLOCKQUOTE)$/.test(el.tagName)) return null;
+  if (el.querySelector('p, div, table, ul, ol, h1, h2, h3, h4, h5, h6, img')) return null;
+  const textos = [];
+  const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let t, total = 0;
+  while ((t = w.nextNode())) { textos.push({ nodo: t, ini: total }); total += t.nodeValue.length; }
+  if (total < 80) return null;
+  const punto = k => {
+    for (let i = textos.length - 1; i >= 0; i--) if (k >= textos[i].ini) return { nodo: textos[i].nodo, off: Math.min(k - textos[i].ini, textos[i].nodo.length) };
+    return { nodo: textos[0].nodo, off: 0 };
+  };
+  const parte = (desde, hasta) => {
+    const r = document.createRange();
+    const a = punto(desde), b = punto(hasta);
+    r.setStart(a.nodo, a.off); r.setEnd(b.nodo, b.off);
+    const copia = el.cloneNode(false);
+    copia.appendChild(r.cloneContents());
+    return copia;
+  };
+  const cabe = k => {
+    const probe = parte(0, k);
+    hojaContenido.appendChild(probe);
+    const ok = altoContenido(hojaContenido) <= altoUtil;
+    probe.remove();
+    return ok;
+  };
+  let lo = 1, hi = total - 1, mejor = 0;
+  while (lo <= hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (cabe(mid)) { mejor = mid; lo = mid + 1; } else hi = mid - 1;
+  }
+  // Retroceder al último espacio para no cortar palabras
+  const completo = textos.map(x => x.nodo.nodeValue).join('');
+  let corte = mejor;
+  while (corte > 0 && !/\s/.test(completo[corte])) corte--;
+  if (corte < 40) return null; // muy poco espacio: mejor pasar el párrafo entero
+  const p1 = parte(0, corte);
+  const p2 = parte(corte, total);
+  p1.style.textAlignLast = 'justify';
+  p1.style.marginBottom = '0';
+  p2.style.textIndent = '0';
+  // quitar el espacio inicial de la segunda parte
+  const w2 = document.createTreeWalker(p2, NodeFilter.SHOW_TEXT);
+  const primero = w2.nextNode();
+  if (primero) primero.nodeValue = primero.nodeValue.replace(/^\s+/, '');
+  return [p1, p2];
+}
+
+function repaginarHojasContrato() {
+  const cont = document.getElementById('contract-a4-pages-container');
+  if (!cont) return;
+  const hojas = Array.from(cont.querySelectorAll('.a4-page-sheet'));
+  if (!hojas.length) return;
+
+  // Todo el contenido, en orden, como bloques
+  const bloques = [];
+  hojas.forEach(h => {
+    const c = h.querySelector('.a4-page-content');
+    Array.from(c ? c.childNodes : []).forEach(n => {
+      if (n.nodeType === 3) {
+        if (n.nodeValue.trim()) { const pEl = document.createElement('p'); pEl.textContent = n.nodeValue.trim(); bloques.push(pEl); }
+      } else if (n.nodeType === 1) {
+        // Párrafo que ODACL partió entre hojas (data-cont): se vuelve a unir con su inicio
+        const previo = bloques[bloques.length - 1];
+        if (n.dataset && n.dataset.cont === '1' && previo && previo.nodeType === 1 && previo.dataset && n.dataset.frag && previo.dataset.frag === n.dataset.frag) {
+          const ultimoTexto = previo.lastChild;
+          if (ultimoTexto && ultimoTexto.nodeType === 3 && !/\s$/.test(ultimoTexto.nodeValue) && n.firstChild && n.firstChild.nodeType === 3 && !/^\s/.test(n.firstChild.nodeValue)) {
+            previo.appendChild(document.createTextNode(' '));
+          }
+          while (n.firstChild) previo.appendChild(n.firstChild);
+          return;
+        }
+        bloques.push(n);
+      }
+    });
+  });
+
+  // Alto útil del cuerpo: hoja A4 menos márgenes superior/inferior (medido antes de rearmar)
+  const estiloHoja = getComputedStyle(hojas[0]);
+  const altoUtil = mmAPx(297) - (parseFloat(estiloHoja.paddingTop) || 0) - (parseFloat(estiloHoja.paddingBottom) || 0) - 2;
+
+  const molde = hojas[0].cloneNode(true);
+  molde.querySelector('.a4-page-content').innerHTML = '';
+  hojas.forEach(h => h.remove());
+
+  const nuevaHoja = () => {
+    const h = molde.cloneNode(true);
+    cont.appendChild(h);
+    return h.querySelector('.a4-page-content');
+  };
+  const altoContenido = c => {
+    const r = c.getBoundingClientRect();
+    const ultimo = c.lastElementChild;
+    if (!ultimo) return 0;
+    const mb = parseFloat(getComputedStyle(ultimo).marginBottom) || 0;
+    const escala = r.height && c.offsetHeight ? r.height / c.offsetHeight : 1;
+    return (ultimo.getBoundingClientRect().bottom - r.top) / escala - mb + (parseFloat(getComputedStyle(c).paddingBottom) || 0);
+  };
+
+  let actual = nuevaHoja();
+  const cola = bloques.slice();
+  let guardia = 0;
+  while (cola.length && guardia++ < 5000) {
+    const b = cola.shift();
+    actual.appendChild(b);
+    if (altoContenido(actual) <= altoUtil) continue;
+
+    // No cabe: intentar partirlo para aprovechar el espacio de esta hoja
+    const partes = trocearBloque(b);
+    if (partes) {
+      b.remove();
+      cola.unshift(...partes);
+      continue;
+    }
+    // Párrafo largo: llenar lo que queda de la hoja y continuar en la siguiente
+    b.remove();
+    const mitades = partirParrafoEnHoja(b, actual, altoUtil, altoContenido);
+    if (mitades) {
+      actual.appendChild(mitades[0]);
+      actual = nuevaHoja();
+      cola.unshift(mitades[1]);
+      continue;
+    }
+    actual.appendChild(b);
+    if (actual.children.length > 1) {
+      b.remove();
+      // Un título no debe quedar solo al final de la hoja: pasa con su contenido
+      const arrastrados = [];
+      while (actual.children.length > 1 && esTituloBloque(actual.lastElementChild)) {
+        arrastrados.unshift(actual.lastElementChild);
+        actual.lastElementChild.remove();
+      }
+      actual = nuevaHoja();
+      arrastrados.forEach(t => actual.appendChild(t));
+      actual.appendChild(b);
+    }
+    // Si un bloque indivisible es más alto que una hoja, se deja en su propia hoja
+  }
+
+  // Numeración y contador
+  const finales = Array.from(cont.querySelectorAll('.a4-page-sheet'));
+  finales.forEach((h, k) => {
+    h.dataset.page = String(k + 1);
+    const c = h.querySelector('.a4-page-content'); if (c) c.dataset.pageIndex = String(k + 1);
+    const pie = h.querySelector('.a4-page-counter-footer');
+    if (pie) pie.textContent = `Página ${k + 1} de ${finales.length}`;
+  });
+  const pInd = document.getElementById('contract-pages-indicator');
+  if (pInd) pInd.textContent = `${finales.length} ${finales.length === 1 ? 'Página A4' : 'Páginas A4'} (Formato Oficial ODACL)`;
+}
+
 function renderContractOfficialModal(c) {
   document.getElementById('contract-modal-code').textContent = `${c.id} · Qubira ODN`;
   document.getElementById('contract-modal-title').textContent = `Contrato Oficial: ${c.cliente_nombre || 'Cliente'}`;
@@ -6057,6 +6264,7 @@ function renderContractOfficialModal(c) {
   if (c.contenido_html && c.contenido_html.trim()) {
     body.innerHTML = renderOdaclContractSheets(c.contenido_html, c);
     document.getElementById('contract-view-modal').classList.add('open');
+    repaginarHojasContrato();
     return;
   }
 
@@ -6156,6 +6364,7 @@ function renderContractOfficialModal(c) {
 
   body.innerHTML = renderOdaclContractSheets(fallbackPagesHtml, c);
   document.getElementById('contract-view-modal').classList.add('open');
+  repaginarHojasContrato();
 }
 
 function closeContractModal() {
@@ -6173,8 +6382,54 @@ function quickPrintContract(id) {
   setTimeout(() => printContract(), 300);
 }
 
+// ══════════════════════════════════════════════════════
+// IMPRESIÓN / PDF AISLADA
+// Antes se usaba window.print() ocultando la app con visibility:hidden: lo
+// oculto seguía ocupando espacio (hojas en blanco) y cada hoja A4 de
+// 297 mm se desbordaba un poco a la siguiente (el doble de páginas). Ahora
+// se imprime solo el documento en un iframe con hojas A4 exactas.
+// ══════════════════════════════════════════════════════
+function imprimirDocumentoAislado(nodo, titulo, cssExtra = '') {
+  if (!nodo) { toast('error', 'Nada que imprimir', 'Abre primero el documento.'); return; }
+  const copia = nodo.cloneNode(true);
+  copia.removeAttribute('style');
+  copia.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+  const estilos = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map(n => n.outerHTML).join('\n');
+  const base = `
+    @page { size: A4 portrait; margin: 0; }
+    html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; display: block !important; min-height: 0 !important; height: auto !important; overflow: visible !important; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    @media print { body * { visibility: visible !important; } }
+    .unfilled-field { background: transparent !important; color: #000 !important; border: none !important; border-bottom: 1px solid #000 !important; }
+    .filled-field { background: transparent !important; color: inherit !important; }`;
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('aria-hidden', 'true');
+  iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+  document.body.appendChild(iframe);
+  const doc = iframe.contentDocument;
+  doc.open();
+  doc.write(`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>${esc(titulo)}</title>${estilos}<style>${base}${cssExtra}</style></head><body>${copia.outerHTML}</body></html>`);
+  doc.close();
+  const imprimir = () => {
+    try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } finally { setTimeout(() => iframe.remove(), 2000); }
+  };
+  // Esperar imágenes (logo del membrete) y fuentes antes de imprimir
+  const imagenes = Array.from(doc.images).map(img => img.complete ? null : new Promise(r => { img.onload = img.onerror = r; }));
+  Promise.all(imagenes)
+    .then(() => (doc.fonts && doc.fonts.ready) || null)
+    .then(() => setTimeout(imprimir, 150));
+}
+
 function printContract() {
-  window.print();
+  const c = getStoredContratos().find(x => x.id === _activeViewingContractId);
+  const titulo = `${c?.id || 'Contrato'} - ${c?.cliente_nombre || 'QUBIRA'}`;
+  imprimirDocumentoAislado(document.getElementById('contract-a4-pages-container'), titulo, `
+    .a4-pages-container { display: block !important; transform: none !important; gap: 0 !important; width: auto !important; }
+    .a4-page-sheet { box-shadow: none !important; border-radius: 0 !important; margin: 0 !important;
+      height: 296.5mm !important; min-height: 0 !important; overflow: hidden !important;
+      page-break-after: always !important; break-after: page !important; }
+    .a4-page-sheet:last-child { page-break-after: auto !important; break-after: auto !important; }
+    .a4-page-sheet::before { display: none !important; }`);
 }
 
 async function deleteContract(id) {
@@ -9863,7 +10118,10 @@ function quickPrintProforma(id) {
 }
 
 function printProforma() {
-  window.print();
+  const p = getStoredProformas().find(x => x.id === _activeViewingProformaId);
+  imprimirDocumentoAislado(document.getElementById('official-proforma-sheet'), `${p?.id || 'Proforma'} - ${p?.cliente_nombre || 'QUBIRA'}`, `
+    @page { size: A4 portrait; margin: 12mm; }
+    .proforma-paper { box-shadow: none !important; border: none !important; border-radius: 0 !important; padding: 0 !important; margin: 0 !important; }`);
 }
 
 function convertActiveProformaToContract() {
