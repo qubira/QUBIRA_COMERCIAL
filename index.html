@@ -842,6 +842,33 @@
     .placeholder-item:focus-within {
       border-color: #0f766e; box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.15);
     }
+    /* Campos de lista (requerimientos, módulos, stack): ocupan todo el ancho y varias líneas */
+    .placeholder-item.multilinea { grid-column: 1 / -1; }
+    .placeholder-item textarea.placeholder-input { min-height: 96px; resize: vertical; line-height: 1.5; font-family: inherit; white-space: pre-wrap; }
+
+    /* ── Requerimientos RF / RNF en la proforma ── */
+    .req-ayuda { font-size: 12px; color: var(--text-muted); background: var(--bg-card2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; line-height: 1.55; }
+    .req-bloque { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
+    .req-bloque-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 10px 12px; background: var(--bg-card2); border-bottom: 1px solid var(--border); }
+    .req-bloque-head strong { font-size: 13px; }
+    .req-bloque-head small { display: block; font-size: 11px; color: var(--text-muted); font-weight: 400; }
+    .req-fila { display: grid; grid-template-columns: 58px minmax(150px, 1fr) minmax(200px, 1.5fr) 30px; gap: 8px; align-items: start; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    .req-titulo { display: flex; flex-direction: column; gap: 6px; }
+    .req-titulo label { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
+    .req-titulo label select { width: auto !important; padding: 4px 8px !important; font-size: 11.5px !important; }
+    .req-fila:last-child { border-bottom: none; }
+    @media (max-width: 900px) { .req-fila { grid-template-columns: 1fr; } }
+    .req-codigo { font-family: monospace; font-weight: 800; font-size: 12px; color: var(--primary); background: var(--primary-light); border-radius: 6px; padding: 6px 4px; text-align: center; }
+    .req-fila input, .req-fila select, .req-fila textarea { width: 100%; font-size: 12.5px; }
+    .req-fila textarea { min-height: 58px; resize: vertical; line-height: 1.45; }
+    .req-acciones { display: flex; flex-direction: column; gap: 4px; }
+    .req-acciones button { width: 26px; height: 28px; border: 1px solid var(--border); background: #fff; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .req-acciones button:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+    .req-acciones button:disabled { opacity: .35; cursor: default; }
+    .req-vacio { padding: 14px 12px; font-size: 12px; color: var(--text-muted); text-align: center; }
+    .req-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--border); background: #fff; }
+    .req-chip { border: 1px dashed #94a3b8; background: #fff; border-radius: 999px; padding: 3px 10px; font-size: 11.5px; cursor: pointer; font-family: inherit; }
+    .req-chip:hover { border-color: var(--primary); color: var(--primary); }
     .placeholder-item.is-unfilled {
       border-color: #fde047; background: #fefce8;
     }
@@ -2071,6 +2098,18 @@
                 </div>
               </div>
             </div>
+
+            <!-- SECCIÓN 2.1: Requerimientos del proyecto (RF / RNF) -->
+            <div class="form-section-title">
+              <svg class="icon" style="width:15px;height:15px"><use href="#icon-clipboard"></use></svg>
+              2.1 Requerimientos del Proyecto (Funcionales y No Funcionales)
+            </div>
+            <div class="req-ayuda">
+              <strong>Funcionales (RF):</strong> lo que el sistema <em>hace</em> (registrar clientes, emitir facturas, generar reportes…).
+              <strong>No funcionales (RNF):</strong> <em>cómo</em> debe hacerlo (seguridad, rendimiento, disponibilidad, compatibilidad…).
+              Ordénalos con ↑↓: ese orden y su explicación pasan tal cual al contrato, a los campos [REQUERIMIENTOS_FUNCIONALES] y [REQUERIMIENTOS_NO_FUNCIONALES].
+            </div>
+            <div id="prf-requerimientos"></div>
 
             <!-- SECCIÓN 3: Método de Trabajo (Metodología de Desarrollo Ágil) -->
             <div class="form-section-title">
@@ -4590,6 +4629,29 @@ let _activeViewingContractId = null;
 let _activeViewingProformaId = null;
 let _proformaToConvert = null;
 let _ctrProformaId = null;          // proforma de la que sale el contrato en edición
+let _ctrDatosProforma = null;       // { rf, rnf, modulos, herramientas, lenguajes } de la proforma de origen
+
+// Separa los datos de la proforma para llevarlos a su campo [ ... ] del contrato
+function datosContratoDesdeProforma(p) {
+  const items = Array.isArray(p.items) ? p.items : [];
+  const servicios = items.filter(it => !it.is_tech_variable && !/^\[(Herramienta|Lenguaje)\]/.test(it.descripcion || ''));
+  const tech = items.filter(it => it.is_tech_variable || /^\[(Herramienta|Lenguaje)\]/.test(it.descripcion || ''));
+  const nombreTech = it => {
+    const m = /^\[(?:Herramienta|Lenguaje)\]\s*(.+?)(?:\s*\(Plan:\s*(.+)\))?$/.exec(it.descripcion || '') || [];
+    const nombre = it.name || m[1] || it.descripcion;
+    const plan = it.plan_name || m[2];
+    return plan && !/^free$/i.test(plan) ? `${nombre} (${plan})` : nombre;
+  };
+  const esHerramienta = it => (it.category || '').toLowerCase() === 'tool' || /^\[Herramienta\]/.test(it.descripcion || '');
+  const reqs = Array.isArray(p.requerimientos) ? p.requerimientos : [];
+  return {
+    rf: textoRequerimientos(reqs, 'RF'),
+    rnf: textoRequerimientos(reqs, 'RNF'),
+    modulos: servicios.map((it, k) => `${k + 1}. ${it.descripcion}`).join('\n'),
+    herramientas: [...new Set(tech.filter(esHerramienta).map(nombreTech))].join(', '),
+    lenguajes: [...new Set(tech.filter(it => !esHerramienta(it)).map(nombreTech))].join(', '),
+  };
+}
 let _contratoTrasProforma = false;  // la proforma que se está creando es para un contrato
 
 function etiquetaProformaContrato(p) {
@@ -5137,9 +5199,14 @@ function getAutoFillValueForToken(token) {
   if (['NOMBRE_PROYECTO', 'NOMBRE DE LA PLATAFORMA'].includes(clean)) return producto;
   if (['TIPO_DE_SISTEMA'].includes(clean)) return tipo;
   if (['NECESIDAD_DEL_CLIENTE', 'OBJETO_SERVICIO', 'OBJETO'].includes(clean)) return objeto;
-  if (['MODULOS_FUNCIONALES', 'REQUERIMIENTOS_FUNCIONALES', 'ENTREGABLES'].includes(clean)) return entregables;
-  if (['STACK_HERRAMIENTAS'].includes(clean)) return 'Node.js, Express, PostgreSQL (Neon Cloud), Cloudinary, Git, GitHub';
-  if (['STACK_LENGUAJES'].includes(clean)) return 'JavaScript ES6+, HTML5, CSS3, SQL';
+  // Cada dato de la proforma va a su campo (sin repetir la misma lista en todos)
+  const dp = _ctrDatosProforma || {};
+  if (['REQUERIMIENTOS_FUNCIONALES'].includes(clean)) return dp.rf || entregables;
+  if (['REQUERIMIENTOS_NO_FUNCIONALES'].includes(clean)) return dp.rnf || '';
+  if (['MODULOS_FUNCIONALES'].includes(clean)) return dp.modulos || entregables;
+  if (['ENTREGABLES'].includes(clean)) return entregables;
+  if (['STACK_HERRAMIENTAS'].includes(clean)) return dp.herramientas || 'Node.js, Express, PostgreSQL (Neon Cloud), Cloudinary, Git, GitHub';
+  if (['STACK_LENGUAJES'].includes(clean)) return dp.lenguajes || 'JavaScript ES6+, HTML5, CSS3, SQL';
   if (['INCLUIDO_EN_ALCANCE'].includes(clean)) return 'Desarrollo, base de datos relacional, subida de archivos cloud y despliegue productivo';
   if (['FUERA_DE_ALCANCE'].includes(clean)) return 'Mantenimiento posterior a garantía, dominios de internet privados y pagos de infraestructura externa';
   if (['DURACION_SPRINT'].includes(clean)) return '1 a 2 semanas por Sprint';
@@ -5222,17 +5289,22 @@ function renderPlaceholdersForm(placeholders, reset = false) {
     const label = humanizePlaceholderToken(token);
     const isUnfilled = !val || val.trim() === '';
     const inputId = `p_holder_${idx}`;
+    const multilinea = /REQUERIMIENTOS|MODULOS|ENTREGABLES|STACK_|ALCANCE/.test(token.toUpperCase()) || String(val).includes('\n');
 
     return `
-      <div class="placeholder-item ${isUnfilled ? 'is-unfilled' : ''}" id="ph_box_${idx}">
+      <div class="placeholder-item ${isUnfilled ? 'is-unfilled' : ''} ${multilinea ? 'multilinea' : ''}" id="ph_box_${idx}">
         <div class="placeholder-label">
           <span>${esc(label)}</span>
           <span class="placeholder-tag">${esc(token)}</span>
         </div>
-        <input type="text" id="${inputId}" class="placeholder-input"
-          value="${esc(val)}"
-          placeholder="Rellenar ${esc(token)}..."
-          oninput="onPlaceholderValueChanged('${esc(token)}', this.value, 'ph_box_${idx}')">
+        ${multilinea
+          ? `<textarea id="${inputId}" class="placeholder-input" rows="${Math.min(10, Math.max(3, String(val).split('\n').length + 1))}"
+              placeholder="Rellenar ${esc(token)}… (una línea por elemento)"
+              oninput="onPlaceholderValueChanged('${esc(token)}', this.value, 'ph_box_${idx}')">${esc(val)}</textarea>`
+          : `<input type="text" id="${inputId}" class="placeholder-input"
+              value="${esc(val)}"
+              placeholder="Rellenar ${esc(token)}..."
+              oninput="onPlaceholderValueChanged('${esc(token)}', this.value, 'ph_box_${idx}')">`}
       </div>
     `;
   }).join('');
@@ -5293,7 +5365,9 @@ function compileContractTemplate(templateHtml, replacements, highlightUnfilled =
       : getAutoFillValueForToken(token);
 
     if (val && String(val).trim() !== '') {
-      result = result.split(token).join(String(val));
+      // Listas (varias líneas): cada elemento en su propia línea dentro del contrato
+      const texto = String(val).includes('\n') ? esc(String(val)).replace(/\n/g, '<br>') : String(val);
+      result = result.split(token).join(texto);
     } else {
       if (highlightUnfilled) {
         result = result.split(token).join(`<span class="unfilled-field" contenteditable="true" data-token="${esc(token)}" title="Haz clic para rellenar este campo manualmente">${esc(token)}</span>`);
@@ -5433,6 +5507,7 @@ async function renderCrearContrato() {
 
   // Si proviene de la conversión de una Proforma
   if (_proformaToConvert) _ctrProformaId = _proformaToConvert.id;
+  else if (!_ctrProformaId) _ctrDatosProforma = null;
   poblarProformasParaContrato();
   if (_proformaToConvert) {
     const p = _proformaToConvert;
@@ -5451,9 +5526,11 @@ async function renderCrearContrato() {
     asegurarOpcion(document.getElementById('ctr-modalidad'), p.modalidad_pago);
     asegurarOpcion(document.getElementById('ctr-garantia'), p.garantia);
     if (objEl && p.alcance) objEl.value = p.alcance;
-    if (entEl && p.items && p.items.length) {
-      entEl.value = p.items.map((it, idx) => `${idx + 1}. ${it.descripcion} (Cant: ${it.cantidad})`).join('\n');
-    }
+    _ctrDatosProforma = datosContratoDesdeProforma(p);
+    // Product Backlog: solo los ítems de servicio (las herramientas y lenguajes van al stack)
+    if (entEl) entEl.value = _ctrDatosProforma.modulos || entEl.value;
+    // Contrato nuevo desde proforma: recalcular todos los campos [ ... ] con sus datos
+    _templatePlaceholdersValues = {};
     asegurarOpcion(document.getElementById('ctr-metodo-trabajo'), p.metodo_trabajo);
     toast('info', 'Proforma Importada', `Datos de la proforma ${p.id} cargados exitosamente en el contrato.`);
     _proformaToConvert = null;
@@ -6275,6 +6352,8 @@ function cargarProformaEnFormulario(p) {
     };
   });
 
+  _currentProformaReqs = (Array.isArray(p.requerimientos) ? p.requerimientos : []).map(r => ({ tipo: r.tipo, titulo: r.titulo || '', detalle: r.detalle || '', prioridad: r.prioridad || 'Media' }));
+  renderRequerimientosProforma();
   set('prf-descuento-pct', Number(p.descuento_pct) || 0);
   asegurarOpcion(document.getElementById('prf-impuesto-opcion'), p.igv_tipo || 'igv_18');
   asegurarOpcion(document.getElementById('prf-modalidad-pago'), p.modalidad_pago);
@@ -6391,6 +6470,8 @@ async function renderCrearProforma() {
   // para que el usuario describa el primer producto/servicio.
   _currentProformaItems = [{ descripcion: '', cantidad: 1, precio: '' }];
   _currentProformaTechItems = [];
+  _currentProformaReqs = [];
+  renderRequerimientosProforma();
 
   // En blanco por defecto al abrir el módulo, igual que el resto del formulario.
   const alcEl = document.getElementById('prf-alcance');
@@ -6452,6 +6533,158 @@ function onProformaProductChange(prodName) {
     renderProformaItemsTable();
   }
   updateProformaPreview();
+}
+
+// ══════════ REQUERIMIENTOS RF / RNF DE LA PROFORMA ══════════
+let _currentProformaReqs = []; // [{ tipo: 'RF'|'RNF', titulo, detalle, prioridad }]
+
+// Plantillas típicas de requerimientos no funcionales (título + explicación editables)
+const RNF_SUGERIDOS = [
+  ['Seguridad', 'Acceso con usuario y contraseña cifrada, roles y permisos por perfil, conexión HTTPS y protección de datos personales conforme a la Ley N° 29733.'],
+  ['Rendimiento', 'Las pantallas principales responden en menos de 3 segundos con la carga de usuarios concurrentes estimada.'],
+  ['Disponibilidad', 'El sistema estará disponible 24/7 con una disponibilidad mensual de al menos 99.5%, salvo mantenimientos programados y comunicados.'],
+  ['Escalabilidad', 'La arquitectura permite crecer en usuarios, datos y módulos sin rediseñar el sistema (base de datos y servidores en la nube).'],
+  ['Usabilidad', 'Interfaz clara e intuitiva en español, con formularios validados y mensajes de error comprensibles para usuarios no técnicos.'],
+  ['Compatibilidad', 'Funciona en las últimas versiones de Chrome, Edge, Firefox y Safari, y se adapta a computadoras, tablets y celulares.'],
+  ['Respaldo y recuperación', 'Copias de seguridad automáticas de la base de datos y procedimiento de restauración ante fallas.'],
+  ['Mantenibilidad', 'Código fuente versionado en repositorio, documentado y organizado por módulos para facilitar mejoras futuras.'],
+];
+
+const codigoReq = (tipo, n) => `${tipo}-${String(n).padStart(2, '0')}`;
+
+function renderRequerimientosProforma() {
+  const cont = document.getElementById('prf-requerimientos');
+  if (!cont) return;
+  const bloque = (tipo, titulo, sub) => {
+    const filas = _currentProformaReqs.map((r, i) => ({ r, i })).filter(x => x.r.tipo === tipo);
+    const chips = tipo === 'RNF'
+      ? `<div class="req-chips"><span style="font-size:11px;color:var(--text-muted);align-self:center">Agregar típico:</span>${RNF_SUGERIDOS.map(([t], k) => `<button type="button" class="req-chip" onclick="agregarRnfSugerido(${k})">+ ${esc(t)}</button>`).join('')}</div>`
+      : '';
+    return `<div class="req-bloque">
+      <div class="req-bloque-head">
+        <div><strong>${titulo} (${filas.length})</strong><small>${sub}</small></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${tipo === 'RF' ? '<button type="button" class="btn btn-outline btn-sm" onclick="sugerirRfDesdeItems()" title="Crea un requerimiento funcional por cada ítem de servicio cotizado">Desde ítems cotizados</button>' : ''}
+          <button type="button" class="btn btn-primary btn-sm" onclick="agregarRequerimiento('${tipo}')">+ ${tipo === 'RF' ? 'Funcional' : 'No funcional'}</button>
+        </div>
+      </div>
+      ${chips}
+      ${filas.length ? filas.map(({ r, i }, pos) => `
+        <div class="req-fila">
+          <div class="req-codigo" title="Código en el contrato">${codigoReq(tipo, pos + 1)}</div>
+          <div class="req-titulo">
+            <input type="text" value="${esc(r.titulo)}" placeholder="${tipo === 'RF' ? 'Ej. Registro y gestión de clientes' : 'Ej. Seguridad de acceso'}" oninput="actualizarRequerimiento(${i}, 'titulo', this.value)" aria-label="Requerimiento">
+            <label>Prioridad
+              <select onchange="actualizarRequerimiento(${i}, 'prioridad', this.value)" aria-label="Prioridad">
+                ${['Alta', 'Media', 'Baja'].map(pr => `<option value="${pr}" ${r.prioridad === pr ? 'selected' : ''}>${pr}</option>`).join('')}
+              </select>
+            </label>
+          </div>
+          <textarea placeholder="Explica con detalle a qué se refiere: qué incluye, quién lo usa y cómo se valida." oninput="actualizarRequerimiento(${i}, 'detalle', this.value)" aria-label="Detalle del requerimiento" rows="3">${esc(r.detalle)}</textarea>
+          <div class="req-acciones">
+            <button type="button" title="Subir" onclick="moverRequerimiento(${i}, -1)" ${pos === 0 ? 'disabled' : ''}>↑</button>
+            <button type="button" title="Bajar" onclick="moverRequerimiento(${i}, 1)" ${pos === filas.length - 1 ? 'disabled' : ''}>↓</button>
+            <button type="button" title="Quitar" onclick="quitarRequerimiento(${i})">✕</button>
+          </div>
+        </div>`).join('') : `<div class="req-vacio">Aún no hay requerimientos ${tipo === 'RF' ? 'funcionales' : 'no funcionales'}.</div>`}
+    </div>`;
+  };
+  cont.innerHTML = bloque('RF', 'Requerimientos funcionales (RF)', 'Lo que el sistema hace para el cliente')
+    + bloque('RNF', 'Requerimientos no funcionales (RNF)', 'Cómo debe funcionar: calidad, seguridad, rendimiento…');
+}
+
+function agregarRequerimiento(tipo, titulo = '', detalle = '', prioridad = 'Media') {
+  _currentProformaReqs.push({ tipo, titulo, detalle, prioridad });
+  renderRequerimientosProforma();
+  const filas = document.querySelectorAll('#prf-requerimientos .req-bloque')[tipo === 'RF' ? 0 : 1]?.querySelectorAll('.req-fila input');
+  if (filas && filas.length && !titulo) filas[filas.length - 1].focus();
+}
+
+function agregarRnfSugerido(k) {
+  const [t, d] = RNF_SUGERIDOS[k];
+  if (_currentProformaReqs.some(r => r.tipo === 'RNF' && r.titulo.toLowerCase() === t.toLowerCase())) {
+    toast('info', 'Ya agregado', `"${t}" ya está en los requerimientos no funcionales.`);
+    return;
+  }
+  agregarRequerimiento('RNF', t, d, 'Media');
+}
+
+function sugerirRfDesdeItems() {
+  const items = _currentProformaItems.filter(it => (it.descripcion || '').trim());
+  if (!items.length) { toast('info', 'Sin ítems', 'Primero agrega ítems de servicio a la cotización.'); return; }
+  let n = 0;
+  items.forEach(it => {
+    const t = it.descripcion.trim();
+    if (!_currentProformaReqs.some(r => r.tipo === 'RF' && r.titulo.toLowerCase() === t.toLowerCase())) {
+      _currentProformaReqs.push({ tipo: 'RF', titulo: t, detalle: '', prioridad: 'Media' });
+      n++;
+    }
+  });
+  renderRequerimientosProforma();
+  toast('success', 'Requerimientos agregados', n ? `${n} requerimiento(s) funcional(es) desde los ítems. Completa su explicación.` : 'Los ítems ya estaban como requerimientos.');
+}
+
+function actualizarRequerimiento(i, campo, valor) {
+  if (_currentProformaReqs[i]) _currentProformaReqs[i][campo] = valor;
+}
+
+// Mueve dentro de su mismo tipo (RF con RF, RNF con RNF)
+function moverRequerimiento(i, delta) {
+  const tipo = _currentProformaReqs[i]?.tipo;
+  const idxTipo = _currentProformaReqs.map((r, k) => r.tipo === tipo ? k : -1).filter(k => k >= 0);
+  const pos = idxTipo.indexOf(i);
+  const destino = idxTipo[pos + delta];
+  if (destino === undefined) return;
+  [_currentProformaReqs[i], _currentProformaReqs[destino]] = [_currentProformaReqs[destino], _currentProformaReqs[i]];
+  renderRequerimientosProforma();
+}
+
+function quitarRequerimiento(i) {
+  _currentProformaReqs.splice(i, 1);
+  renderRequerimientosProforma();
+}
+
+function requerimientosLimpios() {
+  return _currentProformaReqs
+    .map(r => ({ tipo: r.tipo, titulo: (r.titulo || '').trim(), detalle: (r.detalle || '').trim(), prioridad: r.prioridad || 'Media' }))
+    .filter(r => r.titulo);
+}
+
+// Lista "RF-01. Título: detalle (Prioridad alta)" para el contrato
+function textoRequerimientos(reqs, tipo) {
+  return (reqs || []).filter(r => r.tipo === tipo).map((r, k) =>
+    `${codigoReq(tipo, k + 1)}. ${r.titulo}${r.detalle ? ': ' + r.detalle : ''}${r.prioridad ? ` (Prioridad ${r.prioridad.toLowerCase()})` : ''}`
+  ).join('\n');
+}
+
+// Tabla de requerimientos en el documento oficial de la proforma
+function htmlRequerimientosDocumento(reqs) {
+  const lista = Array.isArray(reqs) ? reqs : [];
+  if (!lista.length) return '';
+  const tabla = (tipo, titulo) => {
+    const filas = lista.filter(r => r.tipo === tipo);
+    if (!filas.length) return '';
+    return `<div style="font-weight:700;color:#334155;margin:10px 0 6px">${titulo}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="background:#f1f5f9;color:#475569;text-align:left">
+          <th style="padding:6px 8px;border:1px solid #e2e8f0;width:62px">Código</th>
+          <th style="padding:6px 8px;border:1px solid #e2e8f0;width:30%">Requerimiento</th>
+          <th style="padding:6px 8px;border:1px solid #e2e8f0">Detalle</th>
+          <th style="padding:6px 8px;border:1px solid #e2e8f0;width:64px">Prioridad</th>
+        </tr></thead>
+        <tbody>${filas.map((r, k) => `<tr>
+          <td style="padding:6px 8px;border:1px solid #e2e8f0;font-family:monospace;font-weight:700;color:#0f766e">${codigoReq(tipo, k + 1)}</td>
+          <td style="padding:6px 8px;border:1px solid #e2e8f0;font-weight:600;color:#0f172a">${esc(r.titulo)}</td>
+          <td style="padding:6px 8px;border:1px solid #e2e8f0;color:#334155;white-space:pre-line">${esc(r.detalle || '—')}</td>
+          <td style="padding:6px 8px;border:1px solid #e2e8f0">${esc(r.prioridad || '—')}</td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+  };
+  return `<div style="margin-top:20px;border-top:1px solid #e2e8f0;padding-top:14px;font-size:12px;color:#334155;line-height:1.5">
+    <div style="font-weight:700;color:#0f766e;text-transform:uppercase;margin-bottom:4px">2.1 Requerimientos del Proyecto:</div>
+    ${tabla('RF', 'Requerimientos funcionales (RF)')}
+    ${tabla('RNF', 'Requerimientos no funcionales (RNF)')}
+  </div>`;
 }
 
 let _prfMonedaPrev = null; // moneda elegida antes del cambio (null = aún no se eligió)
@@ -9138,6 +9371,7 @@ async function handleGuardarProforma(e) {
         metodo_trabajo: metodoTrabajo, metodo_sprint: metodoSprint, metodo_reuniones: metodoReuniones,
         metodo_herramientas: metodoHerramientas, metodo_roles: metodoRoles, metodo_detalle: metodoDetalle,
         tipo_cambio: tasaPen(moneda), tipo_cambio_info: infoTipoCambio(moneda),
+        requerimientos: requerimientosLimpios(),
         fecha_emision: fEmision, validez_dias: validezDias,
         fecha_vencimiento: fVenc, estado, responsable,
       }),
@@ -9171,6 +9405,7 @@ function resetCrearProformaForm() {
   document.getElementById('form-crear-proforma')?.reset();
   _currentProformaItems = [];
   _currentProformaTechItems = [];
+  _currentProformaReqs = [];
   renderCrearProforma();
 }
 
@@ -9242,6 +9477,7 @@ function previewCurrentProformaDraft() {
     total,
     metodo_trabajo: document.getElementById('prf-metodo-trabajo')?.value || '',
     metodo_sprint: document.getElementById('prf-metodo-sprint')?.value || '',
+    requerimientos: requerimientosLimpios(),
     metodo_reuniones: document.getElementById('prf-metodo-reuniones')?.value || '',
     metodo_herramientas: document.getElementById('prf-metodo-herramientas')?.value.trim() || '',
     metodo_roles: document.getElementById('prf-metodo-roles')?.value.trim() || '',
@@ -9549,6 +9785,8 @@ function renderProformaOfficialModal(p) {
           </tr>
         </table>
       </div>
+
+      ${htmlRequerimientosDocumento(p.requerimientos)}
 
       <!-- 3. Método de Trabajo (Metodología de Desarrollo) -->
       ${hasMetodo ? `
