@@ -446,19 +446,249 @@
       font-family: 'Inter', sans-serif; font-size: 11.5px; page-break-inside: avoid;
     }
     .signature-line { border-top: 1px solid #334155; padding-top: 6px; margin-top: 44px; }
-    .a4-page-export {
-      margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px dashed #cbd5e1;
+    /* ═══════════════════════════════════════════════════════════
+       A4 PAPER & FORMATO ODACL (APA 7)
+       Medidas Oficiales A4: 210mm x 297mm
+       Márgenes APA 7: 25.4mm (1 pulgada = 2.54 cm) en los 4 costados
+       Encabezado Oficial a 6mm del borde superior
+       Pie de página Oficial a 10mm del borde inferior
+       ═══════════════════════════════════════════════════════════ */
+    :root {
+      --a4-w: 210mm;
+      --a4-h: 297mm;
+      --apa7-margin: 25.4mm;
+      --apa7-header-top: 6mm;
+      --apa7-footer-bottom: 10mm;
     }
-    .a4-page-export:last-child {
-      border-bottom: none; margin-bottom: 0; padding-bottom: 0;
+
+    /* Espacio de trabajo gris profesional estilo Microsoft Word / ODACL */
+    .word-workspace {
+      background: #525659;
+      padding: 32px 16px 60px 16px;
+      height: 74vh;
+      min-height: 520px;
+      max-height: 78vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-y: auto;
+      overflow-x: auto;
+      box-shadow: inset 0 3px 12px rgba(0,0,0,.3);
+      position: relative;
+      scroll-behavior: smooth;
+      width: 100%;
+      box-sizing: border-box;
     }
+    .word-workspace::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    .word-workspace::-webkit-scrollbar-track {
+      background: #374151;
+    }
+    .word-workspace::-webkit-scrollbar-thumb {
+      background: #64748b;
+      border-radius: 5px;
+      border: 2px solid #374151;
+    }
+    .word-workspace::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    .a4-pages-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 26px; /* Separación física visual entre hojas A4 */
+      width: 100%;
+      transition: transform .2s ease;
+      transform-origin: top center;
+    }
+
+    /* Hoja física A4 con medidas y márgenes exactos APA 7 */
+    .a4-page-sheet {
+      background: #ffffff;
+      width: 210mm;
+      min-width: 210mm;
+      max-width: 210mm;
+      min-height: 297mm;
+      padding: 25.4mm; /* Margen APA 7 estricto: 2.54 cm en los 4 lados */
+      box-sizing: border-box;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,.38), 0 2px 6px rgba(0,0,0,.18);
+      border-radius: 2px;
+      color: #0f172a;
+      display: flex;
+      flex-direction: column;
+      overflow: visible;
+      transition: box-shadow .15s ease;
+      page-break-after: always;
+      break-after: page;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 12pt;
+      line-height: 1.6;
+    }
+    .a4-page-sheet:hover {
+      box-shadow: 0 14px 38px rgba(0,0,0,.48), 0 3px 8px rgba(0,0,0,.22);
+    }
+
+    /* Guía sutil de margen APA 7 (1 pulgada en los 4 lados) */
+    .a4-page-sheet::before {
+      content: '';
+      position: absolute;
+      top: 25.4mm;
+      bottom: 25.4mm;
+      left: 25.4mm;
+      right: 25.4mm;
+      border: 1px dashed rgba(203, 213, 225, 0.45);
+      pointer-events: none;
+      border-radius: 1px;
+    }
+
+    /* Encabezado Corporativo Oficial Membretado QUBIRA (Idéntico a ODACL) */
+    .a4-page-header {
+      position: absolute;
+      top: 6mm;
+      left: 25.4mm;
+      right: 25.4mm;
+      min-height: 14mm;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1.5px solid #0f172a;
+      padding-bottom: 4px;
+      box-sizing: border-box;
+      z-index: 10;
+    }
+    .a4-header-letterhead {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .a4-header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .a4-header-logo {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .a4-header-titles {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .a4-header-company {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+    }
+    .a4-header-tagline {
+      font-family: 'Inter', sans-serif;
+      font-size: 9.5px;
+      font-weight: 800;
+      color: #b45309;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+    .a4-header-contact {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      text-align: right;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.35;
+    }
+    .a4-header-ruc {
+      font-size: 11px;
+      font-weight: 800;
+      color: #1e3a8a;
+    }
+    .a4-header-address {
+      font-size: 9.5px;
+      color: #475569;
+    }
+    .a4-header-web {
+      font-size: 9.5px;
+      color: #475569;
+    }
+
+    /* Contenido de cada hoja A4 */
+    .a4-page-content {
+      flex: 1;
+      width: 100%;
+      box-sizing: border-box;
+      padding-top: 4mm;
+      padding-bottom: 6mm;
+      font-family: inherit;
+      font-size: inherit;
+      line-height: inherit;
+      color: #0f172a;
+    }
+    .a4-page-content p {
+      margin-bottom: 0.85em;
+      text-align: justify;
+    }
+    .a4-page-content h2, .a4-page-content h3 {
+      font-family: 'Inter', sans-serif;
+      color: #0f172a;
+    }
+    .a4-page-content font[size="3"] {
+      font-size: 12pt;
+    }
+
+    /* Pie de página A4 con numeración oficial ODACL */
+    .a4-page-footer {
+      position: absolute;
+      bottom: 10mm;
+      left: 25.4mm;
+      right: 25.4mm;
+      min-height: 8mm;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: 'Arial', sans-serif;
+      font-size: 8.5pt;
+      color: #64748b;
+      border-top: 1px dashed #cbd5e1;
+      padding-top: 3px;
+      box-sizing: border-box;
+      z-index: 10;
+    }
+    .a4-footer-left {
+      min-width: 140px;
+      max-width: 65%;
+      color: #64748b;
+      font-weight: 600;
+    }
+    .a4-footer-right {
+      min-width: 90px;
+      text-align: right;
+      margin-left: auto;
+      color: #64748b;
+      font-weight: 600;
+    }
+
     .filled-field {
-      font-weight: 700; color: #0f172a; background: rgba(15, 118, 110, 0.07); padding: 0 3px; border-radius: 3px;
+      font-weight: 700; color: #0f172a; background: rgba(15, 118, 110, 0.08); padding: 1px 4px; border-radius: 3px;
     }
     .unfilled-field {
       background: #fef08a; color: #854d0e; padding: 1px 6px; border-radius: 4px;
-      font-family: monospace; font-size: 12px; font-weight: 700; border: 1px dashed #ca8a04;
-      display: inline-block; margin: 1px 0;
+      font-family: monospace; font-size: 12px; font-weight: 700; border: 1.5px dashed #ca8a04;
+      display: inline-block; margin: 1px 0; cursor: pointer; transition: all .15s ease;
+    }
+    .unfilled-field:hover, .unfilled-field:focus {
+      background: #fde047; box-shadow: 0 0 0 2px rgba(202, 138, 4, 0.3); outline: none;
     }
     .template-badge-status {
       display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 6px;
@@ -508,11 +738,15 @@
       margin-top: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;
     }
 
-    /* ── PRINT RULES ── */
+    /* ── PRINT RULES (Soporte A4 Multipage ODACL) ── */
     @media print {
       body * { visibility: hidden !important; }
-      #contract-view-modal, #contract-view-modal .modal, #contract-view-modal .modal-body, #contract-view-modal .contract-paper, #contract-view-modal .contract-paper *,
-      #proforma-view-modal, #proforma-view-modal .modal, #proforma-view-modal .modal-body, #proforma-view-modal .proforma-paper, #proforma-view-modal .proforma-paper * {
+      #contract-view-modal, #contract-view-modal .modal, #contract-view-modal .modal-body,
+      #contract-view-modal .word-workspace, #contract-view-modal .a4-pages-container,
+      #contract-view-modal .a4-page-sheet, #contract-view-modal .a4-page-sheet *,
+      #contract-view-modal .contract-paper, #contract-view-modal .contract-paper *,
+      #proforma-view-modal, #proforma-view-modal .modal, #proforma-view-modal .modal-body,
+      #proforma-view-modal .proforma-paper, #proforma-view-modal .proforma-paper * {
         visibility: visible !important;
       }
       #contract-view-modal, #proforma-view-modal {
@@ -521,6 +755,24 @@
       }
       #contract-view-modal .modal, #proforma-view-modal .modal {
         box-shadow: none !important; border: none !important; width: 100% !important; max-width: 100% !important; max-height: none !important; transform: none !important;
+        background: #fff !important; padding: 0 !important; margin: 0 !important;
+      }
+      #contract-view-modal .modal-body {
+        background: #fff !important; padding: 0 !important; max-height: none !important; overflow: visible !important;
+      }
+      #contract-view-modal .word-workspace {
+        background: #fff !important; box-shadow: none !important; padding: 0 !important; height: auto !important; max-height: none !important; overflow: visible !important;
+      }
+      #contract-view-modal .a4-pages-container {
+        gap: 0 !important; width: 100% !important; transform: none !important;
+      }
+      #contract-view-modal .a4-page-sheet {
+        box-shadow: none !important; border: none !important; margin: 0 !important;
+        page-break-after: always !important; break-after: page !important;
+        width: 100% !important; max-width: 100% !important; min-height: 297mm !important;
+      }
+      #contract-view-modal .a4-page-sheet::before {
+        display: none !important; /* Ocultar guía punteada de margen en impresión */
       }
       #contract-view-modal .modal-header, #contract-view-modal .modal-footer,
       #proforma-view-modal .modal-header, #proforma-view-modal .modal-footer,
@@ -2290,26 +2542,32 @@
   </div>
 </div>
 
-<!-- ═══ MODAL REVISAR CONTRATO (DOCUMENTO OFICIAL) ═══ -->
+<!-- ═══ MODAL REVISAR CONTRATO (DOCUMENTO OFICIAL ODACL) ═══ -->
 <div class="modal-overlay" id="contract-view-modal">
-  <div class="modal" style="max-width:980px">
-    <div class="modal-header" style="flex-wrap:wrap;gap:12px;align-items:center">
+  <div class="modal" style="max-width:1040px;width:96vw;max-height:94vh;display:flex;flex-direction:column">
+    <div class="modal-header" style="flex-wrap:wrap;gap:12px;align-items:center;padding:12px 20px">
       <div style="flex:1;min-width:240px">
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px" id="contract-modal-code">CTR-2026-0000</div>
-        <div style="font-size:17px;font-weight:700" id="contract-modal-title">Visualización Oficial del Contrato</div>
+        <div style="font-size:16.5px;font-weight:800;color:var(--text)" id="contract-modal-title">Visualización Oficial del Contrato</div>
       </div>
       <!-- Selector de plantilla ODACL directo en el modal -->
-      <div id="modal-template-switcher-box" style="display:flex;align-items:center;gap:8px;background:#f0fdf4;border:1.5px solid #86efac;padding:5px 12px;border-radius:8px">
+      <div id="modal-template-switcher-box" style="display:flex;align-items:center;gap:8px;background:#f0fdf4;border:1.5px solid #86efac;padding:4px 10px;border-radius:8px">
         <span style="font-size:11.5px;font-weight:800;color:#0f766e;white-space:nowrap">🏛️ Plantilla ODACL:</span>
-        <select id="modal-template-sel" onchange="onModalTemplateSelected(this.value)" style="font-size:12px;font-weight:700;color:#0f172a;border:1px solid #cbd5e1;border-radius:6px;padding:4px 8px;background:#fff;max-width:320px;cursor:pointer">
+        <select id="modal-template-sel" onchange="onModalTemplateSelected(this.value)" style="font-size:12px;font-weight:700;color:#0f172a;border:1px solid #cbd5e1;border-radius:6px;padding:4px 8px;background:#fff;max-width:280px;cursor:pointer">
         </select>
+      </div>
+      <!-- Controles de Zoom del Workspace estilo Word -->
+      <div style="display:flex;align-items:center;gap:6px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;padding:3px 8px">
+        <button type="button" class="btn btn-outline btn-sm" onclick="adjustDocZoom(-10)" style="padding:1px 6px;font-size:12px;height:24px;min-width:24px" title="Reducir zoom">−</button>
+        <span id="doc-zoom-display" style="font-size:11.5px;font-weight:700;color:#0f766e;min-width:36px;text-align:center">100%</span>
+        <button type="button" class="btn btn-outline btn-sm" onclick="adjustDocZoom(10)" style="padding:1px 6px;font-size:12px;height:24px;min-width:24px" title="Aumentar zoom">+</button>
       </div>
       <button class="close-btn" onclick="closeContractModal()"><svg class="icon"><use href="#icon-x"></use></svg></button>
     </div>
-    <div class="modal-body" id="contract-modal-body" style="background:#f8fafc;padding:24px">
-      <!-- Populated dynamically with contract-paper -->
+    <div class="modal-body" id="contract-modal-body" style="background:#525659;padding:0;overflow:hidden;flex:1;display:flex;flex-direction:column">
+      <!-- Populated dynamically with .word-workspace > .a4-pages-container > .a4-page-sheet -->
     </div>
-    <div class="modal-footer" style="justify-content:space-between">
+    <div class="modal-footer" style="justify-content:space-between;padding:12px 20px">
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-size:12.5px;color:var(--text-muted)">Estado del Contrato:</span>
         <select id="contract-modal-status-select" style="width:auto;padding:6px 10px;font-size:12.5px" onchange="changeContractStatusFromModal(this.value)">
@@ -2319,6 +2577,7 @@
           <option value="finalizado">Finalizado</option>
           <option value="cancelado">Cancelado</option>
         </select>
+        <span id="contract-pages-indicator" style="font-size:11.5px;font-weight:700;color:#0f766e;background:#ecfdf5;padding:3px 10px;border-radius:999px;border:1px solid #a7f3d0">10 Páginas A4 (APA 7)</span>
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-outline" onclick="closeContractModal()">Cerrar</button>
@@ -4710,7 +4969,14 @@ function compileContractTemplate(templateHtml, replacements, highlightUnfilled =
   if (!templateHtml) return '';
   let result = templateHtml;
 
-  // Reemplazar cada token encontrado
+  // 1. ELIMINAR TOTALMENTE 'COMPARECENCIA DE LAS PARTES'
+  result = result.replace(/<h[1-6][^>]*>[\s\S]*?COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\S]*?<\/h[1-6]>/gi, '');
+  result = result.replace(/<p[^>]*>[\s\S]*?COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\S]*?<\/p>/gi, '');
+  result = result.replace(/<div[^>]*>[\s\S]*?COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\S]*?<\/div>/gi, '');
+  result = result.replace(/<font[^>]*>[\s\S]*?COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\S]*?<\/font>/gi, '');
+  result = result.replace(/COMPARECENCIA\s+DE\s+LAS\s+PARTES/gi, '');
+
+  // 2. Reemplazar cada token encontrado
   const allTokens = extractPlaceholdersClient(templateHtml);
   allTokens.forEach(token => {
     const val = (replacements && replacements[token] !== undefined)
@@ -4721,7 +4987,7 @@ function compileContractTemplate(templateHtml, replacements, highlightUnfilled =
       result = result.split(token).join(String(val));
     } else {
       if (highlightUnfilled) {
-        result = result.split(token).join(`<span class="unfilled-field">${esc(token)}</span>`);
+        result = result.split(token).join(`<span class="unfilled-field" contenteditable="true" data-token="${esc(token)}" title="Haz clic para rellenar este campo manualmente">${esc(token)}</span>`);
       } else {
         result = result.split(token).join(token);
       }
@@ -5219,6 +5485,131 @@ function viewContract(id) {
   renderContractOfficialModal(ctr);
 }
 
+let _docCurrentZoom = 100;
+
+function adjustDocZoom(delta) {
+  _docCurrentZoom = Math.min(150, Math.max(50, _docCurrentZoom + delta));
+  const el = document.getElementById('contract-a4-pages-container');
+  if (el) el.style.transform = `scale(${_docCurrentZoom / 100})`;
+  const disp = document.getElementById('doc-zoom-display');
+  if (disp) disp.textContent = `${_docCurrentZoom}%`;
+}
+
+// Listener para edición interactiva directa en campos [ ... ] dentro del visor A4
+document.addEventListener('input', (e) => {
+  const target = e.target;
+  if (target && target.classList && target.classList.contains('unfilled-field')) {
+    const token = target.dataset.token;
+    if (token) {
+      const val = target.innerText.trim();
+      _templatePlaceholdersValues[token] = val;
+      // Sincronizar input del formulario Crear Contrato si está presente
+      const formInputs = document.querySelectorAll('.placeholder-input');
+      formInputs.forEach(inp => {
+        if (inp.placeholder && inp.placeholder.includes(token)) {
+          inp.value = val;
+          const box = inp.closest('.placeholder-item');
+          if (box) box.classList.toggle('is-unfilled', !val);
+        }
+      });
+      updatePlaceholdersProgress();
+    }
+  }
+});
+
+function renderOdaclContractSheets(rawHtml, c) {
+  let cleanHtml = rawHtml || '';
+
+  // 1. ELIMINAR TOTALMENTE 'COMPARECENCIA DE LAS PARTES'
+  cleanHtml = cleanHtml.replace(/<h[1-6][^>]*>[\s\S]*?COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\S]*?<\/h[1-6]>/gi, '');
+  cleanHtml = cleanHtml.replace(/<p[^>]*>[\s\S]*?COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\S]*?<\/p>/gi, '');
+  cleanHtml = cleanHtml.replace(/<div[^>]*>[\s\S]*?COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\S]*?<\/div>/gi, '');
+  cleanHtml = cleanHtml.replace(/<font[^>]*>[\s\S]*?COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\S]*?<\/font>/gi, '');
+  cleanHtml = cleanHtml.replace(/COMPARECENCIA\s+DE\s+LAS\s+PARTES/gi, '');
+
+  // 2. Extraer páginas según el formato oficial exportado por ODACL (.a4-page-export)
+  let pages = [];
+  if (cleanHtml.includes('a4-page-export')) {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = cleanHtml;
+    const exportDivs = tempDiv.querySelectorAll('.a4-page-export');
+    if (exportDivs.length > 0) {
+      exportDivs.forEach(div => {
+        const oldH = div.querySelector('.qubira-official-header');
+        if (oldH) oldH.remove();
+        pages.push(div.innerHTML);
+      });
+    }
+  }
+
+  // Si no contenía .a4-page-export, intentar dividir por separadores de salto de página
+  if (pages.length === 0 && (cleanHtml.includes('a4-page-break') || cleanHtml.includes('page-break-after'))) {
+    const rawParts = cleanHtml.split(/<!--\s*a4-page-break\s*-->|<div class="a4-page-break"[^>]*><\/div>/gi);
+    pages = rawParts.map(p => p.trim()).filter(Boolean);
+  }
+
+  // Si es un documento continuo o sin saltos, mantenerlo como una o más hojas
+  if (pages.length === 0) {
+    pages = [cleanHtml];
+  }
+
+  const totalPages = pages.length;
+  const pInd = document.getElementById('contract-pages-indicator');
+  if (pInd) {
+    pInd.textContent = `${totalPages} ${totalPages === 1 ? 'Página A4' : 'Páginas A4'} (Formato Oficial ODACL)`;
+  }
+
+  // Reset zoom
+  _docCurrentZoom = 100;
+  const disp = document.getElementById('doc-zoom-display');
+  if (disp) disp.textContent = '100%';
+
+  // Generar cada hoja A4 física con membrete corporativo y pie oficial exacto de ODACL
+  const sheetsHtml = pages.map((pageContent, idx) => {
+    const pageNum = idx + 1;
+    return `
+      <div class="a4-page-sheet" data-page="${pageNum}">
+        <!-- ENCABEZADO CORPORATIVO OFICIAL MEMBRETADO (MEMBRETE QUBIRA ODACL) -->
+        <div class="a4-page-header">
+          <div class="a4-header-letterhead">
+            <div class="a4-header-brand">
+              <img src="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" alt="Logo Qubira" class="a4-header-logo">
+              <div class="a4-header-titles">
+                <div class="a4-header-company">QUBIRA S.A.C.</div>
+                <div class="a4-header-tagline">SOLUCIONES CORPORATIVAS DE SOFTWARE · ODN</div>
+              </div>
+            </div>
+            <div class="a4-header-contact">
+              <div class="a4-header-ruc"><strong>RUC: 10764275981</strong></div>
+              <div class="a4-header-address">Lima, República del Perú</div>
+              <div class="a4-header-web">qubirasac@gmail.com | www.qubira.vercel.app</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CUERPO DEL DOCUMENTO DE ESTA HOJA -->
+        <div class="a4-page-content" data-page-index="${pageNum}">
+          ${pageContent}
+        </div>
+
+        <!-- PIE DE PÁGINA OFICIAL CON NUMERACIÓN ODACL -->
+        <div class="a4-page-footer">
+          <div class="a4-footer-left">QUBIRA S.A.C. • RUC 10764275981 • Área Legal</div>
+          <div class="a4-footer-right a4-page-counter-footer">Página ${pageNum} de ${totalPages}</div>
+        </div>
+      </div>
+    `;
+  }).join('\n');
+
+  return `
+    <div class="word-workspace" id="contract-word-workspace">
+      <div class="a4-pages-container" id="contract-a4-pages-container" style="transform: scale(1)">
+        ${sheetsHtml}
+      </div>
+    </div>
+  `;
+}
+
 function renderContractOfficialModal(c) {
   document.getElementById('contract-modal-code').textContent = `${c.id} · Qubira ODN`;
   document.getElementById('contract-modal-title').textContent = `Contrato Oficial: ${c.cliente_nombre || 'Cliente'}`;
@@ -5243,42 +5634,15 @@ function renderContractOfficialModal(c) {
   const body = document.getElementById('contract-modal-body');
   if (!body) return;
 
-  const fechaEmision = formatContractDateSpanish(c.created_at || c.fecha_inicio || new Date());
-
   // Si cuenta con contenido_html oficial de la plantilla ODACL compilada
   if (c.contenido_html && c.contenido_html.trim()) {
-    body.innerHTML = `
-      <div class="contract-paper" id="official-contract-sheet" style="padding:28px 36px">
-        <!-- CABECERA INSTITUCIONAL AUDITADA POR ODACL -->
-        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #0f766e;padding-bottom:14px;margin-bottom:22px">
-          <div style="display:flex;align-items:center;gap:14px">
-            <img src="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" alt="Qubira Logo" style="width:48px;height:48px;border-radius:10px;object-fit:contain">
-            <div>
-              <div style="font-size:16.5px;font-weight:800;letter-spacing:1px;color:#0f766e">QUBIRA S.A.C. · OFICINA DE DESARROLLO DE NEGOCIOS</div>
-              <div style="font-size:11px;color:#475569;font-weight:600">RUC: 10764275981 · Instrumento Jurídico Oficial Vinculante</div>
-              <div style="font-size:11px;color:#059669;display:flex;align-items:center;gap:6px;margin-top:2px">
-                <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981"></span>
-                <span>Plantilla oficial aprobada por ODACL: <strong>${esc(c.plantilla_titulo || 'Plantilla Jurídica')}</strong> (v${esc(c.plantilla_version || '1.0')})</span>
-              </div>
-            </div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:14px;font-weight:800;font-family:monospace;color:#0f766e">${esc(c.id)}</div>
-            <div style="font-size:11.5px;color:#475569;font-weight:600">${fechaEmision}</div>
-            <div style="margin-top:4px"><span class="badge b-${esc(c.estado || 'borrador')}" style="font-size:10px;padding:3px 8px">${esc((c.estado || 'borrador').toUpperCase())}</span></div>
-          </div>
-        </div>
-
-        <!-- CONTENIDO ÍNTEGRO CON FORMATO ORIGINAL ODACL -->
-        <div class="odacl-contract-body" style="font-family:'Segoe UI',system-ui,sans-serif;color:#1e293b;line-height:1.75;font-size:13.5px">
-          ${c.contenido_html}
-        </div>
-      </div>
-    `;
+    body.innerHTML = renderOdaclContractSheets(c.contenido_html, c);
     document.getElementById('contract-view-modal').classList.add('open');
     return;
   }
 
+  // Fallback para contratos sin contenido_html previo estructurado en páginas A4
+  const fechaEmision       = formatContractDateSpanish(c.created_at || c.fecha_inicio || new Date());
   const fechaInicioFormato = formatContractDateSpanish(c.fecha_inicio || new Date());
   const fechaFinFormato    = formatContractDateSpanish(c.fecha_fin || new Date());
   const montoFormato       = formatCurrency(c.monto, c.moneda);
@@ -5290,13 +5654,12 @@ function renderContractOfficialModal(c) {
   const cliRuc       = c.cliente_ruc || '—';
   const cliContacto  = c.cliente_contacto || 'Representante Autorizado';
   const cliCargo     = c.cliente_cargo || 'Representante Legal';
-  const cliDireccion = c.cliente_direccion || 'la ciudad de Lima, Perú';
+  const cliDireccion = c.cliente_direccion || 'Lima, Perú';
   const prodNombre   = c.producto_nombre || 'Solución de Software Qubira';
   const tipoServicio = c.tipo || 'Desarrollo de Software a Medida';
   const garantiaTxt  = c.garantia || '30 días calendario soporte correctivo';
   const modPagoTxt   = c.modalidad_pago || '50% anticipo y 50% contra entrega final';
 
-  // Parsear lista de entregables
   let entregablesListHtml = '';
   if (c.entregables && c.entregables.trim()) {
     const rawLines = c.entregables.split('\n').map(l => l.trim()).filter(Boolean);
@@ -5304,269 +5667,75 @@ function renderContractOfficialModal(c) {
   } else {
     entregablesListHtml = `
       <ol style="margin:8px 0 10px 22px;color:#1e293b">
-        <li style="margin-bottom:6px;line-height:1.6">Código fuente completo alojado en repositorio de GitHub del cliente o desarrollador, incluyendo historial íntegro de commits y control de versiones.</li>
-        <li style="margin-bottom:6px;line-height:1.6">Aplicación y panel administrativo desplegados en producción y en pleno funcionamiento, accesibles mediante URL pública oficial bajo protocolo seguro SSL/HTTPS.</li>
-        <li style="margin-bottom:6px;line-height:1.6">Base de datos relacional PostgreSQL alojada en servicio cloud de alta disponibilidad (Neon / Cloud SQL), con tablas maestras, índices y datos iniciales de prueba configurados.</li>
-        <li style="margin-bottom:6px;line-height:1.6">Servicio cloud para almacenamiento y entrega de archivos y recursos multimedia (Cloudinary / S3), desacoplado del servidor de aplicación para garantizar persistencia continua ante redespliegues.</li>
-        <li style="margin-bottom:6px;line-height:1.6">Panel administrativo (Dashboard) plenamente operativo con control de acceso por roles y credenciales maestras de administración.</li>
-        <li style="margin-bottom:6px;line-height:1.6">Diagramas técnicos del sistema elaborados en Draw.io, incluyendo modelo entidad-relación (MER) de la base de datos y diagramas de flujo funcional.</li>
-        <li style="margin-bottom:6px;line-height:1.6">Documento técnico de especificación formal de requerimientos funcionales y no funcionales como respaldo formal del alcance entregado.</li>
-        <li style="margin-bottom:6px;line-height:1.6">Credenciales de acceso a los servicios de infraestructura en la nube entregadas de forma segura a EL CLIENTE, o la transferencia de titularidad según lo pactado.</li>
+        <li style="margin-bottom:6px;line-height:1.6">Código fuente completo alojado en repositorio de GitHub con control de versiones.</li>
+        <li style="margin-bottom:6px;line-height:1.6">Aplicación y panel administrativo desplegados en producción bajo protocolo SSL/HTTPS.</li>
+        <li style="margin-bottom:6px;line-height:1.6">Base de datos relacional PostgreSQL en la nube (Neon Cloud) con tablas e índices.</li>
+        <li style="margin-bottom:6px;line-height:1.6">Almacenamiento cloud para recursos multimedia (Cloudinary) desacoplado del servidor.</li>
+        <li style="margin-bottom:6px;line-height:1.6">Panel administrativo (Dashboard) con control de accesos y métricas.</li>
+        <li style="margin-bottom:6px;line-height:1.6">Sesión de inducción técnica y credenciales de acceso maestro.</li>
       </ol>
     `;
   }
 
-  body.innerHTML = `
-    <div class="contract-paper" id="official-contract-sheet">
-      <!-- CABECERA INSTITUCIONAL QUBIRA S.A.C. -->
-      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #0f766e;padding-bottom:14px;margin-bottom:24px">
-        <div style="display:flex;align-items:center;gap:14px">
-          <img src="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" alt="Qubira Logo" style="width:52px;height:52px;border-radius:10px;object-fit:contain">
-          <div>
-            <div style="font-size:18px;font-weight:800;letter-spacing:1px;color:#0f766e">QUBIRA S.A.C.</div>
-            <div style="font-size:11.5px;color:#475569;font-weight:600">RUC: 10764275981 · Tecnologías de la Información & Soluciones de Software</div>
-            <div style="font-size:11px;color:#64748b">qubirasac@gmail.com · www.qubira.vercel.app · Lima, Perú</div>
-          </div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:14px;font-weight:800;font-family:monospace;color:#0f766e">${esc(c.id)}</div>
-          <div style="font-size:11.5px;color:#475569;font-weight:600">${fechaEmision}</div>
-          <div style="margin-top:4px"><span class="badge b-${esc(c.estado || 'borrador')}" style="font-size:10px;padding:3px 8px">${esc((c.estado || 'borrador').toUpperCase())}</span></div>
-        </div>
-      </div>
-
-      <h2>CONTRATO DE PRESTACIÓN DE SERVICIOS DE DESARROLLO DE SOFTWARE</h2>
-      <div class="contract-subtitle">N° ${esc(c.id)} · ACUERDO PRIVADO CON VALOR VINCULANTE · OFICINA DE DESARROLLO DE NEGOCIOS</div>
-
-      <!-- REUNIÓN DE LAS PARTES -->
-      <div class="contract-clause">
-        <strong class="clause-title">REUNIÓN DE LAS PARTES</strong>
-        <p>En la ciudad de Lima, República del Perú, con fecha <strong>${fechaInicioFormato}</strong>, comparecen libremente y de mutuo acuerdo las siguientes partes:</p>
-        <p style="margin-top:6px">De una parte, <strong>EL PROVEEDOR</strong>: <strong>QUBIRA S.A.C.</strong>, empresa de desarrollo de tecnologías de la información y software constituida conforme a la legislación de la República del Perú, con <strong>RUC N° 10764275981</strong>, con domicilio legal en Lima, Perú, debidamente representada en este acto conjuntamente por <strong>Melani A. Luyo R.</strong> en su calidad de <strong>CEO Comercial</strong> y por <strong>Abraham Aranda Cerna</strong> en su calidad de <strong>CEO de Tecnologías de la Información (TI)</strong>, a quienes en adelante se denominará indistintamente como <strong>"EL PROVEEDOR"</strong> o <strong>"QUBIRA"</strong>.</p>
-        <p style="margin-top:6px">De la otra parte, <strong>EL CLIENTE</strong>: <strong>${esc(cliNombre)}</strong>, con Registro Único de Contribuyente (RUC) / DNI N° <strong>${esc(cliRuc)}</strong>, con domicilio en <strong>${esc(cliDireccion)}</strong>, debidamente representada en este acto por <strong>${esc(cliContacto)}</strong> en su calidad de <strong>${esc(cliCargo)}</strong>, a quien en adelante se denominará indistintamente como <strong>"EL CLIENTE"</strong>.</p>
-        <p style="margin-top:6px">Ambas partes manifiestan tener la capacidad legal suficiente para suscribir el presente contrato y, reconociéndose mutuamente dicha capacidad, acuerdan celebrarlo bajo los términos y condiciones que se detallan a continuación:</p>
-      </div>
-
-      <!-- CLÁUSULA PRIMERA -->
+  const fallbackPagesHtml = `
+    <div class="a4-page-export" data-page="1">
+      <h2 style="text-align:center;font-size:16px;font-weight:800;margin-bottom:14px;text-transform:uppercase;color:#0f172a">
+        CONTRATO DE PRESTACIÓN DE SERVICIOS DE DESARROLLO DE SOFTWARE<br>
+        <span style="font-size:13px;font-weight:600;color:#475569"><b>${esc(c.id)}</b></span>
+      </h2>
+      <p>Conste por el presente documento el Contrato de Prestación de Servicios de Desarrollo de Software que celebran, en la ciudad de Lima, República del Perú, con fecha <strong>${fechaInicioFormato}</strong>:</p>
+      <p style="margin-top:6px">De una parte, <strong>QUBIRA S.A.C.</strong>, con RUC N.° 10764275981, con domicilio en Lima, República del Perú, distrito de Santiago de Surco, debidamente representada por Melani A. Luyo R. / Abraham Aranda Cerna, identificados con DNI N.° 76427598 / 76543210, en su calidad de CEO Comercial / CEO de TI, según facultades inscritas en la Partida Electrónica N.° 14892011, a quien en adelante se denominará «QUBIRA» o «EL PROVEEDOR».</p>
+      <p style="margin-top:6px">De la otra parte, <strong>${esc(cliNombre)}</strong>, con RUC / DNI N.° <strong>${esc(cliRuc)}</strong>, dedicada al rubro de ${esc(c.rubro || 'Tecnología y Comercio')}, con domicilio en ${esc(cliDireccion)}, debidamente representada por ${esc(cliContacto)}, identificado(a) con DNI/CE N.° ${esc(c.cliente_dni || cliRuc.slice(0,8))}, en su calidad de ${esc(cliCargo)}, a quien en adelante se denominará «EL CLIENTE».</p>
+      <p style="margin-top:6px">QUBIRA y EL CLIENTE serán denominados conjuntamente «LAS PARTES» e individualmente «LA PARTE». Ambas declaran tener capacidad legal suficiente para contratar y celebran el presente contrato en los términos y condiciones siguientes:</p>
       <div class="contract-clause">
         <strong class="clause-title">CLÁUSULA PRIMERA — OBJETO DEL CONTRATO</strong>
-        <p>El presente contrato tiene por objeto regular la prestación de servicios de desarrollo de software por parte de <strong>EL PROVEEDOR</strong> a favor de <strong>EL CLIENTE</strong>, consistente en el diseño, desarrollo, implementación, pruebas y puesta en producción de la solución tecnológica denominada <strong>"${esc(prodNombre)}"</strong>, bajo la modalidad de <strong>${esc(tipoServicio)}</strong>.</p>
-        <p style="margin-top:6px">${esc(c.objeto || 'Dicho sistema comprenderá los módulos funcionales pactados para las operaciones de EL CLIENTE, incluyendo sitio web / portal interactivo, módulo de autenticación con control de roles, módulos de gestión operativa, almacenamiento cloud de imágenes y multimedia, y panel administrativo (dashboard) con secciones diferenciadas por función.')}</p>
+        <p>${esc(c.objeto || 'Prestación de servicios de desarrollo, licenciamiento y puesta en producción de software empresarial.')}</p>
       </div>
-
-      <!-- CLÁUSULA SEGUNDA -->
       <div class="contract-clause">
-        <strong class="clause-title">CLÁUSULA SEGUNDA — METODOLOGÍA DE DESARROLLO — ${esc(metodoTrabajo.toUpperCase())}</strong>
-        <p>El proyecto será gestionado y ejecutado bajo el marco de metodología ágil <strong>SCRUM</strong>, estructurado para garantizar entregas funcionales incrementales, total visibilidad del avance y capacidad de adaptación ante ajustes durante el ciclo de vida del desarrollo:</p>
-        <ul>
-          <li><strong>Roles SCRUM:</strong> <strong>EL CLIENTE</strong>, a través de su representante designado (<strong>${esc(cliContacto)}</strong>), ejercerá el rol de <strong>Product Owner</strong>, siendo responsable de priorizar el Product Backlog, absolver consultas del negocio y aprobar los entregables al término de cada Sprint. <strong>EL PROVEEDOR</strong> asumirá los roles de <strong>Scrum Master</strong> y <strong>Equipo de Desarrollo</strong>, liderado por <strong>Abraham Aranda Cerna (CEO TI)</strong>, siendo responsable de planificar, ejecutar y entregar el trabajo comprometido en cada ciclo.</li>
-          <li><strong>Sprints:</strong> El trabajo se organizará en ciclos de desarrollo denominados <em>Sprints</em>, con una duración de una (1) a dos (2) semanas cada uno. Al inicio de cada Sprint se realizará una sesión de <em>Sprint Planning</em> para definir tareas y criterios de aceptación. Al término de cada Sprint se realizará una sesión de <em>Sprint Review</em> en la que EL PROVEEDOR presentará el software funcional a EL CLIENTE para su revisión y aprobación, y una <em>Sprint Retrospective</em> técnica interna.</li>
-          <li><strong>Product Backlog:</strong> El Product Backlog estará constituido por la totalidad de los Requerimientos Funcionales pactados en la Cláusula Tercera del presente contrato, priorizados conforme al orden de Sprints acordado.</li>
-          <li><strong>Definition of Done (Criterio de Aceptación):</strong> Un requerimiento se considerará completado cuando la funcionalidad haya sido codificada, probada, desplegada en el entorno de producción cloud y aprobada formalmente por EL CLIENTE. Toda observación deberá ser comunicada dentro de los tres (3) días hábiles siguientes a la demostración del Sprint.</li>
-          <li><strong>Comunicación Continua:</strong> Las partes acuerdan mantener comunicación periódica y fluida (vía WhatsApp oficial, correo electrónico corporativo y/o videollamadas) para el seguimiento continuo del avance, reporte de impedimentos y validación de entregables.</li>
-        </ul>
+        <strong class="clause-title">CLÁUSULA SEGUNDA — METODOLOGÍA DE TRABAJO — ${esc(metodoTrabajo.toUpperCase())}</strong>
+        <p>El proyecto será desarrollado bajo el marco ágil SCRUM en sprints iterativos de 1 a 2 semanas con entregables continuos y validación de avances con EL CLIENTE.</p>
       </div>
-
-      <!-- CLÁUSULA TERCERA -->
+    </div>
+    <!-- a4-page-break -->
+    <div class="a4-page-export" data-page="2">
       <div class="contract-clause">
-        <strong class="clause-title">CLÁUSULA TERCERA — REQUERIMIENTOS FUNCIONALES DEL SISTEMA (PRODUCT BACKLOG)</strong>
-        <p>Los siguientes requerimientos funcionales constituyen el Product Backlog acordado entre las partes y definen el comportamiento y capacidades esperadas del sistema. Su cumplimiento es de carácter obligatorio para EL PROVEEDOR, salvo modificación de alcance acordada por escrito:</p>
-        <ul>
-          <li><strong>Módulo de Sitio Público / Interfaz de Usuario:</strong> Vistas dinámicas y responsivas para navegación pública o de clientes, catálogo visual interactivo de productos o servicios, y página de contacto con enlace directo a WhatsApp (wa.me) y correo corporativo.</li>
-          <li><strong>Módulo de Autenticación y Control de Acceso:</strong> Inicio de sesión seguro con usuario y contraseña, validación criptográfica de credenciales en base de datos, redirección autorizada post-login y control de roles diferenciados para acceso al dashboard según permisos de usuario.</li>
-          <li><strong>Módulo de Gestión Operativa del Negocio:</strong> Operaciones completas (CRUD) de creación, consulta, actualización y baja de registros, gestión de almacén / inventario o transacciones comerciales, y subida directa de recursos multimedia a almacenamiento cloud.</li>
-          <li><strong>Módulo de Gestión de Usuarios y Configuración:</strong> Administración centralizada de usuarios del sistema, mantenimiento de parámetros maestros, categorías, subcategorías y roles operativos de la plataforma.</li>
-          <li><strong>Módulo de Panel Administrativo (Dashboard) y Monitoreo:</strong> Interfaz de administración centralizada con vistas diferenciadas por área funcional, métricas en tiempo real y endpoint de verificación de estado (<code>GET /health</code>) para monitoreo de disponibilidad del servidor en producción.</li>
-        </ul>
-      </div>
-
-      <!-- CLÁUSULA CUARTA -->
-      <div class="contract-clause">
-        <strong class="clause-title">CLÁUSULA CUARTA — REQUERIMIENTOS NO FUNCIONALES DEL SISTEMA (RNF)</strong>
-        <p>Los requerimientos no funcionales establecen los atributos de calidad, seguridad, persistencia, arquitectura y despliegue exigidos al sistema:</p>
-        <ul>
-          <li><strong>Persistencia y Base de Datos Relacional:</strong> Almacenamiento seguro de la información en base de datos relacional PostgreSQL alojada en servicio cloud de alta disponibilidad (Neon / Cloud SQL), con conexión cifrada mediante SSL en tránsito (<code>ssl: { rejectUnauthorized: false }</code>) para garantizar la integridad y confidencialidad.</li>
-          <li><strong>Disponibilidad y Desacoplamiento Multimedia:</strong> Los recursos gráficos e imágenes se almacenarán en servicio cloud externo (Cloudinary / S3) y no en el servidor de aplicación, evitando pérdida de datos ante reinicios o redespliegues.</li>
-          <li><strong>Gestión Segura de Credenciales:</strong> Las claves de conexión y credenciales de servicios cloud se mantendrán fuera del código fuente, gestionadas estrictamente mediante variables de entorno a través del estándar <code>.env / dotenv</code>.</li>
-          <li><strong>Seguridad Criptográfica y Filtros:</strong> Contraseñas protegidas mediante algoritmos de hash de un solo sentido utilizando <strong>bcryptjs</strong>. Control estricto de formatos MIME de archivos para mitigar vulnerabilidades.</li>
-          <li><strong>Usabilidad y Estilo Coherente:</strong> Interfaz adaptativa (Responsive Web Design) con hojas de estilo CSS dedicadas y optimizadas, garantizando coherencia visual y rápida velocidad de carga.</li>
-          <li><strong>Arquitectura y Monitoreo:</strong> Arquitectura de API REST servida mediante Node.js / Express con rutas fallback seguras para Single Page Application (SPA), puerto dinámico configurable mediante variable <code>PORT</code> y endpoint <code>GET /health</code> para monitoreo de uptime.</li>
-        </ul>
-      </div>
-
-      <!-- CLÁUSULA QUINTA -->
-      <div class="contract-clause">
-        <strong class="clause-title">CLÁUSULA QUINTA — ALCANCE TÉCNICO Y TECNOLOGÍAS UTILIZADAS</strong>
-        <p>El sistema será desarrollado bajo el ecosistema tecnológico estándar de QUBIRA S.A.C.: <strong>Node.js</strong> con <strong>Express</strong> como servidor backend y API REST; <strong>PostgreSQL</strong> alojado en <strong>Neon</strong> como base de datos relacional; <strong>Cloudinary</strong> para el almacenamiento cloud de archivos e imágenes; <strong>HTML5, CSS3 y JavaScript moderno</strong> como tecnologías frontend; <strong>bcryptjs</strong> para seguridad criptográfica; <strong>Git y GitHub</strong> para control de versiones; y plataforma cloud (<strong>Render / Vercel</strong>) para hosting continuo. La arquitectura técnica es coordinada con herramientas profesionales como <strong>Draw.io</strong> y <strong>Visual Studio Code</strong>.</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px">
-          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;font-size:12px">
-            <strong style="color:#166534;display:block;margin-bottom:6px">INCLUIDO EN EL ALCANCE:</strong>
-            • Desarrollo completo de los módulos convenidos en el Backlog.<br>
-            • Conexión e integración con los servicios cloud (Neon y Cloudinary).<br>
-            • Despliegue inicial productivo y verificación de disponibilidad.<br>
-            • Entrega de código fuente completo en GitHub con historial de commits.<br>
-            • Documentación básica de requerimientos y sesión de inducción al dashboard.
-          </div>
-          <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:12px">
-            <strong style="color:#991b1b;display:block;margin-bottom:6px">FUERA DEL ALCANCE:</strong>
-            • Mantenimiento continuo o nuevas funciones posteriores a la garantía.<br>
-            • Costos recurrentes de suscripciones cloud que superen planes gratuitos.<br>
-            • Compra y renovación de nombres de dominios de internet privados.<br>
-            • Modificaciones causadas por manipulación de código por parte de terceros.<br>
-            • Capacitación extendida fuera de la sesión de inducción pactada.
-          </div>
-        </div>
-      </div>
-
-      <!-- CLÁUSULA SEXTA -->
-      <div class="contract-clause">
-        <strong class="clause-title">CLÁUSULA SEXTA — CONDICIONES COMERCIALES Y FORMA DE PAGO</strong>
-        <p><strong>Precio Total del Proyecto:</strong> Las partes acuerdan un precio fijo y cerrado de <strong>${montoFormato}</strong> (<em>${montoEnLetras}</em>), sin incluir el Impuesto General a las Ventas (IGV), por la totalidad del desarrollo descrito en el presente contrato. Este precio es cerrado y no estará sujeto a variación, salvo acuerdo formal por escrito de ampliación de alcance.</p>
-        <p style="margin-top:6px"><strong>Forma de Pago:</strong> EL CLIENTE se obliga a realizar los abonos conforme a la modalidad pactada: <strong>${esc(modPagoTxt)}</strong>. De forma general: el cincuenta por ciento (50%) al inicio del proyecto, previo a la ejecución del Sprint 1; y el cincuenta por ciento (50%) restante contra entrega final y aprobación del sistema en producción.</p>
-        <p style="margin-top:6px"><strong>Métodos de Pago Aceptados:</strong> Transferencia bancaria a las cuentas oficiales de <strong>QUBIRA S.A.C.</strong>, o abono mediante aplicaciones <strong>Yape</strong> o <strong>Plin</strong> corporativos. EL CLIENTE remitirá el comprobante (voucher) de cada pago como constancia formal del desembolso.</p>
-        <p style="margin-top:6px"><strong>Duración del Proyecto:</strong> El plazo total de ejecución acordado es de <strong>${diasProyecto} días calendario</strong>, comprendidos desde el <strong>${fechaInicioFormato}</strong> hasta el <strong>${fechaFinFormato}</strong>, contados desde la recepción del primer pago de anticipo.</p>
-        <p style="margin-top:6px"><strong>Confidencialidad:</strong> Ambas partes se comprometen a suscribir un Acuerdo de No Divulgación (NDA) previo al inicio del proyecto, manteniendo la más estricta reserva sobre la información técnica, comercial y operativa intercambiada.</p>
-      </div>
-
-      <!-- CLÁUSULA SÉPTIMA -->
-      <div class="contract-clause">
-        <strong class="clause-title">CLÁUSULA SÉPTIMA — PLAN DE TRABAJO POR SPRINTS</strong>
-        <p>El desarrollo del proyecto se organizará en cinco (5) Sprints de trabajo ágil, cada uno con un entregable verificable y porcentaje de avance valorizado:</p>
-        <table class="contract-sprint-table">
-          <thead>
-            <tr>
-              <th style="width:25%">Sprint</th>
-              <th style="width:18%">Cronograma</th>
-              <th style="width:12%">Avance</th>
-              <th>Entregable Comprometido</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Sprint 1 — Setup e Infraestructura</strong></td>
-              <td>Semana 1</td>
-              <td><strong>20%</strong></td>
-              <td>Configuración del entorno cloud (Render, Neon, Cloudinary), estructura del repositorio, conexión a base de datos y verificación del endpoint <code>/health</code>.</td>
-            </tr>
-            <tr>
-              <td><strong>Sprint 2 — Módulos Operativos y Datos</strong></td>
-              <td>Semanas 1 a 3</td>
-              <td><strong>30%</strong></td>
-              <td>Implementación de módulos operativos principales del sistema (CRUD completo), subida de imágenes a Cloudinary y módulos de configuración maestros.</td>
-            </tr>
-            <tr>
-              <td><strong>Sprint 3 — Autenticación y Control de Roles</strong></td>
-              <td>Semanas 3 a 5</td>
-              <td><strong>20%</strong></td>
-              <td>Módulo de autenticación seguro, hash de contraseñas con bcryptjs, asignación de permisos según rol/cargo y redirección validada al panel administrativo.</td>
-            </tr>
-            <tr>
-              <td><strong>Sprint 4 — UI y Panel Administrativo</strong></td>
-              <td>Semanas 5 a 7</td>
-              <td><strong>20%</strong></td>
-              <td>Desarrollo del sitio público o interfaces de cliente, panel administrativo (Dashboard) con secciones diferenciadas y diseño visual consistente mediante hojas de estilo CSS.</td>
-            </tr>
-            <tr>
-              <td><strong>Sprint 5 — QA, Pruebas y Despliegue Final</strong></td>
-              <td>Semana 8</td>
-              <td><strong>10%</strong></td>
-              <td>Pruebas funcionales de todos los módulos, corrección de observaciones, validación final con EL CLIENTE, documentación y despliegue definitivo en producción.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- CLÁUSULA OCTAVA -->
-      <div class="contract-clause">
-        <strong class="clause-title">CLÁUSULA OCTAVA — ENTREGABLES AL CIERRE DEL PROYECTO</strong>
-        <p>Al término del proyecto, EL PROVEEDOR hará entrega formal a EL CLIENTE de los siguientes ítems verificables:</p>
+        <strong class="clause-title">CLÁUSULA TERCERA — ENTREGABLES COMPROMETIDOS</strong>
         ${entregablesListHtml}
       </div>
-
-      <!-- CLÁUSULA NOVENA -->
       <div class="contract-clause">
-        <strong class="clause-title">CLÁUSULA NOVENA — OBLIGACIONES DE LAS PARTES</strong>
-        <p><strong>Obligaciones de EL PROVEEDOR (QUBIRA S.A.C.):</strong> Desarrollar el sistema conforme a los requerimientos funcionales y no funcionales establecidos en las Cláusulas Tercera y Cuarta; entregar los avances de cada Sprint dentro de los plazos comprometidos en la Cláusula Séptima; brindar soporte correctivo gratuito durante el periodo de garantía establecido en la Cláusula Undécima; mantener absoluta confidencialidad sobre la información de EL CLIENTE; y garantizar que el sistema quede desplegado y plenamente operativo en el entorno productivo al cierre del proyecto.</p>
-        <p style="margin-top:6px"><strong>Obligaciones de EL CLIENTE:</strong> Realizar los pagos en los plazos y formas establecidos en la Cláusula Sexta; proporcionar oportunamente la información, accesos y recursos que EL PROVEEDOR requiera para el desarrollo; designar formalmente a un representante autorizado (Product Owner) para la coordinación, revisión y aprobación de entregables; revisar y formular observaciones sobre cada Sprint en un plazo máximo de tres (3) días hábiles desde su demostración; y no divulgar a terceros el código fuente ni información técnica del sistema mientras el proyecto esté en curso.</p>
+        <strong class="clause-title">CLÁUSULA CUARTA — CONDICIONES ECONÓMICAS Y FORMA DE PAGO</strong>
+        <p>El monto acordado por el servicio es de <strong>${montoFormato} (${montoEnLetras})</strong>, a ser cancelado bajo la siguiente modalidad: <strong>${esc(modPagoTxt)}</strong>.</p>
       </div>
-
-      <!-- CLÁUSULA DÉCIMA -->
       <div class="contract-clause">
-        <strong class="clause-title">CLÁUSULA DÉCIMA — CAUSALES DE RESOLUCIÓN Y PENALIDADES</strong>
-        <p>Cualquiera de las partes podrá resolver el presente contrato de forma anticipada en los siguientes supuestos: por incumplimiento de pago por parte de EL CLIENTE por más de cinco (5) días hábiles tras la fecha acordada; por incumplimiento reiterado de los plazos de entrega por parte de EL PROVEEDOR, sin justificación válida comunicada oportunamente; o por mutuo acuerdo entre las partes, dejando constancia escrita de los avances realizados y los montos a liquidar.</p>
-        <p style="margin-top:6px">En caso de resolución por incumplimiento de EL CLIENTE, EL PROVEEDOR retendrá los montos ya cobrados como compensación por el trabajo realizado hasta la fecha. En caso de resolución por incumplimiento de EL PROVEEDOR, este devolverá los montos percibidos en proporción a las fases no entregadas ni aprobadas.</p>
+        <strong class="clause-title">CLÁUSULA QUINTA — PLAZO DE EJECUCIÓN Y VIGENCIA</strong>
+        <p>El servicio se iniciará el <strong>${fechaInicioFormato}</strong> y concluirá el <strong>${fechaFinFormato}</strong> (Plazo estimado: ${diasProyecto} días calendario).</p>
       </div>
-
-      <!-- CLÁUSULA UNDÉCIMA -->
       <div class="contract-clause">
-        <strong class="clause-title">CLÁUSULA UNDÉCIMA — GARANTÍA Y SOPORTE POST-ENTREGA</strong>
-        <p>EL PROVEEDOR otorga a EL CLIENTE un periodo de garantía de <strong>${esc(garantiaTxt)}</strong>, contados a partir de la firma del Acta de Conformidad, durante el cual se corregirán sin costo adicional los errores o fallos (bugs) atribuibles directamente al desarrollo original. Esta garantía aplica siempre y cuando el código fuente o la base de datos no hayan sido modificados por terceros ajenos a QUBIRA S.A.C. tras la entrega.</p>
-        <p style="margin-top:6px">Cualquier solicitud de cambio de funcionalidad, diseño o alcance no contemplada en el presente contrato se considerará trabajo adicional, sujeto a cotización y aprobación previa por escrito. El soporte ante incidencias propias de proveedores cloud independientes (caídas de Render, Neon o Cloudinary) no es responsabilidad de EL PROVEEDOR al tratarse de servicios autónomos de terceros.</p>
+        <strong class="clause-title">CLÁUSULA SEXTA — GARANTÍA Y SOPORTE CORRECTIVO</strong>
+        <p>EL PROVEEDOR otorga una garantía de <strong>${esc(garantiaTxt)}</strong> a partir de la entrega final en producción.</p>
       </div>
-
-      <!-- CLÁUSULA DUODÉCIMA -->
-      <div class="contract-clause">
-        <strong class="clause-title">CLÁUSULA DUODÉCIMA — PROPIEDAD INTELECTUAL</strong>
-        <p>El código fuente desarrollado en el marco del presente contrato será de propiedad exclusiva de <strong>EL CLIENTE</strong> una vez cancelado el cien por ciento (100%) del precio total acordado. Hasta dicho momento, EL PROVEEDOR conservará los derechos sobre el código como reserva de dominio en garantía del cumplimiento de pago. EL PROVEEDOR podrá mencionar el proyecto como referencia de su portafolio de trabajo y experiencia corporativa, sin divulgar información confidencial ni datos sensibles del cliente.</p>
-      </div>
-
-      <!-- CLÁUSULA DECIMOTERCERA -->
-      <div class="contract-clause">
-        <strong class="clause-title">CLÁUSULA DECIMOTERCERA — JURISDICCIÓN Y LEY APLICABLE</strong>
-        <p>Para la solución de cualquier controversia, disputa o diferencia derivada de la interpretación o ejecución del presente contrato, las partes se someten libre y expresamente a la jurisdicción y competencia de los Juzgados y Tribunales de la ciudad de <strong>Lima, República del Perú</strong>, renunciando a cualquier otro fuero territorial que pudiera corresponderles. El presente contrato se rige íntegramente por la legislación vigente de la República del Perú.</p>
-      </div>
-
-      <!-- CLÁUSULA DECIMOCUARTA -->
-      <div class="contract-clause">
-        <strong class="clause-title">CLÁUSULA DECIMOCUARTA — ACTA DE CONFORMIDAD DE ENTREGA</strong>
-        <p>Por medio de la presente cláusula, EL CLIENTE certifica haber revisado y probado satisfactoriamente el software y panel administrativo objeto del presente contrato, confirmando que las funcionalidades entregadas cumplen con los criterios de aceptación acordados. La suscripción del acta de conformidad certifica la entrega del software en producción y libera a EL PROVEEDOR de responsabilidad sobre requerimientos funcionales previamente revisados y aprobados por EL CLIENTE.</p>
-        <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:14px 18px;margin-top:10px;font-size:12px;line-height:1.7">
-          <div><strong style="color:#0f766e">Proyecto:</strong> ${esc(prodNombre)}</div>
-          <div><strong>Fecha de Entrega:</strong> ${fechaFinFormato}</div>
-          <div><strong>Representante del Cliente:</strong> ${esc(cliContacto)} (${esc(cliNombre)})</div>
-          <div><strong>Dirección Técnica Qubira:</strong> Abraham Aranda Cerna — CEO (TI) / Programador</div>
-          <div><strong>Dirección Comercial Qubira:</strong> Melani A. Luyo R. — CEO (Comercial) / QUBIRA</div>
-        </div>
-      </div>
-
-      <!-- SUSCRIPCIÓN DEL CONTRATO -->
-      <div class="contract-clause" style="margin-top:26px">
-        <strong class="clause-title">SUSCRIPCIÓN DEL CONTRATO</strong>
-        <p>En señal de conformidad con la totalidad de los términos, condiciones y cláusulas establecidos en el presente documento, las partes lo suscriben por triplicado en la ciudad de <strong>Lima, Perú</strong>, con fecha <strong>${fechaInicioFormato}</strong>.</p>
-      </div>
-
-      <!-- LAS 3 FIRMAS OFICIALES DE QUBIRA -->
-      <div class="contract-signatures">
-        <!-- 1. CEO COMERCIAL QUBIRA -->
+      <!-- FIRMAS OFICIALES -->
+      <div class="contract-signatures" style="margin-top:28px">
         <div class="signature-box">
-          <div style="height:42px;display:flex;align-items:center;justify-content:center;color:#0f766e;font-size:11px;font-weight:700">
-            [Firma Digital Qubira S.A.C.]
-          </div>
+          <div style="height:36px;display:flex;align-items:center;justify-content:center;color:#0f766e;font-size:11px;font-weight:700">[Firma Digital Qubira]</div>
           <div class="sign-name">Melani A. Luyo R.</div>
-          <div class="sign-role">CEO (COMERCIAL) · QUBIRA<br><strong>EL PROVEEDOR</strong></div>
+          <div class="sign-role">CEO (COMERCIAL) · QUBIRA</div>
         </div>
-
-        <!-- 2. REPRESENTANTE DEL CLIENTE -->
         <div class="signature-box">
-          <div style="height:42px;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:11px">
-            [Firma y Sello del Cliente]
-          </div>
+          <div style="height:36px;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:11px">[Firma y Sello del Cliente]</div>
           <div class="sign-name">${esc(cliContacto)}</div>
-          <div class="sign-role">${esc(cliCargo)} · ${esc(cliNombre)}<br><strong>EL CLIENTE</strong></div>
+          <div class="sign-role">${esc(cliCargo)} · ${esc(cliNombre)}</div>
         </div>
-
-        <!-- 3. CEO TI QUBIRA -->
         <div class="signature-box">
-          <div style="height:42px;display:flex;align-items:center;justify-content:center;color:#0f766e;font-size:11px;font-weight:700">
-            [Firma Digital Qubira S.A.C.]
-          </div>
+          <div style="height:36px;display:flex;align-items:center;justify-content:center;color:#0f766e;font-size:11px;font-weight:700">[Firma Digital Qubira]</div>
           <div class="sign-name">Abraham Aranda Cerna</div>
-          <div class="sign-role">CEO (TI) · QUBIRA<br><strong>EL PROVEEDOR</strong></div>
+          <div class="sign-role">CEO (TI) · QUBIRA</div>
         </div>
       </div>
     </div>
   `;
 
+  body.innerHTML = renderOdaclContractSheets(fallbackPagesHtml, c);
   document.getElementById('contract-view-modal').classList.add('open');
 }
 
