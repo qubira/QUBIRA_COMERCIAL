@@ -1786,42 +1786,21 @@
               </div>
             </div>
 
-            <!-- SECCIÓN 4: Alcance y Cláusulas del Modelo Qubira -->
-            <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-              <div style="display:flex;align-items:center;gap:6px">
-                <svg class="icon" style="width:15px;height:15px"><use href="#icon-file-text"></use></svg>
-                <span>4. Alcance, Metodología Ágil y Respaldo Técnico</span>
-              </div>
-              <button type="button" class="btn btn-outline btn-sm" onclick="cargarPlantillaContratoModelo()" style="font-size:11px;padding:3px 10px;display:inline-flex;align-items:center;gap:4px">
-                <span>📑</span> Cargar Plantilla Modelo Qubira
-              </button>
-            </div>
-
-            <div class="form-group" style="margin-bottom:12px">
-              <label for="ctr-metodo-trabajo">Metodología de Desarrollo y Gestión Ágil *</label>
-              <select id="ctr-metodo-trabajo" required onchange="updateContractPreview()">
-                <option value="Scrum — Marco Ágil por Sprints iterativos con entregables continuos y feedback">Scrum — Sprints iterativos de 1 a 2 semanas con entregables continuos (Modelo Oficial Qubira)</option>
-                <option value="Kanban — Marco Ágil por flujo continuo en tablero visual">Kanban — Flujo continuo y tablero visual dinámico</option>
-                <option value="Scrumban — Marco híbrido de sprints y tablero Kanban">Scrumban — Híbrido de Sprints con tablero visual</option>
-                <option value="Desarrollo Estructurado por Fases e Hitos Técnicos">Desarrollo Estructurado por Fases e Hitos Técnicos</option>
-              </select>
-              <span class="form-help">Rige las Cláusulas Segunda (Metodología Scrum) y Séptima (Plan de Trabajo por Sprints).</span>
-            </div>
-
-            <div class="form-group">
-              <label for="ctr-objeto">Objeto del Contrato (Alcance Principal) *</label>
-              <textarea id="ctr-objeto" rows="3" required oninput="updateContractPreview()"></textarea>
-              <span class="form-help">Describe la solución contratada por el cliente (Cláusula Primera).</span>
-            </div>
-
-            <!-- Requerimientos y entregables: llegan de la proforma de origen (no se editan aquí) -->
+            <!-- Alcance, metodología y requerimientos: llegan de la proforma de origen (no se editan aquí) -->
+            <select id="ctr-metodo-trabajo" hidden aria-hidden="true" tabindex="-1">
+              <option value="Scrum — Marco Ágil por Sprints iterativos con entregables continuos y feedback">Scrum</option>
+              <option value="Kanban — Marco Ágil por flujo continuo en tablero visual">Kanban</option>
+              <option value="Scrumban — Marco híbrido de sprints y tablero Kanban">Scrumban</option>
+              <option value="Desarrollo Estructurado por Fases e Hitos Técnicos">Por fases</option>
+            </select>
+            <textarea id="ctr-objeto" hidden aria-hidden="true" tabindex="-1"></textarea>
             <textarea id="ctr-entregables" hidden aria-hidden="true" tabindex="-1"></textarea>
 
             <!-- SECCIÓN 5: Rellenado de Campos en Corchetes [ ... ] -->
             <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:20px">
               <div style="display:flex;align-items:center;gap:6px">
                 <svg class="icon" style="width:15px;height:15px"><use href="#icon-edit-3"></use></svg>
-                <span>5. Rellenado en contexto de la plantilla [ ... ]</span>
+                <span>4. Rellenado en contexto de la plantilla [ ... ]</span>
               </div>
               <div style="display:flex;gap:6px;align-items:center">
                 <span class="badge b-vigente" id="ctr-placeholders-badge" style="font-size:11px">0 campos detectados</span>
@@ -6312,7 +6291,8 @@ function onContractClientSelected(cliId) {
 
 function onContractProductChange(prodName) {
   const objEl = document.getElementById('ctr-objeto');
-  if (objEl) {
+  // Si el contrato viene de una proforma, su alcance manda
+  if (objEl && !(_ctrProformaId && getStoredProformas().find(x => x.id === _ctrProformaId)?.alcance)) {
     objEl.value = `Licenciamiento y despliegue del software corporativo "${prodName}", incluyendo configuración de servidores, pruebas de integración y puesta en marcha para las operaciones del cliente.`;
   }
   autoFillPlaceholdersFromForm(false);
