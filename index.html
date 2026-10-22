@@ -1814,11 +1814,8 @@
               <span class="form-help">Describe la solución contratada por el cliente (Cláusula Primera).</span>
             </div>
 
-            <div class="form-group" style="margin-top:12px">
-              <label for="ctr-entregables">Requerimientos Funcionales, Módulos y Entregables Clave (Product Backlog) *</label>
-              <textarea id="ctr-entregables" rows="4" required oninput="updateContractPreview()"></textarea>
-              <span class="form-help">Módulos del sistema, pantallas, base de datos y entregables (Cláusulas Tercera y Octava).</span>
-            </div>
+            <!-- Requerimientos y entregables: llegan de la proforma de origen (no se editan aquí) -->
+            <textarea id="ctr-entregables" hidden aria-hidden="true" tabindex="-1"></textarea>
 
             <!-- SECCIÓN 5: Rellenado de Campos en Corchetes [ ... ] -->
             <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:20px">
