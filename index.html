@@ -6103,9 +6103,21 @@ function compileContractTemplate(templateHtml, replacements, highlightUnfilled =
       : getAutoFillValueForToken(token);
 
     if (val && String(val).trim() !== '') {
-      // Listas (varias líneas): cada elemento en su propia línea dentro del contrato
-      const texto = String(val).includes('\n') ? esc(String(val)).replace(/\n/g, '<br>') : String(val);
-      result = result.split(token).join(texto);
+      if (String(val).includes('\n')) {
+        // Listas (varias líneas): la lista empieza en una línea nueva, cada elemento en
+        // su propia línea, y el texto que sigue continúa debajo (sin la «, y» que la unía)
+        const lineas = String(val).split('\n').map(l => l.trim()).filter(Boolean).map(esc).join('<br>');
+        const reTok = new RegExp('[ \\t\\u00a0]*' + token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\s*,\\s*(?:y\\s+)?)?', 'g');
+        result = result.replace(reTok, (m, union, pos, todo) => {
+          const sigue = todo.slice(pos + m.length);
+          const finDeBloque = /^\s*(<\/(p|div|li|td|h\d)>|$)/i.test(sigue);
+          const finDeFrase = !union && /^\s*[.;:]/.test(sigue);
+          const inicioDeBloque = /(<(p|div|li|td|h\d)\b[^>]*>|^)\s*$/i.test(todo.slice(0, pos));
+          return (inicioDeBloque ? '' : '<br>') + lineas + (finDeBloque || finDeFrase ? '' : '<br>');
+        });
+      } else {
+        result = result.split(token).join(String(val));
+      }
     } else {
       if (highlightUnfilled) {
         result = result.split(token).join(`<span class="unfilled-field" contenteditable="true" data-token="${esc(token)}" title="Haz clic para rellenar este campo manualmente">${esc(token)}</span>`);
