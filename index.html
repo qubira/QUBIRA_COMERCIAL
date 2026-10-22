@@ -6119,6 +6119,12 @@ function renderPlaceholdersForm(placeholders, reset = false) {
       <div class="phc-texto">${sueltosVisibles.map(t => `<div>${esc(humanizePlaceholderToken(t))}: ${htmlCasillaVariable(t)}</div>`).join('')}</div>
     </div>` : '';
 
+  // Al redibujar se conserva dónde estaba la lista (y la página), salvo que cambie el filtro o la búsqueda
+  const listaPrev = container.querySelector('.phc-lista');
+  const vistaClave = _phFiltro + '|' + _phBusqueda + '|' + _selectedTemplateKey;
+  const scrollPrev = listaPrev && container.dataset.vista === vistaClave ? listaPrev.scrollTop : 0;
+  const winPrev = window.scrollY;
+  container.dataset.vista = vistaClave;
   container.innerHTML = `
     <div class="phc-barra">
       <button type="button" class="phc-tab ${_phFiltro === 'pendientes' ? 'activo' : ''}" onclick="phFiltrar('pendientes')">Pendientes (${pendientesTotal})</button>
@@ -6129,6 +6135,8 @@ function renderPlaceholdersForm(placeholders, reset = false) {
     <div class="phc-lista">
       ${tarjetas || otros ? tarjetas + otros : `<div class="phc-vacio">${_phFiltro === 'pendientes' && !q ? '✓ Todas las variables de la plantilla están completas.' : 'No hay párrafos que coincidan con la búsqueda.'}</div>`}
     </div>`;
+  if (scrollPrev) { const l = container.querySelector('.phc-lista'); if (l) l.scrollTop = scrollPrev; }
+  if (listaPrev && Math.abs(window.scrollY - winPrev) > 2) window.scrollTo(0, winPrev);
 }
 
 function phFiltrar(f) { _phFiltro = f; renderPlaceholdersForm(extraerPlaceholdersPlantillaActual(), false); }
