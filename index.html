@@ -1014,6 +1014,11 @@
     .phc-plantilla:hover { background: #f0fdfa; }
     .phc-plantilla.activa { background: #0f766e; border-color: #0f766e; color: #fff; }
     .ph-combo { position: relative; display: inline-block; vertical-align: baseline; }
+    .ph-multi { display: inline-flex !important; flex-wrap: wrap; align-items: center; gap: 4px; padding: 2px 4px !important; max-width: 100%; line-height: 1.3 !important; }
+    .ph-multi .ph-combo-in { border: 0 !important; outline: 0; background: transparent !important; font-family: 'Inter', sans-serif !important; font-size: 12.5px !important; line-height: 1.4 !important; height: auto !important; padding: 2px 4px !important; min-width: 0; box-shadow: none !important; }
+    .ph-chip { display: inline-flex; align-items: center; gap: 4px; background: #0f766e; color: #fff; border-radius: 999px; padding: 2px 4px 2px 9px; font-size: 12px; font-weight: 600; font-family: 'Inter', sans-serif; }
+    .ph-chip button { border: 0; background: rgba(255,255,255,.22); color: #fff; width: 16px; height: 16px; border-radius: 50%; font-size: 9px; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+    .ph-chip button:hover { background: rgba(255,255,255,.4); }
     .ph-combo-lista { position: absolute; left: 0; top: calc(100% + 4px); z-index: 50; min-width: 260px; max-height: 240px; overflow-y: auto; background: #fff; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 14px 30px rgba(15,23,42,.16); padding: 4px; display: flex; flex-direction: column; font-family: 'Inter', sans-serif; }
     .ph-combo-lista[hidden] { display: none; }
     .ph-combo-grupo { font-size: 10px; font-weight: 800; color: #0f766e; text-transform: uppercase; letter-spacing: .4px; padding: 6px 8px 3px; }
@@ -6078,12 +6083,7 @@ function htmlCasillaVariable(token) {
   }
   if (VARIABLES_HERRAMIENTA.includes(limpio)) {
     const { cotizadas, catalogo } = herramientasParaContrato();
-    if (cotizadas.length || catalogo.length) {
-      const val = _templatePlaceholdersValues[token] || '';
-      return `<span class="ph-combo"><input type="text" class="ph-in ph-combo-in ${val ? 'lleno' : ''}" data-token="${esc(token)}" data-valor="${esc(val)}" value="${esc(val)}"
-        placeholder="🔍 Buscar herramienta…" autocomplete="off" size="${Math.max(18, val.length + 2)}" title="Herramientas registradas en Tech Stack & Costos"
-        onfocus="phComboAbrir(this)" oninput="phComboFiltrar(this)" onkeydown="phComboTeclas(event, this)" onblur="phComboSalir(this)"><span class="ph-combo-lista" hidden></span></span>`;
-    }
+    if (cotizadas.length || catalogo.length) return htmlHerramientasMulti(token);
   }
   if (limpio === 'CARGO_REPRESENTANTE_QUBIRA') {
     const val = _templatePlaceholdersValues[token] || (_templatePlaceholdersValues[token] = cargoPorDefectoQubira());
@@ -6748,11 +6748,46 @@ function herramientasParaContrato() {
   return { cotizadas, catalogo };
 }
 
+// ── Varias herramientas por variable: etiquetas + buscador ──
+function herramientasElegidas(token) {
+  const v = String(_templatePlaceholdersValues[token] || '').trim();
+  if (!v) return [];
+  const partes = v.split(/,\s*|\s+y\s+/).map(x => x.trim()).filter(Boolean);
+  return [...new Set(partes)];
+}
+function htmlHerramientasMulti(token) {
+  const sel = herramientasElegidas(token);
+  const val = _templatePlaceholdersValues[token] || '';
+  return `<span class="ph-in ph-multi ${sel.length ? 'lleno' : ''}" data-token="${esc(token)}" data-valor="${esc(val)}">${sel.map((n, i) =>
+      `<span class="ph-chip">${esc(n)}<button type="button" title="Quitar ${esc(n)}" onmousedown="event.preventDefault()" onclick="phMultiQuitar('${esc(token)}', ${i})">✕</button></span>`).join('')}<span class="ph-combo"><input type="text" class="ph-combo-in" data-tok="${esc(token)}" data-valor=""
+      placeholder="${sel.length ? '+ Agregar otra…' : '🔍 Buscar herramienta…'}" autocomplete="off" size="${sel.length ? 14 : 20}" title="Herramientas registradas en Tech Stack & Costos"
+      onfocus="phComboAbrir(this)" oninput="phComboFiltrar(this)" onkeydown="phComboTeclas(event, this)" onblur="phComboSalir(this)"><span class="ph-combo-lista" hidden></span></span></span>`;
+}
+function phMultiGuardar(token, lista, enfocar) {
+  const valor = listaConY(lista);
+  onPlaceholderValueChanged(token, valor, null);
+  document.querySelectorAll('#ctr-placeholders-container .ph-multi').forEach(w => {
+    if (w.dataset.token !== token) return;
+    w.outerHTML = htmlHerramientasMulti(token);
+  });
+  document.querySelectorAll('#ctr-placeholders-container .phc').forEach(card => {
+    const toks = (card.dataset.tokens || '').split('|').filter(Boolean);
+    card.classList.toggle('completo', toks.every(t => (_templatePlaceholdersValues[t] || '').trim() !== ''));
+  });
+  if (enfocar) document.querySelector(`#ctr-placeholders-container .ph-multi[data-token="${CSS.escape(token)}"] .ph-combo-in`)?.focus();
+}
+function phMultiQuitar(token, i) {
+  const lista = herramientasElegidas(token);
+  lista.splice(i, 1);
+  phMultiGuardar(token, lista, false);
+}
+
 // ── Buscador con filtro para las herramientas (escribe y la lista se filtra) ──
 function phComboOpciones(el) {
   const { cotizadas, catalogo } = herramientasParaContrato();
   const q = String(el.value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-  const filtra = arr => q && el.value !== el.dataset.valor ? arr.filter(n => n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(q)) : arr;
+  const ya = el.dataset.tok ? herramientasElegidas(el.dataset.tok) : [];
+  const filtra = arr => (q && el.value !== el.dataset.valor ? arr.filter(n => n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(q)) : arr).filter(n => !ya.includes(n));
   return [['En la cotización', filtra(cotizadas)], ['Catálogo Tech Stack & Costos', filtra(catalogo)]];
 }
 function phComboPintar(el) {
@@ -6774,6 +6809,13 @@ function phComboAbrir(el) { el.select(); phComboPintar(el); }
 function phComboFiltrar(el) { phComboPintar(el); }
 function phComboElegir(op) {
   const el = op.closest('.ph-combo').querySelector('.ph-combo-in');
+  if (el.dataset.tok) {
+    const token = el.dataset.tok;
+    const lista = herramientasElegidas(token);
+    if (!lista.includes(op.dataset.v)) lista.push(op.dataset.v);
+    phMultiGuardar(token, lista, true);
+    return;
+  }
   el.value = op.dataset.v;
   el.dataset.valor = op.dataset.v;
   el.closest('.ph-combo').querySelector('.ph-combo-lista').hidden = true;
@@ -6803,6 +6845,9 @@ function phComboTeclas(e, el) {
   } else if (e.key === 'Enter') {
     e.preventDefault();
     if (ops[i >= 0 ? i : 0]) phComboElegir(ops[i >= 0 ? i : 0]);
+  } else if (e.key === 'Backspace' && !el.value && el.dataset.tok) {
+    const lista = herramientasElegidas(el.dataset.tok);
+    if (lista.length) { e.preventDefault(); lista.pop(); phMultiGuardar(el.dataset.tok, lista, true); }
   } else if (e.key === 'Escape') {
     el.value = el.dataset.valor || '';
     lista.hidden = true;
@@ -6937,7 +6982,7 @@ async function guardarNuevoRepresentanteContrato() {
 }
 
 function phSiguientePendiente() {
-  const vacia = Array.from(document.querySelectorAll('#ctr-placeholders-container .ph-in:not(.ph-bloqueada):not(.ph-falta)')).find(c => !String(c.value || '').trim());
+  const vacia = Array.from(document.querySelectorAll('#ctr-placeholders-container .ph-in:not(.ph-bloqueada):not(.ph-falta)')).find(c => !String(c.value ?? c.dataset.valor ?? '').trim());
   if (!vacia) { toast('success', 'Todo completo', 'No quedan variables pendientes en la plantilla.'); return; }
   vacia.scrollIntoView({ block: 'center', behavior: 'smooth' });
   vacia.focus();
