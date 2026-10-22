@@ -930,6 +930,38 @@
     .phc-texto input.ph-in { display: inline-block !important; width: auto !important; height: auto !important; min-height: 0 !important; }
     .ph-in { font: inherit; font-family: 'Inter', sans-serif !important; font-size: 12.5px !important; line-height: 1.4 !important; padding: 2px 7px !important; margin: 0 2px; border: 1px dashed #f59e0b !important; background: #fef3c7 !important; border-radius: 5px !important; color: #0f172a; min-width: 9ch; max-width: 100%; vertical-align: baseline; box-shadow: none; }
     .ph-in:focus { outline: none; border-style: solid !important; border-color: #0f766e !important; background: #fff !important; box-shadow: 0 0 0 3px rgba(15,118,110,.15) !important; }
+    .cotv { border: 1px solid var(--border); border-radius: 12px; background: #fff; padding: 14px 16px; margin-bottom: 6px; }
+    .cotv-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .cotv-head strong { font-size: 13.5px; }
+    .cotv-head small { display: block; font-size: 11.5px; color: var(--text-muted); font-weight: 500; }
+    .cotv-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+    .cotv-ver { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 800; color: #fff; background: #0f766e; border-radius: 999px; padding: 2px 9px; margin-left: 6px; vertical-align: middle; }
+    .cotv-resumen { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+    @media (max-width: 760px) { .cotv-resumen { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .cotv-dato { background: #f8fafc; border: 1px solid #eef2f7; border-radius: 9px; padding: 8px 10px; }
+    .cotv-dato span { display: block; font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; font-weight: 700; }
+    .cotv-dato b { font-size: 14px; }
+    .cotv-bloque { margin-top: 14px; }
+    .cotv-bloque h5 { font-size: 12px; font-weight: 800; color: #0f766e; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .cotv-bloque h5 { flex-wrap: wrap; }
+    .cotv-bloque h5 .btn { white-space: nowrap; }
+    .cotv-tabla { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .cotv-tabla th { text-align: left; font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; padding: 6px; border-bottom: 1px solid var(--border); }
+    .cotv-tabla td { padding: 5px 6px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .cotv-tabla input, .cotv-tabla select, .cotv-tabla textarea { width: 100%; font-size: 12.5px !important; padding: 5px 7px !important; min-height: 0 !important; }
+    .cotv-tabla textarea { resize: vertical; min-height: 34px !important; }
+    .cotv-tabla .num { width: 90px; text-align: right; }
+    .cotv-tabla .quitar { border: 0; background: none; color: #b91c1c; cursor: pointer; font-size: 14px; }
+    .cotv-totales { display: flex; justify-content: flex-end; gap: 18px; flex-wrap: wrap; margin-top: 12px; font-size: 12.5px; color: var(--text-muted); }
+    .cotv-totales b { color: var(--text); }
+    .cotv-totales .total b { color: #0f766e; font-size: 15px; }
+    .cotv-pie { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); }
+    .cotv-pie input { flex: 1; min-width: 200px; }
+    .cotv-vacio { font-size: 12.5px; color: var(--text-muted); padding: 6px 0; }
+    .cotv-hist { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .cotv-hist th { text-align: left; font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; padding: 6px; border-bottom: 1px solid var(--border); }
+    .cotv-hist td { padding: 8px 6px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+    .cotv-hist tr.activa td { background: #f0fdfa; }
     .phc-plantillas { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 2px 0 8px; font-size: 11px; color: var(--text-muted); font-weight: 600; }
     .phc-plantilla { border: 1px solid #99f6e4; background: #fff; color: #0f766e; border-radius: 999px; padding: 3px 11px; font-size: 11.5px; font-weight: 700; cursor: pointer; }
     .phc-plantilla:hover { background: #f0fdfa; }
@@ -1800,11 +1832,21 @@
             <textarea id="ctr-objeto" hidden aria-hidden="true" tabindex="-1"></textarea>
             <textarea id="ctr-entregables" hidden aria-hidden="true" tabindex="-1"></textarea>
 
+            <!-- SECCIÓN 4: Cotización de la proforma (con versiones) -->
+            <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:20px">
+              <div style="display:flex;align-items:center;gap:6px">
+                <svg class="icon" style="width:15px;height:15px"><use href="#icon-file-text"></use></svg>
+                <span>4. Cotización de la proforma</span>
+              </div>
+              <span class="badge" id="cotv-badge" style="font-size:10.5px"></span>
+            </div>
+            <div id="cotv-cont" class="cotv"></div>
+
             <!-- SECCIÓN 5: Rellenado de Campos en Corchetes [ ... ] -->
             <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:20px">
               <div style="display:flex;align-items:center;gap:6px">
                 <svg class="icon" style="width:15px;height:15px"><use href="#icon-edit-3"></use></svg>
-                <span>4. Rellenado en contexto de la plantilla [ ... ]</span>
+                <span>5. Rellenado en contexto de la plantilla [ ... ]</span>
               </div>
               <div style="display:flex;gap:6px;align-items:center">
                 <span class="badge b-vigente" id="ctr-placeholders-badge" style="font-size:11px">0 campos detectados</span>
@@ -1912,6 +1954,10 @@
             <button type="button" class="btn btn-primary" id="btn-ver-doc-completo" style="width:100%;justify-content:center;padding:12px 16px;font-weight:700;font-size:13.5px;gap:8px;box-shadow:0 4px 12px rgba(15,118,110,0.25)" onclick="previewCurrentDraft()">
               <svg class="icon" style="color:#fff;width:18px;height:18px"><use href="#icon-file-text"></use></svg>
               Ver Documento Completo
+            </button>
+            <button type="button" class="btn btn-outline" id="btn-ver-cotizacion" style="width:100%;justify-content:center;padding:10px 16px;font-weight:700;font-size:13px;gap:8px;margin-top:8px;display:none" onclick="verCotizacionActivaContrato()" title="Ver, imprimir o descargar la versión de la cotización que usa este contrato">
+              <svg class="icon" style="width:16px;height:16px"><use href="#icon-file-text"></use></svg>
+              <span id="btn-ver-cotizacion-txt">Ver Cotización</span>
             </button>
           </div>
         </div>
@@ -5099,6 +5145,7 @@ document.addEventListener('mousedown', e => {
 });
 
 function mostrarOrigenContrato() {
+  renderCotizacionContrato();
   const form = document.getElementById('form-crear-contrato');
   const vinc = document.getElementById('ctr-origen-vinculo');
   const ops = document.getElementById('ctr-origen-opciones');
@@ -5118,6 +5165,7 @@ function mostrarOrigenContrato() {
 }
 
 function cambiarOrigenContrato() {
+  _cotv.editando = false;
   _ctrProformaId = null;
   resetCrearContratoForm();
 }
@@ -5955,6 +6003,316 @@ function phCambio(el) {
   });
 }
 
+// ══════════ COTIZACIÓN DE LA PROFORMA EN EL CONTRATO (CON VERSIONES) ══════════
+// Los ítems, costos variables y requerimientos vienen de la proforma de origen.
+// Si se cambian desde el contrato, se guardan como versión nueva de la proforma
+// (la anterior queda en el historial) y el contrato pasa a usar esa versión.
+const _cotv = { editando: false, items: [], tech: [], reqs: [], nota: '' };
+const TOKENS_DE_PROFORMA = ['REQUERIMIENTOS_FUNCIONALES', 'REQUERIMIENTOS_NO_FUNCIONALES', 'MODULOS_FUNCIONALES', 'ENTREGABLES', 'STACK_HERRAMIENTAS', 'STACK_LENGUAJES', 'PRECIO_ACORDADO', 'PRECIO_EN_LETRAS', 'MONEDA'];
+
+function proformaDelContrato() { return _ctrProformaId ? getStoredProformas().find(x => x.id === _ctrProformaId) : null; }
+function esItemTech(it) { return !!(it.is_tech_variable || /^\[(Herramienta|Lenguaje)\]/.test(it.descripcion || '')); }
+
+function techDesdeItem(it) {
+  const m = /^\[(Herramienta|Lenguaje)\]\s*(.+?)(?:\s*\(Plan:\s*(.+)\))?$/.exec(it.descripcion || '') || [];
+  const esTool = (it.category || '').toLowerCase() === 'tool' || m[1] === 'Herramienta';
+  return { tech_id: it.tech_id || null, category: esTool ? 'tool' : 'language', name: it.name || m[2] || it.descripcion || '',
+    plan_name: it.plan_name || m[3] || '', costo: it.costo_base ?? null, margen_min: it.margen_min ?? null, margen_max: it.margen_max ?? null,
+    propuesta: Number(it.propuesta ?? it.precio) || 0, moneda: it.moneda || '', periodo: it.periodo || 'mes', image_url: it.image_url || '' };
+}
+
+function fichaTech(t) {
+  const cat = (_techCatalogCache?.tool || []).concat(_techCatalogCache?.language || []);
+  return cat.find(c => (t.tech_id && String(c.id) === String(t.tech_id)) || String(c.name || '').toLowerCase() === String(t.name || '').toLowerCase()) || null;
+}
+
+function itemsDesdeEdicion() {
+  const items = _cotv.items.filter(it => (it.descripcion || '').trim() || Number(it.precio) > 0)
+    .map(it => ({ descripcion: (it.descripcion || '').trim() || 'Servicio de desarrollo / software', cantidad: Number(it.cantidad) || 1, precio: Number(it.precio) || 0 }));
+  _cotv.tech.forEach(t => {
+    const esTool = t.category === 'tool';
+    items.push({ descripcion: `[${esTool ? 'Herramienta' : 'Lenguaje'}] ${t.name}${esTool ? ` (Plan: ${t.plan_name || 'Free'})` : ''}`,
+      cantidad: 1, precio: Number(t.propuesta) || 0, is_tech_variable: true, tech_id: t.tech_id, category: t.category, plan_name: t.plan_name,
+      costo_base: t.costo, margen_min: t.margen_min, margen_max: t.margen_max, propuesta: Number(t.propuesta) || 0, name: t.name,
+      moneda: t.moneda, periodo: t.periodo, image_url: t.image_url });
+  });
+  return items;
+}
+
+function totalesCotizacion(items, p) {
+  const subtotal = items.reduce((a, it) => a + (Number(it.cantidad) || 1) * (Number(it.precio) || 0), 0);
+  const desc = subtotal * ((Number(p?.descuento_pct) || 0) / 100);
+  const neto = Math.max(0, subtotal - desc);
+  const igv = (p?.igv_tipo || 'igv_18') === 'igv_18' ? neto * 0.18 : 0;
+  return { subtotal, desc, neto, igv, total: neto + igv };
+}
+
+function renderCotizacionContrato() {
+  const cont = document.getElementById('cotv-cont');
+  const badge = document.getElementById('cotv-badge');
+  const btnVer = document.getElementById('btn-ver-cotizacion');
+  const p = proformaDelContrato();
+  if (!cont) return;
+  if (!p) {
+    cont.innerHTML = '<div class="cotv-vacio">Elige la proforma de origen en «0. Origen del contrato» para ver aquí su cotización.</div>';
+    if (badge) badge.textContent = '';
+    if (btnVer) btnVer.style.display = 'none';
+    return;
+  }
+  const v = p.version_actual || 1;
+  if (badge) badge.textContent = `Versión ${v} en uso`;
+  if (btnVer) { btnVer.style.display = ''; document.getElementById('btn-ver-cotizacion-txt').textContent = `Ver Cotización ${p.id} · v${v}`; }
+  const items = Array.isArray(p.items) ? p.items : [];
+  const serv = items.filter(it => !esItemTech(it));
+  const tech = items.filter(esItemTech).map(techDesdeItem);
+  const reqs = Array.isArray(p.requerimientos) ? p.requerimientos : [];
+  const cab = `<div class="cotv-head">
+      <div><strong>${esc(p.id)} <span class="cotv-ver">v${v}</span></strong><small>${_cotv.editando ? 'Editando: al guardar se crea la versión ' + (v + 1) + ' y el contrato pasa a usarla.' : 'Datos de la cotización que usa este contrato.'}</small></div>
+      <div class="cotv-acciones">
+        <button type="button" class="btn btn-outline btn-sm" onclick="abrirHistorialCotizacion()">🕘 Historial de versiones</button>
+        ${_cotv.editando ? '' : '<button type="button" class="btn btn-primary btn-sm" onclick="editarCotizacionContrato()">✏️ Editar cotización</button>'}
+      </div></div>`;
+  if (!_cotv.editando) {
+    const t = totalesCotizacion(items, p);
+    const lista = (arr, f) => arr.length ? arr.slice(0, 6).map(f).join('') + (arr.length > 6 ? `<li style="color:var(--text-muted)">… y ${arr.length - 6} más</li>` : '') : '<li style="color:var(--text-muted)">—</li>';
+    cont.innerHTML = cab + `
+      <div class="cotv-resumen">
+        <div class="cotv-dato"><span>Ítems / servicios</span><b>${serv.length}</b></div>
+        <div class="cotv-dato"><span>Costos variables</span><b>${tech.length}</b></div>
+        <div class="cotv-dato"><span>RF / RNF</span><b>${reqs.filter(r => r.tipo === 'RF').length} / ${reqs.filter(r => r.tipo === 'RNF').length}</b></div>
+        <div class="cotv-dato"><span>Total</span><b style="color:#0f766e">${esc(formatCurrency(t.total, p.moneda))}</b></div>
+      </div>
+      <div class="cotv-resumen" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+        <div class="cotv-dato"><span>Ítems</span><ul style="margin:4px 0 0 16px;font-size:12px">${lista(serv, it => `<li>${esc(it.descripcion)}${Number(it.cantidad) > 1 ? ' ×' + Number(it.cantidad) : ''}</li>`)}</ul></div>
+        <div class="cotv-dato"><span>Tecnologías</span><ul style="margin:4px 0 0 16px;font-size:12px">${lista(tech, x => `<li>${esc(x.name)}${x.plan_name && x.category === 'tool' ? ' — ' + esc(x.plan_name) : ''}</li>`)}</ul></div>
+        <div class="cotv-dato"><span>Requerimientos</span><ul style="margin:4px 0 0 16px;font-size:12px">${lista(reqs, r => `<li><b>${esc(r.tipo)}</b> ${esc(r.titulo)}</li>`)}</ul></div>
+      </div>`;
+    return;
+  }
+  // Modo edición
+  const it = _cotv.items, te = _cotv.tech, rq = _cotv.reqs;
+  const planesDe = t => { const f = fichaTech(t); const pl = f ? normalizeTechPlans(f).map(x => x.name).filter(Boolean) : []; if (t.plan_name && !pl.includes(t.plan_name)) pl.unshift(t.plan_name); return pl; };
+  const tot = totalesCotizacion(itemsDesdeEdicion(), p);
+  const catalogo = (_techCatalogCache?.tool || []).concat(_techCatalogCache?.language || []).filter(c => !te.some(t => fichaTech(t) === c));
+  cont.innerHTML = cab + `
+    <div class="cotv-bloque"><h5>Ítems, licencias y servicios cotizados <button type="button" class="btn btn-outline btn-sm" onclick="cotvAgregar('items')">+ Agregar ítem</button></h5>
+      <table class="cotv-tabla"><thead><tr><th>#</th><th>Descripción</th><th class="num">Cant.</th><th class="num">P. unitario</th><th class="num">Subtotal</th><th></th></tr></thead><tbody>
+      ${it.length ? it.map((x, i) => `<tr><td>${i + 1}</td>
+        <td><input value="${esc(x.descripcion)}" oninput="cotvSet('items',${i},'descripcion',this.value)" placeholder="Descripción del concepto o servicio"></td>
+        <td class="num"><input type="number" min="1" step="1" class="num" value="${esc(x.cantidad)}" oninput="cotvSet('items',${i},'cantidad',this.value,true)"></td>
+        <td class="num"><input type="number" min="0" step="0.01" class="num" value="${esc(x.precio)}" oninput="cotvSet('items',${i},'precio',this.value,true)"></td>
+        <td class="num" data-sub="${i}">${esc(formatCurrency((Number(x.cantidad) || 1) * (Number(x.precio) || 0), p.moneda))}</td>
+        <td><button type="button" class="quitar" title="Quitar" onclick="cotvQuitar('items',${i})">✕</button></td></tr>`).join('') : '<tr><td colspan="6" class="cotv-vacio">Sin ítems.</td></tr>'}
+      </tbody></table></div>
+    <div class="cotv-bloque"><h5>Ítems, servicios y costos variables (Tech Stack)
+        <span style="display:flex;gap:6px;align-items:center"><select id="cotv-tech-nuevo" style="font-size:12px;padding:4px 6px;max-width:220px"><option value="">Agregar tecnología…</option>${catalogo.map(c => `<option value="${esc(c.id)}">${esc(c.name)}${c.category === 'language' ? ' (lenguaje)' : ''}</option>`).join('')}</select>
+        <button type="button" class="btn btn-outline btn-sm" onclick="cotvAgregarTech()">+ Agregar</button></span></h5>
+      <table class="cotv-tabla"><thead><tr><th>#</th><th>Herramienta / lenguaje</th><th>Plan</th><th>Margen</th><th class="num">Propuesta</th><th></th></tr></thead><tbody>
+      ${te.length ? te.map((x, i) => `<tr><td>${i + 1}</td><td><b>${esc(x.name)}</b> <small style="color:var(--text-muted)">${x.category === 'tool' ? 'Herramienta' : 'Lenguaje'}</small></td>
+        <td>${x.category === 'tool' ? `<select onchange="cotvPlan(${i},this.value)">${planesDe(x).map(n => `<option${n === x.plan_name ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>` : '—'}</td>
+        <td style="white-space:nowrap;font-size:11.5px;color:var(--text-muted)">${x.margen_min != null || x.margen_max != null ? esc(formatCurrency(x.margen_min || 0, p.moneda)) + ' – ' + esc(formatCurrency(x.margen_max || 0, p.moneda)) : '—'}</td>
+        <td class="num"><input type="number" min="0" step="0.01" class="num" value="${esc(x.propuesta)}" oninput="cotvSet('tech',${i},'propuesta',this.value,true)"></td>
+        <td><button type="button" class="quitar" title="Quitar" onclick="cotvQuitar('tech',${i})">✕</button></td></tr>`).join('') : '<tr><td colspan="6" class="cotv-vacio">Sin tecnologías.</td></tr>'}
+      </tbody></table></div>
+    <div class="cotv-bloque"><h5>Requerimientos funcionales (RF) y no funcionales (RNF)
+        <span style="display:flex;gap:6px"><button type="button" class="btn btn-outline btn-sm" onclick="cotvAgregar('reqs','RF')">+ RF</button><button type="button" class="btn btn-outline btn-sm" onclick="cotvAgregar('reqs','RNF')">+ RNF</button></span></h5>
+      <table class="cotv-tabla"><thead><tr><th>Tipo</th><th>Requerimiento</th><th>Detalle</th><th>Prioridad</th><th></th></tr></thead><tbody>
+      ${rq.length ? rq.map((x, i) => `<tr>
+        <td style="width:80px"><select onchange="cotvSet('reqs',${i},'tipo',this.value)"><option${x.tipo === 'RF' ? ' selected' : ''}>RF</option><option${x.tipo === 'RNF' ? ' selected' : ''}>RNF</option></select></td>
+        <td><input value="${esc(x.titulo)}" oninput="cotvSet('reqs',${i},'titulo',this.value)" placeholder="Ej: Módulo de autenticación"></td>
+        <td><textarea rows="1" oninput="cotvSet('reqs',${i},'detalle',this.value)" placeholder="Qué significa exactamente">${esc(x.detalle || '')}</textarea></td>
+        <td style="width:100px"><select onchange="cotvSet('reqs',${i},'prioridad',this.value)">${['Alta', 'Media', 'Baja'].map(o => `<option${o === (x.prioridad || 'Media') ? ' selected' : ''}>${o}</option>`).join('')}</select></td>
+        <td><button type="button" class="quitar" title="Quitar" onclick="cotvQuitar('reqs',${i})">✕</button></td></tr>`).join('') : '<tr><td colspan="5" class="cotv-vacio">Sin requerimientos.</td></tr>'}
+      </tbody></table></div>
+    <div class="cotv-totales" id="cotv-totales">${htmlTotalesCotv(tot, p)}</div>
+    <div class="cotv-pie">
+      <input type="text" id="cotv-nota" maxlength="300" placeholder="Motivo del cambio (opcional). Ej: el cliente agregó el módulo de reportes" value="${esc(_cotv.nota)}" oninput="_cotv.nota=this.value">
+      <button type="button" class="btn btn-outline btn-sm" onclick="cancelarEdicionCotizacion()">Cancelar</button>
+      <button type="button" class="btn btn-primary btn-sm" id="cotv-guardar" onclick="guardarVersionCotizacion()">💾 Guardar como versión ${v + 1}</button>
+    </div>`;
+}
+
+function htmlTotalesCotv(t, p) {
+  return `<span>Subtotal <b>${esc(formatCurrency(t.subtotal, p.moneda))}</b></span>`
+    + (t.desc ? `<span>Descuento <b>-${esc(formatCurrency(t.desc, p.moneda))}</b></span>` : '')
+    + (t.igv ? `<span>IGV 18% <b>${esc(formatCurrency(t.igv, p.moneda))}</b></span>` : '')
+    + `<span class="total">Total <b>${esc(formatCurrency(t.total, p.moneda))}</b></span>`;
+}
+
+function editarCotizacionContrato() {
+  const p = proformaDelContrato();
+  if (!p) return;
+  const items = Array.isArray(p.items) ? p.items : [];
+  _cotv.items = items.filter(it => !esItemTech(it)).map(it => ({ descripcion: it.descripcion || '', cantidad: Number(it.cantidad) || 1, precio: Number(it.precio) || 0 }));
+  _cotv.tech = items.filter(esItemTech).map(techDesdeItem);
+  _cotv.reqs = (Array.isArray(p.requerimientos) ? p.requerimientos : []).map(r => ({ tipo: r.tipo, titulo: r.titulo || '', detalle: r.detalle || '', prioridad: r.prioridad || 'Media' }));
+  _cotv.nota = '';
+  _cotv.editando = true;
+  ensureTechCatalogLoaded().then(() => { if (_cotv.editando) renderCotizacionContrato(); });
+  renderCotizacionContrato();
+}
+
+function cancelarEdicionCotizacion() { _cotv.editando = false; renderCotizacionContrato(); }
+
+// Cambia un campo sin volver a pintar (no se pierde el foco); los montos recalculan los totales
+function cotvSet(lista, i, campo, valor, recalcular) {
+  if (!_cotv[lista]?.[i]) return;
+  _cotv[lista][i][campo] = valor;
+  if (!recalcular) return;
+  const p = proformaDelContrato();
+  if (lista === 'items') {
+    const x = _cotv.items[i];
+    const celda = document.querySelector(`#cotv-cont td[data-sub="${i}"]`);
+    if (celda) celda.textContent = formatCurrency((Number(x.cantidad) || 1) * (Number(x.precio) || 0), p?.moneda);
+  }
+  const tot = document.getElementById('cotv-totales');
+  if (tot && p) tot.innerHTML = htmlTotalesCotv(totalesCotizacion(itemsDesdeEdicion(), p), p);
+}
+
+function cotvAgregar(lista, tipo) {
+  if (lista === 'items') _cotv.items.push({ descripcion: '', cantidad: 1, precio: 0 });
+  if (lista === 'reqs') _cotv.reqs.push({ tipo: tipo || 'RF', titulo: '', detalle: '', prioridad: 'Media' });
+  renderCotizacionContrato();
+}
+
+function cotvQuitar(lista, i) { _cotv[lista].splice(i, 1); renderCotizacionContrato(); }
+
+function cotvAgregarTech() {
+  const id = document.getElementById('cotv-tech-nuevo')?.value;
+  if (!id) return;
+  const f = (_techCatalogCache?.tool || []).concat(_techCatalogCache?.language || []).find(c => String(c.id) === String(id));
+  if (!f) return;
+  const esTool = f.category === 'tool';
+  const plan = esTool ? (normalizeTechPlans(f)[0] || {}) : {};
+  _cotv.tech.push({ tech_id: f.id, category: esTool ? 'tool' : 'language', name: f.name, plan_name: plan.name || (esTool ? 'FREE' : ''),
+    costo: plan.costo ?? f.costo ?? null, margen_min: plan.margen_min ?? f.margen_min ?? null, margen_max: plan.margen_max ?? f.margen_max ?? null,
+    propuesta: Number(plan.margen_min ?? f.margen_min) || 0, moneda: plan.moneda || f.moneda || '', periodo: plan.periodo || f.periodo || 'mes', image_url: f.image_url || '' });
+  renderCotizacionContrato();
+}
+
+function cotvPlan(i, nombre) {
+  const t = _cotv.tech[i];
+  if (!t) return;
+  t.plan_name = nombre;
+  const f = fichaTech(t);
+  const pl = f ? normalizeTechPlans(f).find(x => x.name === nombre) : null;
+  if (pl) {
+    t.costo = pl.costo ?? t.costo; t.margen_min = pl.margen_min ?? null; t.margen_max = pl.margen_max ?? null;
+    if (Number(pl.margen_min) === 0 && Number(pl.margen_max) === 0) t.propuesta = 0;
+    else if (!(Number(t.propuesta) >= Number(pl.margen_min || 0))) t.propuesta = Number(pl.margen_min) || 0;
+  }
+  renderCotizacionContrato();
+}
+
+async function guardarVersionCotizacion() {
+  const p = proformaDelContrato();
+  if (!p) return;
+  const items = itemsDesdeEdicion();
+  if (!items.length) { qcAlert('Agrega al menos un ítem a la cotización.', { tipo: 'aviso', titulo: 'Cotización vacía' }); return; }
+  const reqs = _cotv.reqs.filter(r => (r.titulo || '').trim());
+  const btn = document.getElementById('cotv-guardar');
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+  try {
+    const r = await qcApiFetch(`/api/comercial/proformas/${encodeURIComponent(p.id)}/versiones`, {
+      method: 'POST', body: JSON.stringify({ items, requerimientos: reqs, nota: _cotv.nota.trim() || 'Editada desde el contrato' })
+    });
+    _cotv.editando = false;
+    aplicarVersionAlContrato(r.proforma);
+    toast('success', `Versión ${r.proforma.version_actual} guardada`, `${p.id} ahora usa la versión ${r.proforma.version_actual}; la anterior queda en el historial.`);
+  } catch (e) {
+    if (e.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo guardar la versión', e.message);
+    if (btn) { btn.disabled = false; btn.textContent = `💾 Guardar como versión ${(p.version_actual || 1) + 1}`; }
+  }
+}
+
+// El contrato toma los datos de la versión activa (monto, módulos, stack, requerimientos)
+function aplicarVersionAlContrato(prf) {
+  const i = _proformasCache.findIndex(x => x.id === prf.id);
+  if (i >= 0) _proformasCache[i] = { ..._proformasCache[i], ...prf }; else _proformasCache.push(prf);
+  _ctrDatosProforma = datosContratoDesdeProforma(prf);
+  const montoEl = document.getElementById('ctr-monto');
+  const monEl = document.getElementById('ctr-moneda');
+  if (monEl && prf.moneda) { monEl.value = prf.moneda; _ctrMonedaPrev = prf.moneda; }
+  if (montoEl) montoEl.value = Number(prf.total || 0).toFixed(2);
+  const entEl = document.getElementById('ctr-entregables');
+  if (entEl) entEl.value = _ctrDatosProforma.modulos || entEl.value;
+  Object.keys(_templatePlaceholdersValues).forEach(t => {
+    if (TOKENS_DE_PROFORMA.includes(limpiarToken(t))) _templatePlaceholdersValues[t] = getAutoFillValueForToken(t) || '';
+  });
+  renderCotizacionContrato();
+  mostrarOrigenContrato();
+  if (_selectedTemplateKey) refrescarVariablesContrato(); else updateContractPreview();
+}
+
+async function abrirHistorialCotizacion() {
+  const p = proformaDelContrato();
+  if (!p) return;
+  document.getElementById('cotv-hist-ov')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'cotv-hist-ov';
+  ov.className = 'modal-overlay open qc-dlg info';
+  ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+  ov.innerHTML = `<div class="modal" style="max-width:820px;width:96vw">
+      <div class="modal-header"><div class="qc-dlg-head"><div class="qc-dlg-icono">${QC_DLG_ICONOS.info}</div>
+        <div><div class="qc-dlg-titulo">Historial de versiones · ${esc(p.id)}</div><div class="qc-dlg-sub">La versión en uso es la que toma el contrato</div></div></div></div>
+      <div class="modal-body" id="cotv-hist-body"><div class="cotv-vacio">Cargando versiones…</div></div>
+      <div class="modal-footer"><button type="button" class="btn btn-outline" onclick="document.getElementById('cotv-hist-ov').remove()">Cerrar</button></div>
+    </div>`;
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  document.body.appendChild(ov);
+  try {
+    const r = await qcApiFetch(`/api/comercial/proformas/${encodeURIComponent(p.id)}/versiones`);
+    _cotvHist = r.versiones || [];
+    const actual = r.version_actual || p.version_actual || 1;
+    const fecha = d => d ? new Date(d).toLocaleString('es-PE', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+    document.getElementById('cotv-hist-body').innerHTML = `<table class="cotv-hist"><thead><tr><th>Versión</th><th>Fecha</th><th>Por</th><th>Cambio</th><th>Contenido</th><th style="text-align:right">Total</th><th></th></tr></thead><tbody>
+      ${_cotvHist.map((v, k) => { const its = Array.isArray(v.items) ? v.items : []; const rq = Array.isArray(v.requerimientos) ? v.requerimientos : [];
+        return `<tr class="${v.version === actual ? 'activa' : ''}"><td><b>v${v.version}</b>${v.version === actual ? ' <span class="cotv-ver">en uso</span>' : ''}</td>
+        <td style="white-space:nowrap">${esc(fecha(v.created_at))}</td><td>${esc(v.creado_por || '—')}</td><td>${esc(v.nota || '—')}</td>
+        <td style="font-size:11.5px;color:var(--text-muted)">${its.filter(x => !esItemTech(x)).length} ítems · ${its.filter(esItemTech).length} tecnologías · ${rq.length} requerimientos</td>
+        <td style="text-align:right;white-space:nowrap"><b>${esc(formatCurrency(v.total, v.moneda || p.moneda))}</b></td>
+        <td style="white-space:nowrap"><button type="button" class="btn btn-outline btn-sm" onclick="verVersionCotizacion(${k})">Ver</button>
+          ${v.version === actual ? '' : `<button type="button" class="btn btn-primary btn-sm" onclick="recuperarVersionCotizacion(${v.version})">Usar esta versión</button>`}</td></tr>`; }).join('')}
+      </tbody></table>`;
+  } catch (e) {
+    if (e.message !== 'SESSION_EXPIRED') document.getElementById('cotv-hist-body').innerHTML = `<div class="cotv-vacio">No se pudo cargar el historial: ${esc(e.message)}</div>`;
+  }
+}
+let _cotvHist = [];
+
+// Ver / imprimir una versión con el mismo formato oficial de la proforma
+function verVersionCotizacion(k) {
+  const p = proformaDelContrato();
+  const v = _cotvHist[k];
+  if (!p || !v) return;
+  document.getElementById('cotv-hist-ov')?.remove();
+  _activeViewingProformaId = p.id;
+  renderProformaOfficialModal({ ...p, items: v.items, requerimientos: v.requerimientos, subtotal: v.subtotal, descuento_pct: v.descuento_pct,
+    descuento_monto: v.descuento_monto, subtotal_neto: v.subtotal_neto, igv_tipo: v.igv_tipo || p.igv_tipo, igv_monto: v.igv_monto, total: v.total,
+    version_actual: v.version });
+}
+
+async function recuperarVersionCotizacion(version) {
+  const p = proformaDelContrato();
+  if (!p) return;
+  const ok = await qcConfirm(`Se creará la versión ${(p.version_actual || 1) + 1} con los datos de la v${version} y el contrato pasará a usarla. El historial no se borra.`, { titulo: `Usar la versión ${version}`, aceptar: 'Usar esta versión' });
+  if (!ok) return;
+  try {
+    const r = await qcApiFetch(`/api/comercial/proformas/${encodeURIComponent(p.id)}/versiones/${version}/restaurar`, { method: 'POST' });
+    document.getElementById('cotv-hist-ov')?.remove();
+    _cotv.editando = false;
+    aplicarVersionAlContrato(r.proforma);
+    toast('success', 'Versión recuperada', `Se creó la v${r.proforma.version_actual} a partir de la v${version}; el contrato ya la usa.`);
+  } catch (e) {
+    if (e.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo recuperar', e.message);
+  }
+}
+
+function verCotizacionActivaContrato() {
+  const p = proformaDelContrato();
+  if (p) viewProforma(p.id);
+}
+
 // ── Plantillas rápidas: rellenan de golpe las variables de un párrafo ──
 const PLANTILLAS_RAPIDAS = [
   {
@@ -6594,6 +6952,7 @@ async function handleGuardarContrato(e) {
         contenido_html: finalHtml,
         campos_rellenos: _templatePlaceholdersValues,
         proforma_id: _ctrProformaId,
+        proforma_version: proformaDelContrato()?.version_actual || 1,
       }),
     });
     _ctrProformaId = null;
@@ -10826,7 +11185,7 @@ function viewProforma(id) {
 
 function renderProformaOfficialModal(p) {
   const codeEl = document.getElementById('proforma-modal-code');
-  if (codeEl) codeEl.textContent = `${p.id || 'PRF-2026-0001'} · Qubira ODN Cotización`;
+  if (codeEl) codeEl.textContent = `${p.id || 'PRF-2026-0001'}${p.version_actual > 1 ? ' · Versión ' + p.version_actual : ''} · Qubira ODN Cotización`;
 
   const titleEl = document.getElementById('proforma-modal-title');
   if (titleEl) titleEl.textContent = p.cliente_nombre ? `Proforma Comercial: ${p.cliente_nombre}` : 'Proforma Comercial';
