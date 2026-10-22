@@ -5767,6 +5767,11 @@ function getAutoFillValueForToken(token) {
   // Sprints del cronograma de la proforma (fecha y hora de cada entregable)
   const sprints = sprintsDelCronograma();
   if (['DURACION_SPRINT'].includes(clean)) return sprints.length ? sprints.join('\n') : '1 a 2 semanas por Sprint';
+  // Número del último sprint del cronograma (= cantidad de sprints)
+  if (['NUMERO_CANTIDAD_SPRINT', 'CANTIDAD_SPRINTS', 'NUMERO_SPRINTS'].includes(clean)) {
+    const ult = sprints.length ? Number((/Sprint\s+(\d+)/i.exec(sprints[sprints.length - 1]) || [])[1]) : 0;
+    return ult ? String(ult) : '';
+  }
   if (['NUM_TOTAL_SPRINTS'].includes(clean)) return sprints.length ? `${sprints.length} ${sprints.length === 1 ? 'Sprint' : 'Sprints'}` : '4 Sprints iterativos';
   if (['DIA_REUNION_SEMANAL'].includes(clean)) return 'Viernes 4:00 p.m.';
   if (['CANAL_COMUNICACION'].includes(clean)) return 'WhatsApp corporativo y Google Meet';
@@ -6221,7 +6226,7 @@ function ajustarTablas10(raiz) {
   });
 }
 const TOKENS_DE_PROFORMA = ['REQUERIMIENTOS_FUNCIONALES', 'REQUERIMIENTOS_NO_FUNCIONALES', 'MODULOS_FUNCIONALES', 'ENTREGABLES', 'STACK_HERRAMIENTAS', 'STACK_LENGUAJES', 'PRECIO_ACORDADO', 'PRECIO_EN_LETRAS', 'MONEDA', 'PLANES_GRATUITOS',
-  'DETALLE_DE_PAGOS', 'DIAS_GARANTIA', 'NECESIDAD_DEL_CLIENTE', 'OBJETO_SERVICIO', 'OBJETO', 'DURACION_SPRINT', 'NUM_TOTAL_SPRINTS'];
+  'DETALLE_DE_PAGOS', 'DIAS_GARANTIA', 'NECESIDAD_DEL_CLIENTE', 'OBJETO_SERVICIO', 'OBJETO', 'DURACION_SPRINT', 'NUM_TOTAL_SPRINTS', 'NUMERO_CANTIDAD_SPRINT'];
 
 // Código visible de una proforma con su versión: PRF-2026-001, PRF-2026-001.V2, .V3…
 function codigoProforma(p, version) {
