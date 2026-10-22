@@ -1009,6 +1009,10 @@
     .cotv-hist th { text-align: left; font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; padding: 6px; border-bottom: 1px solid var(--border); }
     .cotv-hist td { padding: 8px 6px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
     .cotv-hist tr.activa td { background: #f0fdfa; }
+    .phc-auto { font-size: 11.5px; font-weight: 700; color: #0f766e; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 999px; padding: 2px 10px; }
+    .phc-alt-aviso { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; color: #b45309; margin-bottom: 6px; }
+    .phc-alt-op { border: 1px dashed #fbbf24; background: #fffbeb; border-radius: 8px; padding: 6px 10px; margin-bottom: 6px; cursor: pointer; line-height: 1.6; }
+    .phc-alt-op:hover { border-style: solid; background: #fef3c7; }
     .phc-plantillas { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 2px 0 8px; font-size: 11px; color: var(--text-muted); font-weight: 600; }
     .phc-plantilla { border: 1px solid #99f6e4; background: #fff; color: #0f766e; border-radius: 999px; padding: 3px 11px; font-size: 11.5px; font-weight: 700; cursor: pointer; }
     .phc-plantilla:hover { background: #f0fdfa; }
@@ -5670,6 +5674,7 @@ function humanizePlaceholderToken(token) {
 
 function getAutoFillValueForToken(token) {
   const clean = token.replace(/^\[/, '').replace(/\]$/, '').trim().toUpperCase();
+  if (Object.prototype.hasOwnProperty.call(VALORES_INICIALES, clean)) return VALORES_INICIALES[clean](token);
   const clientes = getStoredClientes();
   const cliId = document.getElementById('ctr-cliente-sel')?.value;
   const cliente = clientes.find(c => c.id === cliId) || {};
@@ -5866,6 +5871,20 @@ const esVariableLista = (token, valor) => /REQUERIMIENTOS|MODULOS|ENTREGABLES|ST
 function parrafosConVariables(html, placeholders) {
   const div = document.createElement('div');
   div.innerHTML = quitarComparecencia(html || '');
+  // Párrafos con alternativas: se anotan para mostrar sus botones
+  unirFragmentosConAlternativas(div);
+  const alternativas = new Map();
+  div.querySelectorAll('p, li').forEach(el => {
+    if (!/\s\|\s/.test(el.textContent || '')) return;
+    const a = analizarAlternativas(el);
+    if (!a) return;
+    alternativas.set(el, a);
+    if (a.elegida !== null) {
+      const op = a.opciones[a.elegida];
+      const sinPrefijo = op && /^\s*Las horas de la bolsa/i.test(op.replace(/<[^>]+>/g, ''));
+      el.innerHTML = a.elegida < 0 || op === undefined ? a.base : a.base + (a.prefijo && !sinPrefijo ? a.prefijo : '') + op;
+    }
+  });
   const validas = new Set(placeholders);
   const items = [];
   const porFragmento = new Map(); // párrafos partidos entre hojas: se unen en una sola tarjeta
@@ -5885,9 +5904,9 @@ function parrafosConVariables(html, placeholders) {
     }
     const esTitulo = /^H[1-6]$/.test(b.tagName) || (/^CL[ÁA]USULA\b/i.test(texto) && texto.length < 160);
     if (esTitulo) seccion = texto.replace(RE_VARIABLE, '').replace(/\s+/g, ' ').trim() || seccion;
-    const it = { seccion, texto, tokens: [...new Set(tokens)] };
+    const it = { seccion, texto, tokens: [...new Set(tokens)], alternativa: alternativas.get(b) || null };
     if (frag) porFragmento.set(frag, it);
-    if (tokens.length) items.push(it);
+    if (tokens.length || it.alternativa) items.push(it);
   });
   const vistos = new Set(items.flatMap(it => it.tokens));
   return { items, sueltos: placeholders.filter(t => !vistos.has(t)) };
@@ -6108,6 +6127,14 @@ function htmlCasillaVariable(token) {
     const { cotizadas, catalogo } = herramientasParaContrato();
     if (cotizadas.length || catalogo.length) return htmlHerramientasMulti(token);
   }
+  if (limpio === 'PLAZO_ENTREGA_INFORMACION' || limpio === 'PLAZO_RESPUESTA_CLIENTE') {
+    const val = _templatePlaceholdersValues[token] || '';
+    const rec = plazoClienteRecomendado();
+    return `<select class="ph-in ph-sel ${val ? 'lleno' : ''}" data-token="${esc(token)}" onchange="phCambio(this)" title="Según la duración de los Sprints: el cliente debe responder antes de que termine el Sprint">
+      <option value="">— Elige el plazo —</option>
+      ${OPCIONES_PLAZO_CLIENTE.map(([v, d]) => `<option value="${esc(v)}"${v === val ? ' selected' : ''}>${esc(v)} · ${esc(d)}${v === rec ? ' (recomendado)' : ''}</option>`).join('')}
+    </select>`;
+  }
   if (limpio === 'CARGO_REPRESENTANTE_QUBIRA') {
     const val = _templatePlaceholdersValues[token] || (_templatePlaceholdersValues[token] = cargoPorDefectoQubira());
     const ops = opcionesCargoQubira();
@@ -6169,16 +6196,17 @@ function renderPlaceholdersForm(placeholders, reset = false) {
   const { items, sueltos } = parrafosConVariables(tpl?.contenido_html || '', placeholders);
   const validas = new Set(placeholders);
   const lleno = t => (_templatePlaceholdersValues[t] || '').trim() !== '';
-  const pendientesTotal = items.filter(it => it.tokens.some(t => !lleno(t))).length + sueltos.filter(t => !lleno(t)).length;
+  const altPendiente = it => !!(it.alternativa && !it.alternativa.automatica && it.alternativa.elegida === null);
+  const pendientesTotal = items.filter(it => it.tokens.some(t => !lleno(t)) || altPendiente(it)).length + sueltos.filter(t => !lleno(t)).length;
   const q = _phBusqueda.trim().toLowerCase();
-  const visible = it => (_phFiltro === 'todos' || it.tokens.some(t => !lleno(t)))
+  const visible = it => (_phFiltro === 'todos' || it.tokens.some(t => !lleno(t)) || altPendiente(it))
     && (!q || it.texto.toLowerCase().includes(q) || it.seccion.toLowerCase().includes(q) || it.tokens.some(t => humanizePlaceholderToken(t).toLowerCase().includes(q)));
 
   const tarjetas = items.filter(visible).map(it => `
     <div class="phc ${it.tokens.every(lleno) ? 'completo' : ''}" data-tokens="${esc(it.tokens.join('|'))}">
-      <div class="phc-seccion">${esc(it.seccion)}<span>${it.tokens.length} ${it.tokens.length === 1 ? 'variable' : 'variables'}</span></div>
-      ${htmlPlantillasRapidas(it.tokens)}
-      <div class="phc-texto">${htmlParrafoConCasillas(it.texto, validas)}</div>
+      <div class="phc-seccion">${esc(it.seccion)}<span>${it.tokens.length ? `${it.tokens.length} ${it.tokens.length === 1 ? 'variable' : 'variables'}` : `${it.alternativa?.opciones.length || 0} opciones`}</span></div>
+      ${htmlPlantillasRapidas(it.tokens)}${htmlAlternativas(it.alternativa)}
+      <div class="phc-texto">${it.alternativa && it.alternativa.elegida === null ? htmlOpcionesSinElegir(it.alternativa) : htmlParrafoConCasillas(it.texto, validas)}</div>
     </div>`).join('');
   const sueltosVisibles = sueltos.filter(t => (_phFiltro === 'todos' || !lleno(t)) && (!q || humanizePlaceholderToken(t).toLowerCase().includes(q) || t.toLowerCase().includes(q)));
   const otros = sueltosVisibles.length ? `
@@ -6279,7 +6307,8 @@ function ajustarTablas10(raiz) {
 }
 const TOKENS_DE_PROFORMA = ['REQUERIMIENTOS_FUNCIONALES', 'REQUERIMIENTOS_NO_FUNCIONALES', 'MODULOS_FUNCIONALES', 'ENTREGABLES', 'STACK_HERRAMIENTAS', 'STACK_LENGUAJES', 'PRECIO_ACORDADO', 'PRECIO_EN_LETRAS', 'MONEDA', 'PLANES_GRATUITOS',
   'DETALLE_DE_PAGOS', 'DIAS_GARANTIA', 'NECESIDAD_DEL_CLIENTE', 'OBJETO_SERVICIO', 'OBJETO', 'DURACION_SPRINT', 'NUM_TOTAL_SPRINTS', 'NUMERO_CANTIDAD_SPRINT',
-  'TOTAL_DIAS_HABILES', 'FECHA_INICIO', 'FECHA_ENTREGA_FINAL', 'FECHA_LIMITE_INSUMOS', 'DETALLES_SPRINTS', 'CRONOGRAMA_REUNIONES'];
+  'TOTAL_DIAS_HABILES', 'FECHA_INICIO', 'FECHA_ENTREGA_FINAL', 'FECHA_LIMITE_INSUMOS', 'DETALLES_SPRINTS', 'CRONOGRAMA_REUNIONES',
+  'INCLUYE_O_NO_IGV', 'DIAS_GARANTIA', 'PLAZO_ENTREGA_INFORMACION', 'PLAZO_RESPUESTA_CLIENTE'];
 
 // Código visible de una proforma con su versión: PRF-2026-001, PRF-2026-001.V2, .V3…
 function codigoProforma(p, version) {
@@ -6761,6 +6790,69 @@ function verCotizacionActivaContrato() {
   if (p) viewProforma(p.id);
 }
 
+// ══════════ VALORES INICIALES Y BOTONES «POR DEFECTO» (cláusulas 7 a 16) ══════════
+// Texto de la plantilla que sigue a una variable (para no repetir «días», «horas», «meses»…)
+function textoTrasVariable(token) {
+  const html = (_odaclTemplatesCache || []).find(t => t.clave === _selectedTemplateKey)?.contenido_html || '';
+  const plano = html.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ');
+  const i = plano.indexOf(token);
+  return i < 0 ? '' : plano.slice(i + token.length, i + token.length + 30).trim().toLowerCase();
+}
+// «ocho (8)» + unidad solo si la plantilla no la trae después de la casilla
+function conUnidad(token, numero, unidad, reYaEsta) {
+  return reYaEsta.test(textoTrasVariable(token)) ? numero : `${numero} ${unidad}`;
+}
+const RE_DIAS = /^d[ií]as?\b/, RE_HORAS = /^horas?\b/, RE_MESES = /^mes(es)?\b/, RE_ANOS = /^a[ñn]os?\b/;
+
+// Duración del proyecto (días calendario del inicio al último Sprint) y de cada Sprint
+function duracionProyecto() {
+  const est = agendaDesdeTexto(proformaDelContrato()?.metodo_sprint);
+  if (!est) return null;
+  const fin = est.entregables[est.entregables.length - 1];
+  const total = contarDias(est.inicio, fin).total;
+  const diasPorSprint = total / Math.max(1, est.entregables.length);
+  return { total, diasPorSprint };
+}
+// 16.1: garantía proporcional al tamaño del proyecto
+function garantiaRecomendada() {
+  const d = duracionProyecto();
+  if (!d) return '';
+  if (d.total <= 14) return 'quince (15)';
+  if (d.total <= 92) return 'treinta (30)';
+  return 'sesenta (60)';
+}
+// 12.1: plazo de respuesta del cliente según la duración de los Sprints
+const OPCIONES_PLAZO_CLIENTE = [['un (1)', 'Sprints de 1 día'], ['dos (2)', 'Sprints de 1 semana'], ['tres (3)', 'Sprints de 2 semanas o más']];
+function plazoClienteRecomendado() {
+  const d = duracionProyecto();
+  if (!d) return '';
+  if (d.diasPorSprint <= 2) return 'un (1)';
+  if (d.diasPorSprint < 14) return 'dos (2)';
+  return 'tres (3)';
+}
+const vacio = () => '';
+const VALORES_INICIALES = {
+  // 7.1 / 7.2 / 8.3: se llenan con el botón «Por defecto»
+  PLAZO_COTIZACION_CAMBIO: vacio, VIGENCIA_COTIZACION: vacio,
+  TARIFA_HORA_ADICIONAL: vacio, HORAS_CAMBIOS_MENORES: vacio, NUM_RONDAS_CORRECCION: vacio,
+  // 9.1: según la cotización (si aplica IGV o no)
+  INCLUYE_O_NO_IGV: () => { const p = proformaDelContrato(); return p ? ((p.igv_tipo || 'igv_18') === 'igv_18' ? 'incluye' : 'no incluye') : ''; },
+  // 9.3 / 10.2: se llenan a mano
+  NUMERO_CUENTA: vacio, BANCO: vacio, CCI: vacio, TITULAR_CUENTA_COBRO: vacio, NUMERO_YAPE_PLIN: vacio, CUENTA_DETRACCIONES: vacio,
+  DETALLE_PAGO_ARMADA: () => 'una (1)',
+  // 10.4 (plantilla con variables): botones
+  RESPONSABLE_COSTOS_TERCEROS: vacio, PORCENTAJE_GESTION: vacio,
+  // 12.1: según la duración de los Sprints
+  PLAZO_ENTREGA_INFORMACION: () => plazoClienteRecomendado(), PLAZO_RESPUESTA_CLIENTE: () => plazoClienteRecomendado(),
+  // 13.1 / 13.3 / 15.1: vacíos, con botón
+  TITULAR_REPOSITORIO: vacio, MODULOS_PANEL_ADMIN: vacio, HORAS_CAPACITACION: vacio, MESES_CUSTODIA: vacio, ANOS_CONFIDENCIALIDAD: vacio,
+  // 16.1: según el tamaño del proyecto
+  DIAS_GARANTIA: t => { const g = garantiaRecomendada(); return g ? conUnidad(t, g, 'días calendario', RE_DIAS) : ''; },
+  // 16.2: botón «Por defecto»
+  PLAZO_RESPUESTA_GARANTIA: vacio, HORAS_CONFIRMACION: vacio, HORAS_CRITICO: vacio, DIAS_MAYOR: vacio, HORAS_DIAGNOSTICO: vacio,
+};
+const tk = k => `[${k}]`;
+
 // ── 6.1 Plazo calculado con los Sprints del cronograma ──
 const INSUMOS_INICIALES_BASE = '(i) logotipo y paleta de colores; (ii) textos e imágenes; (iii) relación de usuarios y roles; (iv) datos de prueba; y (v) accesos al dominio y a las cuentas de terceros a su cargo';
 function plazoDelCronograma() {
@@ -6912,6 +7004,40 @@ function phComboTeclas(e, el) {
 
 // ── Plantillas rápidas: rellenan de golpe las variables de un párrafo ──
 const PLANTILLAS_RAPIDAS = [
+  { tokens: ['PLAZO_COTIZACION_CAMBIO', 'VIGENCIA_COTIZACION'], opciones: [
+    { id: 'cambio', nombre: '⚙️ Por defecto', valores: () => ({
+      PLAZO_COTIZACION_CAMBIO: conUnidad(tk('PLAZO_COTIZACION_CAMBIO'), 'un (1)', 'día hábil', RE_DIAS),
+      VIGENCIA_COTIZACION: conUnidad(tk('VIGENCIA_COTIZACION'), 'cinco (5)', 'días calendario', RE_DIAS) }) } ] },
+  { tokens: ['TARIFA_HORA_ADICIONAL', 'HORAS_CAMBIOS_MENORES'], opciones: [
+    { id: 'tarifa', nombre: '⚙️ Por defecto', valores: () => ({
+      TARIFA_HORA_ADICIONAL: '$ 25.00 USD',
+      HORAS_CAMBIOS_MENORES: conUnidad(tk('HORAS_CAMBIOS_MENORES'), 'dos (2)', 'horas', RE_HORAS) }) } ] },
+  { tokens: ['NUM_RONDAS_CORRECCION'], opciones: [
+    { id: 'rondas', nombre: '⚙️ Por defecto', valores: { NUM_RONDAS_CORRECCION: 'una (1) ronda de corrección sin costo, y el Entregable final incluye dos (2)' } } ] },
+  { tokens: ['INCLUYE_O_NO_IGV'], opciones: [
+    { id: 'sinigv', nombre: '⚙️ Por defecto: no incluye IGV', valores: { INCLUYE_O_NO_IGV: 'no incluye' } } ] },
+  { tokens: ['RESPONSABLE_COSTOS_TERCEROS', 'PORCENTAJE_GESTION'], opciones: [
+    { id: 'cliente', nombre: '👤 Paga EL CLIENTE (10 %)', valores: { RESPONSABLE_COSTOS_TERCEROS: 'EL CLIENTE', PORCENTAJE_GESTION: 'diez (10)' } },
+    { id: 'qubira', nombre: '🏢 QUBIRA asume el hosting', valores: { RESPONSABLE_COSTOS_TERCEROS: 'QUBIRA durante la ejecución del proyecto y el periodo de garantía, y de EL CLIENTE a partir de entonces', PORCENTAJE_GESTION: 'diez (10)' } } ] },
+  { tokens: ['MODULOS_PANEL_ADMIN', 'HORAS_CAPACITACION'], opciones: [
+    { id: 'entrega', nombre: '⚙️ Por defecto', valores: () => ({
+      MODULOS_PANEL_ADMIN: 'Usuarios, Productos, Ventas y Reportes',
+      HORAS_CAPACITACION: conUnidad(tk('HORAS_CAPACITACION'), 'cuatro (4)', 'horas', RE_HORAS) }) } ] },
+  { tokens: ['MESES_CUSTODIA'], opciones: [
+    { id: 'custodia', nombre: '⚙️ Por defecto: 6 meses', valores: () => ({ MESES_CUSTODIA: conUnidad(tk('MESES_CUSTODIA'), 'seis (6)', 'meses', RE_MESES) }) } ] },
+  { tokens: ['ANOS_CONFIDENCIALIDAD'], opciones: [
+    { id: 'confid', nombre: '⚙️ Por defecto: 3 años', valores: () => ({ ANOS_CONFIDENCIALIDAD: conUnidad(tk('ANOS_CONFIDENCIALIDAD'), 'tres (3)', 'años', RE_ANOS) }) } ] },
+  { tokens: ['DIAS_GARANTIA'], opciones: [
+    { id: 'g15', nombre: '15 días (hasta 2 semanas)', valores: () => ({ DIAS_GARANTIA: conUnidad(tk('DIAS_GARANTIA'), 'quince (15)', 'días calendario', RE_DIAS) }) },
+    { id: 'g30', nombre: '30 días (1 a 3 meses)', valores: () => ({ DIAS_GARANTIA: conUnidad(tk('DIAS_GARANTIA'), 'treinta (30)', 'días calendario', RE_DIAS) }) },
+    { id: 'g60', nombre: '60 días (más de 3 meses)', valores: () => ({ DIAS_GARANTIA: conUnidad(tk('DIAS_GARANTIA'), 'sesenta (60)', 'días calendario', RE_DIAS) }) } ] },
+  { tokens: ['PLAZO_RESPUESTA_GARANTIA', 'HORAS_CONFIRMACION', 'HORAS_CRITICO', 'DIAS_MAYOR', 'HORAS_DIAGNOSTICO'], opciones: [
+    { id: 'soporte', nombre: '⚙️ Por defecto', valores: () => ({
+      PLAZO_RESPUESTA_GARANTIA: conUnidad(tk('PLAZO_RESPUESTA_GARANTIA'), 'ocho (8)', 'horas hábiles', RE_HORAS),
+      HORAS_CONFIRMACION: conUnidad(tk('HORAS_CONFIRMACION'), 'ocho (8)', 'horas hábiles', RE_HORAS),
+      HORAS_CRITICO: conUnidad(tk('HORAS_CRITICO'), 'ocho (8)', 'horas', RE_HORAS),
+      DIAS_MAYOR: conUnidad(tk('DIAS_MAYOR'), 'tres (3)', 'días', RE_DIAS),
+      HORAS_DIAGNOSTICO: conUnidad(tk('HORAS_DIAGNOSTICO'), 'dos (2)', 'horas', RE_HORAS) }) } ] },
   {
     tokens: ['DIAS_TOLERANCIA'],
     opciones: [
@@ -6945,13 +7071,31 @@ function plantillasRapidasPara(tokens) {
   return PLANTILLAS_RAPIDAS.filter(g => g.tokens.some(t => limpios.includes(t)));
 }
 
+// Botones para elegir la alternativa de un párrafo (o aviso si se eligió sola)
+function htmlAlternativas(a) {
+  if (!a) return '';
+  const resumen = h => { const t = h.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim(); return t.length > 70 ? t.slice(0, 70) + '…' : t; };
+  if (a.automatica) {
+    const nombres = { saldo: '50 % / 50 %: saldo final', armadas: '30 / 40 / 30: armadas', mensual: 'mensual recurrente', bolsa: 'bolsa de horas', unico: '100 % adelantado: sin regla adicional' };
+    return `<div class="phc-plantillas"><span>Según la forma de pago:</span><span class="phc-auto">${esc(nombres[a.tipo] || 'elige la forma de pago en la cotización')}</span></div>`;
+  }
+  return `<div class="phc-plantillas"><span>Elegir opción ${esc(a.num)}:</span>${a.opciones.map((o, i) =>
+    `<button type="button" class="phc-plantilla${a.elegida === i ? ' activa' : ''}" onmousedown="event.preventDefault()" onclick="elegirAlternativa('${esc(a.num)}', ${i})" title="${esc(resumen(o))}">Opción ${i + 1}: ${esc(resumen(o).slice(0, 38))}…</button>`).join('')}</div>`;
+}
+function htmlOpcionesSinElegir(a) {
+  return `<div class="phc-alt-aviso">⚠ Elige una opción para el numeral ${esc(a.num)}:</div>` + a.opciones.map((o, i) =>
+    `<div class="phc-alt-op" onclick="elegirAlternativa('${esc(a.num)}', ${i})"><b>Opción ${i + 1}.</b> ${o.replace(/<(?!\/?(b|i|u|strong|em)\b)[^>]*>/gi, '')}</div>`).join('');
+}
+
+function valoresPlantilla(o) { return typeof o.valores === 'function' ? o.valores() : o.valores; }
 function htmlPlantillasRapidas(tokens) {
   const grupos = plantillasRapidasPara(tokens);
   if (!grupos.length) return '';
   const valorDe = k => _templatePlaceholdersValues[tokens.find(t => limpiarToken(t) === k)] || '';
-  return grupos.map((g, gi) => `<div class="phc-plantillas"><span>Pegar plantilla:</span>${g.opciones.map(o => {
-    const activa = Object.entries(o.valores).every(([k, v]) => !tokens.some(t => limpiarToken(t) === k) || valorDe(k) === v);
-    return `<button type="button" class="phc-plantilla${activa ? ' activa' : ''}" data-grupo="${PLANTILLAS_RAPIDAS.indexOf(g)}" data-op="${o.id}" onmousedown="event.preventDefault()" onclick="aplicarPlantillaRapida(${PLANTILLAS_RAPIDAS.indexOf(g)}, '${o.id}')" title="${esc(Object.values(o.valores).join(' · '))}">${esc(o.nombre)}</button>`;
+  return grupos.map((g, gi) => `<div class="phc-plantillas"><span>${g.opciones.length > 1 ? 'Elegir:' : 'Pegar plantilla:'}</span>${g.opciones.map(o => {
+    const vals = valoresPlantilla(o);
+    const activa = Object.entries(vals).every(([k, v]) => !tokens.some(t => limpiarToken(t) === k) || valorDe(k) === v);
+    return `<button type="button" class="phc-plantilla${activa ? ' activa' : ''}" data-grupo="${PLANTILLAS_RAPIDAS.indexOf(g)}" data-op="${o.id}" onmousedown="event.preventDefault()" onclick="aplicarPlantillaRapida(${PLANTILLAS_RAPIDAS.indexOf(g)}, '${o.id}')" title="${esc(Object.values(vals).join(' · '))}">${esc(o.nombre)}</button>`;
   }).join('')}</div>`).join('');
 }
 
@@ -6960,7 +7104,7 @@ function aplicarPlantillaRapida(gi, id) {
   if (!op) return;
   const todos = Object.keys(_templatePlaceholdersValues).concat(extraerPlaceholdersPlantillaActual());
   // Se actualizan las casillas en su sitio (sin volver a pintar la lista ni mover el scroll)
-  Object.entries(op.valores).forEach(([k, v]) => {
+  Object.entries(valoresPlantilla(op)).forEach(([k, v]) => {
     [...new Set(todos)].filter(t => limpiarToken(t) === k).forEach(t => {
       _templatePlaceholdersValues[t] = v;
       const casilla = Array.from(document.querySelectorAll('#ctr-placeholders-container .ph-in')).find(c => c.dataset.token === t && 'value' in c);
@@ -7114,6 +7258,100 @@ function quitarComparecencia(html) {
   return div.innerHTML;
 }
 
+// ══════════ PÁRRAFOS CON ALTERNATIVAS «opción A | opción B» ══════════
+// 9.4: la alternativa se elige sola según la forma de pago de la cotización.
+// Otros (10.4): se elige con un botón; hasta elegir, el contrato no se puede guardar.
+function numeralDe(texto) { return (/^\s*(\d+\.\d+)\./.exec(texto) || [])[1] || ''; }
+function claveAlternativa(num) { return `[__OPCION ${num}]`; }
+function tipoPagoCotizacion() {
+  const m = String(proformaDelContrato()?.modalidad_pago || document.getElementById('ctr-modalidad')?.value || '').toLowerCase();
+  if (/bolsa/.test(m)) return 'bolsa';
+  if (/mensual/.test(m)) return 'mensual';
+  if (/100\s*%/.test(m)) return 'unico';
+  if (/30\s*%/.test(m)) return 'armadas';
+  if (/50\s*%/.test(m) || /factura/.test(m)) return 'saldo';
+  return '';
+}
+const PALABRAS_PAGO = { saldo: /saldo final/i, armadas: /una \(1\) armada/i, mensual: /mensualidad/i, bolsa: /bolsa/i };
+// Devuelve { num, opciones:[html], base, prefijo, automatica, elegida }
+function analizarAlternativas(el) {
+  const html = el.innerHTML;
+  const partes = html.split(/\s*\|\s*/);
+  if (partes.length < 2) return null;
+  const num = numeralDe(el.textContent || '');
+  let base = '', prefijo = '', opciones = partes;
+  const ex = /Por excepci[oó]n al numeral [\d.]+,\s*/i.exec(partes[0]);
+  if (num === '9.4' && ex) {
+    base = partes[0].slice(0, ex.index);
+    prefijo = ex[0];
+    opciones = [partes[0].slice(ex.index + ex[0].length), ...partes.slice(1)];
+  } else {
+    // En los demás, la primera opción incluye el encabezado «10.4. Título.»
+    const cab = /^(\s*(?:<[^>]+>\s*)*<b>[^<]*<\/b>\s*)/i.exec(partes[0]);
+    if (cab) { base = cab[1]; opciones = [partes[0].slice(cab[1].length), ...partes.slice(1)]; }
+  }
+  if (num === '9.4') {
+    const tipo = tipoPagoCotizacion();
+    const i = tipo === 'unico' ? -1 : opciones.findIndex(o => PALABRAS_PAGO[tipo]?.test(o.replace(/<[^>]+>/g, '')));
+    return { num, opciones, base, prefijo, automatica: true, elegida: tipo ? i : null, tipo };
+  }
+  const v = _templatePlaceholdersValues[claveAlternativa(num)];
+  return { num, opciones, base, prefijo, automatica: false, elegida: v === undefined || v === '' ? null : Number(v) };
+}
+// Un párrafo con «|» partido entre dos hojas se une antes de elegir la opción
+function unirFragmentosConAlternativas(div) {
+  div.querySelectorAll('p[data-frag]:not([data-cont])').forEach(el => {
+    const conts = [...div.querySelectorAll('p[data-cont]')].filter(c => c.getAttribute('data-frag') === el.getAttribute('data-frag'));
+    if (!conts.length) return;
+    const texto = (el.textContent || '') + ' ' + conts.map(c => c.textContent || '').join(' ');
+    if (!/\s\|\s/.test(texto)) return;
+    conts.forEach(c => { el.innerHTML += ' ' + c.innerHTML; c.remove(); });
+  });
+}
+
+// Aplica la alternativa elegida a cada párrafo; sin elegir, deja todas a la vista
+function aplicarAlternativas(html, conAviso) {
+  if (!html || !html.includes('|')) return html;
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  unirFragmentosConAlternativas(div);
+  div.querySelectorAll('p, li').forEach(el => {
+    if (!/\s\|\s/.test(el.textContent || '')) return;
+    const a = analizarAlternativas(el);
+    if (!a) return;
+    if (a.elegida === null) {
+      if (conAviso) el.innerHTML = a.base + (a.prefijo || '') + a.opciones.map((o, i) => `<span class="unfilled-field">[OPCIÓN ${i + 1}]</span> ${o}`).join(' ');
+      return;
+    }
+    const op = a.opciones[a.elegida];
+    if (a.elegida < 0 || op === undefined) { el.innerHTML = a.base.replace(/\s+$/, ''); return; }
+    const sinPrefijo = /^\s*Las horas de la bolsa/i.test(op.replace(/<[^>]+>/g, ''));
+    el.innerHTML = a.base + (a.prefijo && !sinPrefijo ? a.prefijo : '') + op;
+  });
+  // Las continuaciones de un párrafo partido entre hojas ya quedaron incluidas en la opción
+  return div.innerHTML;
+}
+function alternativasPendientes() {
+  const html = (_odaclTemplatesCache || []).find(t => t.clave === _selectedTemplateKey)?.contenido_html || '';
+  if (!html.includes('|')) return [];
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  unirFragmentosConAlternativas(div);
+  return [...div.querySelectorAll('p, li')].filter(el => /\s\|\s/.test(el.textContent || ''))
+    .map(analizarAlternativas).filter(a => a && !a.automatica && a.elegida === null).map(a => a.num);
+}
+function elegirAlternativa(num, i) {
+  _templatePlaceholdersValues[claveAlternativa(num)] = String(i);
+  renderPlaceholdersForm(extraerPlaceholdersPlantillaActual(), false);
+  updateContractPreview();
+}
+// «un (1) días hábiles» → «un (1) día hábil»
+function singularizarUno(html) {
+  const sing = { 'días': 'día', 'horas': 'hora', 'meses': 'mes', 'años': 'año', 'rondas': 'ronda', 'armadas': 'armada', 'mensualidades': 'mensualidad' };
+  return html.replace(/\b(un|una) \(1\) (días|horas|meses|años|rondas|armadas|mensualidades)( hábiles| calendario)?/g,
+    (m, art, pal, adj) => `${art} (1) ${sing[pal]}${adj === ' hábiles' ? ' hábil' : (adj || '')}`);
+}
+
 // ── 4.5 Infraestructura en planes gratuitos ──
 // Se activa cuando la proforma usa el plan FREE de una herramienta que también tiene
 // planes de pago (las que solo tienen plan FREE no cuentan). Con solo planes de pago no aplica.
@@ -7196,6 +7434,8 @@ function compileContractTemplate(templateHtml, replacements, highlightUnfilled =
   result = quitarComparecencia(result);
   // 1b. Cláusula 4.5 de planes gratuitos (solo si la proforma los usa)
   result = insertarClausulaPlanesGratuitos(result, replacements);
+  // 1c. Párrafos con alternativas «… | …» (9.4 según la forma de pago, 10.4 la elegida)
+  result = aplicarAlternativas(result, highlightUnfilled);
 
   // 2. Reemplazar cada token encontrado
   const allTokens = extractPlaceholdersClient(templateHtml);
@@ -7229,7 +7469,7 @@ function compileContractTemplate(templateHtml, replacements, highlightUnfilled =
     }
   });
 
-  return result;
+  return singularizarUno(result);
 }
 
 function cargarPlantillaContratoModelo() {
@@ -7528,6 +7768,11 @@ function updateContractPreview() {
 
 async function handleGuardarContrato(e) {
   e.preventDefault();
+  const sinElegir = alternativasPendientes();
+  if (sinElegir.length) {
+    qcAlert(`Antes de guardar, elige la opción del numeral ${sinElegir.join(', ')} en «Rellenado en contexto».`, { titulo: 'Falta elegir una opción' });
+    return;
+  }
   if (!_ctrProformaId) {
     toast('error', 'Falta el origen', 'Elige una proforma registrada o crea la proforma primero.');
     document.getElementById('ctr-proforma-buscar')?.focus();
