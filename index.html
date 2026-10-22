@@ -1013,6 +1013,15 @@
     .phc-plantilla { border: 1px solid #99f6e4; background: #fff; color: #0f766e; border-radius: 999px; padding: 3px 11px; font-size: 11.5px; font-weight: 700; cursor: pointer; }
     .phc-plantilla:hover { background: #f0fdfa; }
     .phc-plantilla.activa { background: #0f766e; border-color: #0f766e; color: #fff; }
+    .ph-combo { position: relative; display: inline-block; vertical-align: baseline; }
+    .ph-combo-lista { position: absolute; left: 0; top: calc(100% + 4px); z-index: 50; min-width: 260px; max-height: 240px; overflow-y: auto; background: #fff; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 14px 30px rgba(15,23,42,.16); padding: 4px; display: flex; flex-direction: column; font-family: 'Inter', sans-serif; }
+    .ph-combo-lista[hidden] { display: none; }
+    .ph-combo-grupo { font-size: 10px; font-weight: 800; color: #0f766e; text-transform: uppercase; letter-spacing: .4px; padding: 6px 8px 3px; }
+    .ph-combo-op { font-size: 12.5px; padding: 6px 9px; border-radius: 7px; cursor: pointer; color: var(--text); line-height: 1.3; }
+    .ph-combo-op.foco, .ph-combo-op:hover { background: #f0fdfa; }
+    .ph-combo-op.elegida { font-weight: 700; color: #0f766e; }
+    .ph-combo-op mark { background: #fef08a; color: inherit; border-radius: 2px; }
+    .ph-combo-vacio { font-size: 12px; color: var(--text-muted); padding: 10px; }
     .ph-resp { display: inline; }
     .ph-descartado { text-decoration: line-through; color: #94a3b8; font-size: 12px; background: #f1f5f9; border-radius: 5px; padding: 2px 7px; }
     .ph-flecha { color: #0f766e; font-weight: 800; margin: 0 4px; }
@@ -6071,13 +6080,9 @@ function htmlCasillaVariable(token) {
     const { cotizadas, catalogo } = herramientasParaContrato();
     if (cotizadas.length || catalogo.length) {
       const val = _templatePlaceholdersValues[token] || '';
-      const extra = val && !cotizadas.includes(val) && !catalogo.includes(val) ? `<option selected>${esc(val)}</option>` : '';
-      const ops = arr => arr.map(n => `<option${n === val ? ' selected' : ''}>${esc(n)}</option>`).join('');
-      return `<select class="ph-in ph-sel ${val ? 'lleno' : ''}" data-token="${esc(token)}" onchange="phCambio(this)" title="Herramientas registradas en Tech Stack & Costos">
-        <option value="">— Elige herramienta —</option>${extra}
-        ${cotizadas.length ? `<optgroup label="En la cotización">${ops(cotizadas)}</optgroup>` : ''}
-        ${catalogo.length ? `<optgroup label="Catálogo Tech Stack & Costos">${ops(catalogo)}</optgroup>` : ''}
-      </select>`;
+      return `<span class="ph-combo"><input type="text" class="ph-in ph-combo-in ${val ? 'lleno' : ''}" data-token="${esc(token)}" data-valor="${esc(val)}" value="${esc(val)}"
+        placeholder="🔍 Buscar herramienta…" autocomplete="off" size="${Math.max(18, val.length + 2)}" title="Herramientas registradas en Tech Stack & Costos"
+        onfocus="phComboAbrir(this)" oninput="phComboFiltrar(this)" onkeydown="phComboTeclas(event, this)" onblur="phComboSalir(this)"><span class="ph-combo-lista" hidden></span></span>`;
     }
   }
   if (limpio === 'CARGO_REPRESENTANTE_QUBIRA') {
@@ -6741,6 +6746,68 @@ function herramientasParaContrato() {
   const catalogo = [...new Set((_techCatalogCache?.tool || []).filter(t => (t.category || 'tool') === 'tool').map(t => String(t.name || '').trim()).filter(Boolean))]
     .filter(n => !cotizadas.includes(n)).sort((a, b) => a.localeCompare(b, 'es'));
   return { cotizadas, catalogo };
+}
+
+// ── Buscador con filtro para las herramientas (escribe y la lista se filtra) ──
+function phComboOpciones(el) {
+  const { cotizadas, catalogo } = herramientasParaContrato();
+  const q = String(el.value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  const filtra = arr => q && el.value !== el.dataset.valor ? arr.filter(n => n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(q)) : arr;
+  return [['En la cotización', filtra(cotizadas)], ['Catálogo Tech Stack & Costos', filtra(catalogo)]];
+}
+function phComboPintar(el) {
+  const lista = el.parentElement.querySelector('.ph-combo-lista');
+  const grupos = phComboOpciones(el);
+  const q = String(el.value || '').trim();
+  let k = 0;
+  const marcar = n => {
+    if (!q || el.value === el.dataset.valor) return esc(n);
+    const i = n.toLowerCase().indexOf(q.toLowerCase());
+    return i < 0 ? esc(n) : esc(n.slice(0, i)) + '<mark>' + esc(n.slice(i, i + q.length)) + '</mark>' + esc(n.slice(i + q.length));
+  };
+  const html = grupos.filter(([, arr]) => arr.length).map(([titulo, arr]) => `<span class="ph-combo-grupo">${titulo}</span>` +
+    arr.map(n => `<span class="ph-combo-op${k++ === 0 ? ' foco' : ''}${n === el.dataset.valor ? ' elegida' : ''}" data-v="${esc(n)}" onmousedown="event.preventDefault(); phComboElegir(this)">${marcar(n)}</span>`).join('')).join('');
+  lista.innerHTML = html || '<span class="ph-combo-vacio">Sin coincidencias en Tech Stack & Costos</span>';
+  lista.hidden = false;
+}
+function phComboAbrir(el) { el.select(); phComboPintar(el); }
+function phComboFiltrar(el) { phComboPintar(el); }
+function phComboElegir(op) {
+  const el = op.closest('.ph-combo').querySelector('.ph-combo-in');
+  el.value = op.dataset.v;
+  el.dataset.valor = op.dataset.v;
+  el.closest('.ph-combo').querySelector('.ph-combo-lista').hidden = true;
+  phCambio(el);
+  document.querySelectorAll('#ctr-placeholders-container .ph-combo-in').forEach(o => { if (o.dataset.token === el.dataset.token) o.dataset.valor = el.value; });
+  el.size = Math.max(18, el.value.length + 2);
+  el.blur();
+}
+// Al salir sin elegir, vuelve al valor que tenía (la búsqueda es solo un filtro)
+function phComboSalir(el) {
+  setTimeout(() => {
+    const lista = el.parentElement?.querySelector('.ph-combo-lista');
+    if (lista) lista.hidden = true;
+    if (el.value !== el.dataset.valor) el.value = el.dataset.valor || '';
+  }, 120);
+}
+function phComboTeclas(e, el) {
+  const lista = el.parentElement.querySelector('.ph-combo-lista');
+  const ops = [...lista.querySelectorAll('.ph-combo-op')];
+  const i = ops.findIndex(o => o.classList.contains('foco'));
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (lista.hidden) { phComboPintar(el); return; }
+    const n = ops.length ? (i + (e.key === 'ArrowDown' ? 1 : ops.length - 1)) % ops.length : -1;
+    ops.forEach((o, k) => o.classList.toggle('foco', k === n));
+    ops[n]?.scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (ops[i >= 0 ? i : 0]) phComboElegir(ops[i >= 0 ? i : 0]);
+  } else if (e.key === 'Escape') {
+    el.value = el.dataset.valor || '';
+    lista.hidden = true;
+    el.blur();
+  }
 }
 
 // ── Plantillas rápidas: rellenan de golpe las variables de un párrafo ──
