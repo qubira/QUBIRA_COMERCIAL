@@ -1013,6 +1013,11 @@
     .phc-plantilla { border: 1px solid #99f6e4; background: #fff; color: #0f766e; border-radius: 999px; padding: 3px 11px; font-size: 11.5px; font-weight: 700; cursor: pointer; }
     .phc-plantilla:hover { background: #f0fdfa; }
     .phc-plantilla.activa { background: #0f766e; border-color: #0f766e; color: #fff; }
+    .ph-resp { display: inline; }
+    .ph-descartado { text-decoration: line-through; color: #94a3b8; font-size: 12px; background: #f1f5f9; border-radius: 5px; padding: 2px 7px; }
+    .ph-flecha { color: #0f766e; font-weight: 800; margin: 0 4px; }
+    .ph-volver { border: 1px solid #99f6e4; background: #fff; color: #0f766e; border-radius: 999px; padding: 1px 8px; font-size: 10.5px; font-weight: 700; cursor: pointer; margin-left: 4px; vertical-align: middle; }
+    .ph-volver:hover { background: #f0fdfa; }
     .ph-origen { font-size: 10px; font-weight: 700; color: #0f766e; background: #ecfdf5; border-radius: 999px; padding: 1px 7px; margin-left: 2px; vertical-align: middle; }
     .ph-in.ph-falta { display: inline-block; cursor: pointer; border: 1px dashed #ef4444 !important; background: #fef2f2 !important; color: #b91c1c; font-weight: 600; }
     .ph-in.ph-falta:hover { background: #fee2e2 !important; }
@@ -5215,6 +5220,7 @@ function mostrarOrigenContrato() {
 function cambiarOrigenContrato() {
   _cotv.editando = false;
   _cotv.expandido = false;
+  _respDerivado = false;
   _ctrProformaId = null;
   resetCrearContratoForm();
 }
@@ -5876,7 +5882,7 @@ async function cargarTrabajadoresActivos() {
   // Si la casilla aún tiene el valor de antes, se reemplaza por el trabajador por defecto
   Object.keys(_templatePlaceholdersValues).forEach(t => {
     const v = String(_templatePlaceholdersValues[t] || '');
-    if (limpiarToken(t) === 'RESPONSABLE_PROYECTO_QUBIRA' && (!v.trim() || !opcionesResponsable().includes(v))) _templatePlaceholdersValues[t] = responsablePorDefecto();
+    if (limpiarToken(t) === 'RESPONSABLE_PROYECTO_QUBIRA' && (!v.trim() || (!opcionesResponsable().includes(v) && !_trabajadoresActivos.map(etiquetaTrabajador).includes(v)))) _templatePlaceholdersValues[t] = responsablePorDefecto();
   });
   if (_selectedTemplateKey) refrescarVariablesContrato();
 }
@@ -5897,6 +5903,63 @@ function trabajadoresDelCronograma() {
     return t ? { ...t, cronograma: true } : { nombre: n, cargo: '', area: 'OTI', cronograma: true };
   }).filter(t => !vistos.has(t.nombre) && vistos.add(t.nombre));
 }
+// ── Responsable del proyecto: del cronograma, o derivado a otro personal de la base de datos ──
+let _respDerivado = false;
+function htmlResponsable(token) {
+  const lista = listaResponsables();
+  const ops = lista.map(etiquetaTrabajador);
+  const delCrono = !!lista[0]?.cronograma;
+  let val = _templatePlaceholdersValues[token];
+  const todos = _trabajadoresActivos.map(etiquetaTrabajador);
+  // Si el valor es alguien fuera del cronograma, está derivado
+  if (delCrono && val && !ops.includes(val) && todos.includes(val)) _respDerivado = true;
+  if (!delCrono) _respDerivado = false;
+  if (_respDerivado) {
+    const descartado = responsablePorDefecto();
+    if (!val || ops.includes(val)) val = _templatePlaceholdersValues[token] = '';
+    const opciones = _trabajadoresActivos.filter(t => etiquetaTrabajador(t) !== descartado);
+    const selector = opciones.length
+      ? `<select class="ph-in ph-sel ${val ? 'lleno' : ''}" data-token="${esc(token)}" onchange="phCambio(this)" title="Personal activo registrado en la base de datos (RRHH)">
+          <option value="">— Elige el personal —</option>
+          ${opciones.map(t => { const o = etiquetaTrabajador(t); return `<option value="${esc(o)}"${o === val ? ' selected' : ''}>${esc(o)}${t.area ? ' · ' + esc(t.area) : ''}</option>`; }).join('')}
+        </select>`
+      : `<input type="text" class="ph-in ${val ? 'lleno' : ''}" data-token="${esc(token)}" value="${esc(val || '')}" placeholder="Nombre completo del responsable" oninput="phCambio(this)">`;
+    return `<span class="ph-descartado" title="Responsable del cronograma descartado">${esc(descartado)}</span>
+      <span class="ph-flecha">→</span>${selector}
+      <button type="button" class="ph-volver" onclick="responsableDelCronograma('${esc(token)}')" title="Volver al responsable del cronograma">↩ Cronograma</button>`;
+  }
+  if (!val || !ops.includes(val)) val = _templatePlaceholdersValues[token] = responsablePorDefecto();
+  return `<select class="ph-in ph-sel lleno" data-token="${esc(token)}" onchange="phResponsableCambio(this)" title="${delCrono ? 'Trabajadores de OTI elegidos en el cronograma de la proforma' : 'Trabajadores activos registrados en RRHH'}">
+      ${ops.map((o, i) => `<option value="${esc(o)}"${o === val ? ' selected' : ''}>${esc(o)}${lista[i].area ? ' · ' + esc(lista[i].area) : ''}</option>`).join('')}
+      ${delCrono ? '<option value="__derivar">↪ Derivar a otro personal…</option>' : ''}
+    </select>${delCrono ? '<small class="ph-origen">del cronograma</small>' : ''}`;
+}
+
+// Repinta solo el control del responsable (sin mover la pantalla)
+function repintarResponsable(token) {
+  document.querySelectorAll('#ctr-placeholders-container .ph-resp').forEach(w => { if (w.dataset.wrap === token) w.innerHTML = htmlResponsable(token); });
+  updatePlaceholdersProgress();
+  updateContractPreview();
+}
+
+function phResponsableCambio(el) {
+  const token = el.dataset.token;
+  if (el.value === '__derivar') {
+    _respDerivado = true;
+    _templatePlaceholdersValues[token] = '';
+    repintarResponsable(token);
+    document.querySelector(`#ctr-placeholders-container .ph-resp[data-wrap="${CSS.escape(token)}"] [data-token]`)?.focus();
+    return;
+  }
+  phCambio(el);
+}
+
+function responsableDelCronograma(token) {
+  _respDerivado = false;
+  _templatePlaceholdersValues[token] = responsablePorDefecto();
+  repintarResponsable(token);
+}
+
 // Si la proforma tiene equipo en el cronograma se ofrece ese; si no, todos los activos de RRHH
 function listaResponsables() { const c = trabajadoresDelCronograma(); return c.length ? c : _trabajadoresActivos; }
 function opcionesResponsable() { return listaResponsables().map(etiquetaTrabajador); }
@@ -5974,14 +6037,8 @@ function htmlCasillaVariable(token) {
     }
     return `<span class="ph-in ph-bloqueada" data-token="${esc(token)}" title="${esc(origen)} · no se puede editar">🔒 ${esc(val)}</span>`;
   }
-  if (limpio === 'RESPONSABLE_PROYECTO_QUBIRA' && listaResponsables().length) {
-    const lista = listaResponsables();
-    const ops = lista.map(etiquetaTrabajador);
-    let val = _templatePlaceholdersValues[token];
-    // Si cambió la proforma (y su equipo), se toma el primero del nuevo cronograma
-    if (!val || !ops.includes(val)) val = _templatePlaceholdersValues[token] = responsablePorDefecto();
-    const delCrono = !!lista[0]?.cronograma;
-    return `<select class="ph-in ph-sel lleno" data-token="${esc(token)}" onchange="phCambio(this)" title="${delCrono ? 'Trabajadores de OTI elegidos en el cronograma de la proforma' : 'Trabajadores activos registrados en RRHH'}">${ops.map((o, i) => `<option value="${esc(o)}"${o === val ? ' selected' : ''}>${esc(o)}${lista[i].area ? ' · ' + esc(lista[i].area) : ''}</option>`).join('')}</select>${delCrono ? '<small class="ph-origen">del cronograma</small>' : ''}`;
+  if (limpio === 'RESPONSABLE_PROYECTO_QUBIRA' && (listaResponsables().length || _trabajadoresActivos.length)) {
+    return `<span class="ph-resp" data-wrap="${esc(token)}">${htmlResponsable(token)}</span>`;
   }
   if (limpio === 'CARGO_REPRESENTANTE_QUBIRA') {
     const val = _templatePlaceholdersValues[token] || (_templatePlaceholdersValues[token] = cargoPorDefectoQubira());
