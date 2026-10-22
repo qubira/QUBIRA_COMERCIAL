@@ -1422,7 +1422,7 @@
     <div class="sf-estado" style="display:flex;align-items:center;gap:8px;margin-top:10px" title="Sistema activo">
       <span class="pulse-dot"></span> <span class="sf-txt">Sistema activo</span>
     </div>
-    <div class="sf-copy" style="font-size:10px;opacity:.5;margin-top:2px">© 2026 Qubira S.A.C.</div>
+    <div class="sf-copy" style="font-size:10px;opacity:.5;margin-top:2px">© 2026 QUBIRA</div>
   </div>
 </aside>
 <div class="mob-overlay" id="mob-overlay" onclick="closeSidebar()"></div>
@@ -1883,7 +1883,7 @@
                 <span style="font-size:10.5px;font-weight:800;color:#065f46;text-transform:uppercase;letter-spacing:.5px">Plantilla ODACL Seleccionada</span>
                 <span id="prev-plantilla-badge" class="badge" style="background:#10b981;color:#fff;font-size:9.5px;padding:2px 7px">Oficial</span>
               </div>
-              <div id="prev-plantilla-name" style="font-size:13px;font-weight:800;color:#0f766e;line-height:1.35">Contrato de Desarrollo de Software - QUBIRA S.A.C.</div>
+              <div id="prev-plantilla-name" style="font-size:13px;font-weight:800;color:#0f766e;line-height:1.35">Contrato de Desarrollo de Software - QUBIRA</div>
             </div>
 
             <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;margin-bottom:18px">
@@ -5394,7 +5394,7 @@ function onContractTemplateSelected(key, resetPlaceholders = false) {
           <div>
             <strong>Plantilla Oficial Aprobada por ODACL</strong>
             <div style="font-size:10.5px;font-weight:500;opacity:.9">
-              ${esc(tpl.descripcion || 'Redacción oficial corporativa de Qubira S.A.C.')}
+              ${esc(tpl.descripcion || 'Redacción oficial corporativa de QUBIRA')}
             </div>
           </div>
         </div>
@@ -5579,7 +5579,7 @@ function getAutoFillValueForToken(token) {
   // Mapeos institucionales
   if (['CODIGO_CONTRATO'].includes(clean)) return codigo;
   if (['FECHA_DIA_MES_AÑO'].includes(clean)) return formatContractDateSpanish(fInicio);
-  if (['RAZON_SOCIAL_QUBIRA'].includes(clean)) return 'QUBIRA S.A.C.';
+  if (['RAZON_SOCIAL_QUBIRA'].includes(clean)) return 'QUBIRA';
   if (['RUC_QUBIRA'].includes(clean)) return '10764275981';
   if (['DOMICILIO_QUBIRA'].includes(clean)) return 'Lima, República del Perú';
   if (['DISTRITO_QUBIRA'].includes(clean)) return 'Santiago de Surco';
@@ -5589,7 +5589,7 @@ function getAutoFillValueForToken(token) {
   if (['PARTIDA_QUBIRA'].includes(clean)) return 'Partida Electrónica N° 14892011';
   if (['CORREO_QUBIRA'].includes(clean)) return 'qubirasac@gmail.com';
   if (['BANCO'].includes(clean)) return 'Banco de Crédito del Perú (BCP)';
-  if (['TITULAR_CUENTA_COBRO'].includes(clean)) return 'QUBIRA S.A.C.';
+  if (['TITULAR_CUENTA_COBRO'].includes(clean)) return 'QUBIRA';
   if (['NUMERO_CUENTA'].includes(clean)) return '191-98765432-0-45';
   if (['CCI'].includes(clean)) return '002-191-009876543204-51';
   if (['NUMERO_YAPE_PLIN'].includes(clean)) return '910 827 344';
@@ -6047,7 +6047,7 @@ async function renderCrearContrato() {
   // Set default objeto y entregables if empty
   const objEl = document.getElementById('ctr-objeto');
   if (objEl && !objEl.value) {
-    objEl.value = 'Prestación de servicios de desarrollo, licenciamiento y puesta en producción de software empresarial con estándares de seguridad, alta concurrencia y soporte técnico de Qubira S.A.C.';
+    objEl.value = 'Prestación de servicios de desarrollo, licenciamiento y puesta en producción de software empresarial con estándares de seguridad, alta concurrencia y soporte técnico de QUBIRA';
   }
   const entEl = document.getElementById('ctr-entregables');
   if (entEl && !entEl.value) {
@@ -6246,7 +6246,7 @@ async function handleGuardarContrato(e) {
   // Plantilla ODACL aprobada
   const tpl = (_odaclTemplatesCache || []).find(t => t.clave === _selectedTemplateKey);
   const plantilla_clave = tpl ? tpl.clave : 'desarrollo_software';
-  const plantilla_titulo = tpl ? tpl.titulo : 'Contrato de Desarrollo de Software - QUBIRA S.A.C.';
+  const plantilla_titulo = tpl ? tpl.titulo : 'Contrato de Desarrollo de Software - QUBIRA';
   const plantilla_version = (tpl && tpl.oficial && tpl.oficial.origenVersion) ? tpl.oficial.origenVersion : 1;
 
   // Compilar HTML definitivo (sin marcas amarillas de edición)
@@ -6300,7 +6300,7 @@ function previewCurrentDraft() {
 
   const tpl = (_odaclTemplatesCache || []).find(t => t.clave === _selectedTemplateKey) || {
     clave: 'desarrollo_software',
-    titulo: 'Contrato de Desarrollo de Software - QUBIRA S.A.C.',
+    titulo: 'Contrato de Desarrollo de Software - QUBIRA',
     contenido_html: ''
   };
 
@@ -6547,7 +6547,7 @@ function renderOdaclContractSheets(rawHtml, c) {
             <div class="a4-header-brand">
               <img src="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" alt="Logo Qubira" class="a4-header-logo">
               <div class="a4-header-titles">
-                <div class="a4-header-company">QUBIRA S.A.C.</div>
+                <div class="a4-header-company">QUBIRA</div>
                 <div class="a4-header-tagline">SOLUCIONES CORPORATIVAS DE SOFTWARE · ODN</div>
               </div>
             </div>
@@ -6566,7 +6566,7 @@ function renderOdaclContractSheets(rawHtml, c) {
 
         <!-- PIE DE PÁGINA OFICIAL CON NUMERACIÓN ODACL -->
         <div class="a4-page-footer">
-          <div class="a4-footer-left">QUBIRA S.A.C. • RUC 10764275981 • Área Legal</div>
+          <div class="a4-footer-left">QUBIRA • RUC 10764275981 • Área Legal</div>
           <div class="a4-footer-right a4-page-counter-footer">Página ${pageNum} de ${totalPages}</div>
         </div>
       </div>
@@ -6864,7 +6864,7 @@ function renderContractOfficialModal(c) {
         <span style="font-size:13px;font-weight:600;color:#475569"><b>${esc(c.id)}</b></span>
       </h2>
       <p>Conste por el presente documento el Contrato de Prestación de Servicios de Desarrollo de Software que celebran, en la ciudad de Lima, República del Perú, con fecha <strong>${fechaInicioFormato}</strong>:</p>
-      <p style="margin-top:6px">De una parte, <strong>QUBIRA S.A.C.</strong>, con RUC N.° 10764275981, con domicilio en Lima, República del Perú, distrito de Santiago de Surco, debidamente representada por Melani A. Luyo R. / Abraham Aranda Cerna, identificados con DNI N.° 76427598 / 76543210, en su calidad de CEO Comercial / CEO de TI, según facultades inscritas en la Partida Electrónica N.° 14892011, a quien en adelante se denominará «QUBIRA» o «EL PROVEEDOR».</p>
+      <p style="margin-top:6px">De una parte, <strong>QUBIRA</strong>, con RUC N.° 10764275981, con domicilio en Lima, República del Perú, distrito de Santiago de Surco, debidamente representada por Melani A. Luyo R. / Abraham Aranda Cerna, identificados con DNI N.° 76427598 / 76543210, en su calidad de CEO Comercial / CEO de TI, según facultades inscritas en la Partida Electrónica N.° 14892011, a quien en adelante se denominará «QUBIRA» o «EL PROVEEDOR».</p>
       <p style="margin-top:6px">De la otra parte, <strong>${esc(cliNombre)}</strong>, con RUC / DNI N.° <strong>${esc(cliRuc)}</strong>, dedicada al rubro de ${esc(c.rubro || 'Tecnología y Comercio')}, con domicilio en ${esc(cliDireccion)}, debidamente representada por ${esc(cliContacto)}, identificado(a) con DNI/CE N.° ${esc(c.cliente_dni || cliRuc.slice(0,8))}, en su calidad de ${esc(cliCargo)}, a quien en adelante se denominará «EL CLIENTE».</p>
       <p style="margin-top:6px">QUBIRA y EL CLIENTE serán denominados conjuntamente «LAS PARTES» e individualmente «LA PARTE». Ambas declaran tener capacidad legal suficiente para contratar y celebran el presente contrato en los términos y condiciones siguientes:</p>
       <div class="contract-clause">
@@ -10547,7 +10547,7 @@ function renderProformaOfficialModal(p) {
         <div style="display:flex;align-items:center;gap:14px">
           <img src="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" alt="Qubira Logo" style="width:52px;height:52px;border-radius:10px;object-fit:contain">
           <div>
-            <div style="font-size:17px;font-weight:800;letter-spacing:1px;color:#0f766e">QUBIRA S.A.C.</div>
+            <div style="font-size:17px;font-weight:800;letter-spacing:1px;color:#0f766e">QUBIRA</div>
             <div style="font-size:11px;color:#6b7280">RUC: 10764275981 · Tecnologías de la Información & Software</div>
             <div style="font-size:11px;color:#6b7280">qubirasac@gmail.com · www.qubira.vercel.app · Lima, Perú</div>
           </div>
