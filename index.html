@@ -5346,16 +5346,40 @@ function updatePlaceholdersProgress() {
   }
 }
 
+// Quita SOLO el encabezado "COMPARECENCIA DE LAS PARTES". Antes se usaban
+// expresiones regulares que empezaban en el primer <h2>/<p>/<div> del
+// documento y borraban hasta ese texto: se llevaban el título del contrato
+// y su código [CODIGO_CONTRATO] (y con <div>, páginas enteras).
+function quitarComparecencia(html) {
+  if (!html || !/COMPARECENCIA/i.test(html)) return html;
+  const RE = /COMPARECENCIA\s+DE\s+LAS\s+PARTES/i;
+  const SOLO = /^[\s\u00a0]*COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\u00a0:.\-—]*$/i;
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  const textos = [];
+  const w = document.createTreeWalker(div, NodeFilter.SHOW_TEXT);
+  let t;
+  while ((t = w.nextNode())) if (RE.test(t.nodeValue)) textos.push(t);
+  textos.forEach(nodo => {
+    if (!div.contains(nodo)) return; // ya se quitó junto con otro encabezado
+    // El elemento más externo cuyo texto completo es solo ese encabezado
+    let el = nodo.parentElement, objetivo = null;
+    while (el && el !== div) {
+      if (SOLO.test(el.textContent)) objetivo = el;
+      el = el.parentElement;
+    }
+    if (objetivo) objetivo.remove();
+    else nodo.nodeValue = nodo.nodeValue.replace(/COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\u00a0:]*/gi, '');
+  });
+  return div.innerHTML;
+}
+
 function compileContractTemplate(templateHtml, replacements, highlightUnfilled = false) {
   if (!templateHtml) return '';
   let result = templateHtml;
 
   // 1. ELIMINAR TOTALMENTE 'COMPARECENCIA DE LAS PARTES'
-  result = result.replace(/<h[1-6][^>]*>[\s\S]*?COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\S]*?<\/h[1-6]>/gi, '');
-  result = result.replace(/<p[^>]*>[\s\S]*?COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\S]*?<\/p>/gi, '');
-  result = result.replace(/<div[^>]*>[\s\S]*?COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\S]*?<\/div>/gi, '');
-  result = result.replace(/<font[^>]*>[\s\S]*?COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\S]*?<\/font>/gi, '');
-  result = result.replace(/COMPARECENCIA\s+DE\s+LAS\s+PARTES/gi, '');
+  result = quitarComparecencia(result);
 
   // 2. Reemplazar cada token encontrado
   const allTokens = extractPlaceholdersClient(templateHtml);
@@ -5940,11 +5964,7 @@ function renderOdaclContractSheets(rawHtml, c) {
   let cleanHtml = rawHtml || '';
 
   // 1. ELIMINAR TOTALMENTE 'COMPARECENCIA DE LAS PARTES'
-  cleanHtml = cleanHtml.replace(/<h[1-6][^>]*>[\s\S]*?COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\S]*?<\/h[1-6]>/gi, '');
-  cleanHtml = cleanHtml.replace(/<p[^>]*>[\s\S]*?COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\S]*?<\/p>/gi, '');
-  cleanHtml = cleanHtml.replace(/<div[^>]*>[\s\S]*?COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\S]*?<\/div>/gi, '');
-  cleanHtml = cleanHtml.replace(/<font[^>]*>[\s\S]*?COMPARECENCIA\s+DE\s+LAS\s+PARTES[\s\S]*?<\/font>/gi, '');
-  cleanHtml = cleanHtml.replace(/COMPARECENCIA\s+DE\s+LAS\s+PARTES/gi, '');
+  cleanHtml = quitarComparecencia(cleanHtml);
 
   // 2. Extraer páginas según el formato oficial exportado por ODACL (.a4-page-export)
   let pages = [];
