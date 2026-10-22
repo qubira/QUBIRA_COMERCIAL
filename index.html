@@ -155,7 +155,8 @@
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
-      overflow-x: hidden;
+      /* clip (no hidden): corta el desborde horizontal sin anular los paneles sticky */
+      overflow-x: clip;
     }
     .page {
       display: none;
@@ -930,6 +931,9 @@
     .phc-texto input.ph-in { display: inline-block !important; width: auto !important; height: auto !important; min-height: 0 !important; }
     .ph-in { font: inherit; font-family: 'Inter', sans-serif !important; font-size: 12.5px !important; line-height: 1.4 !important; padding: 2px 7px !important; margin: 0 2px; border: 1px dashed #f59e0b !important; background: #fef3c7 !important; border-radius: 5px !important; color: #0f172a; min-width: 9ch; max-width: 100%; vertical-align: baseline; box-shadow: none; }
     .ph-in:focus { outline: none; border-style: solid !important; border-color: #0f766e !important; background: #fff !important; box-shadow: 0 0 0 3px rgba(15,118,110,.15) !important; }
+    /* Resumen en Tiempo Real: se queda fijo mientras se baja por el generador; tiene su propio scroll */
+    .ctr-resumen-fijo { position: sticky; top: 84px; align-self: start; max-height: calc(100vh - 100px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+    @media (max-width: 1100px) { .ctr-resumen-fijo { position: static; max-height: none; overflow: visible; } }
     .cotv { border: 1px solid var(--border); border-radius: 12px; background: #fff; padding: 14px 16px; margin-bottom: 6px; }
     .cotv-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
     .cotv-head strong { font-size: 13.5px; }
@@ -1892,7 +1896,7 @@
         </div>
 
         <!-- Previsualización en Vivo -->
-        <div style="position:sticky;top:84px">
+        <div class="ctr-resumen-fijo">
           <div class="card" style="margin-bottom:16px;border-top:4px solid var(--primary)">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
               <span style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">Resumen en Tiempo Real</span>
