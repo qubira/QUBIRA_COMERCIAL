@@ -5813,7 +5813,8 @@ function getAutoFillValueForToken(token) {
   if (['CANAL_COMUNICACION'].includes(clean)) return 'WhatsApp corporativo y Google Meet';
   if (['HORARIO_ATENCION'].includes(clean)) return 'Lunes a Viernes de 9:00 a.m. a 6:00 p.m.';
   if (['HERRAMIENTA_GESTION'].includes(clean)) return 'GitHub Projects / Jira';
-  if (['DIAS_TOLERANCIA'].includes(clean)) return '3 días hábiles';
+  // La plantilla dice «supera en [DIAS_TOLERANCIA] días»: va el número en letras y cifra
+  if (['DIAS_TOLERANCIA'].includes(clean)) return 'tres (3)';
   if (['TARIFA_HORA_ADICIONAL'].includes(clean)) return '$ 25.00 USD';
   if (['NUM_RONDAS_CORRECCION'].includes(clean)) return '2 rondas de ajuste por entregable';
   if (['HORAS_CAPACITACION'].includes(clean)) return '4 horas de sesión virtual de inducción';
@@ -6911,6 +6912,12 @@ function phComboTeclas(e, el) {
 
 // ── Plantillas rápidas: rellenan de golpe las variables de un párrafo ──
 const PLANTILLAS_RAPIDAS = [
+  {
+    tokens: ['DIAS_TOLERANCIA'],
+    opciones: [
+      { id: 'tolerancia3', nombre: '⏱️ Por defecto: 3 días', valores: { DIAS_TOLERANCIA: 'tres (3)' } },
+    ],
+  },
   {
     tokens: ['LISTA_INSUMOS_INICIALES'],
     opciones: [
