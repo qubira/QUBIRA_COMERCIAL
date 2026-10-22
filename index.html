@@ -930,6 +930,7 @@
     .phc-texto input.ph-in { display: inline-block !important; width: auto !important; height: auto !important; min-height: 0 !important; }
     .ph-in { font: inherit; font-family: 'Inter', sans-serif !important; font-size: 12.5px !important; line-height: 1.4 !important; padding: 2px 7px !important; margin: 0 2px; border: 1px dashed #f59e0b !important; background: #fef3c7 !important; border-radius: 5px !important; color: #0f172a; min-width: 9ch; max-width: 100%; vertical-align: baseline; box-shadow: none; }
     .ph-in:focus { outline: none; border-style: solid !important; border-color: #0f766e !important; background: #fff !important; box-shadow: 0 0 0 3px rgba(15,118,110,.15) !important; }
+    .ph-in.ph-bloqueada { display: inline-block; font-family: monospace !important; font-weight: 700; border: 1px solid #cbd5e1 !important; background: #f1f5f9 !important; color: #334155; cursor: not-allowed; user-select: all; }
     .ph-in.lleno { border-style: solid !important; border-color: #6ee7b7 !important; background: #ecfdf5 !important; }
     textarea.ph-in { display: block !important; width: 100% !important; margin: 6px 0; min-height: 70px; resize: vertical; white-space: pre-wrap; line-height: 1.5 !important; }
     .phc-vacio { padding: 16px; background: var(--bg-card2); border-radius: 8px; text-align: center; color: var(--text-muted); font-size: 12.5px; }
@@ -5719,7 +5720,17 @@ function parrafosConVariables(html, placeholders) {
   return { items, sueltos: placeholders.filter(t => !vistos.has(t)) };
 }
 
+// Variables que el sistema asigna y no se editan (el código del contrato es correlativo)
+function esVariableBloqueada(token) {
+  const limpio = String(token || '').replace(/[\[\]]/g, '').trim().toUpperCase().replace(/\s+/g, '_');
+  return limpio === 'CODIGO_CONTRATO' || limpio === 'CODIGO_DEL_CONTRATO';
+}
+
 function htmlCasillaVariable(token) {
+  if (esVariableBloqueada(token)) {
+    const cod = _templatePlaceholdersValues[token] = getAutoFillValueForToken(token) || _templatePlaceholdersValues[token] || '';
+    return `<span class="ph-in ph-bloqueada" data-token="${esc(token)}" title="Código asignado automáticamente por el sistema; no se puede editar">🔒 ${esc(cod)}</span>`;
+  }
   const valor = _templatePlaceholdersValues[token] || '';
   const etiqueta = humanizePlaceholderToken(token);
   const lleno = valor.trim() !== '';
@@ -5827,13 +5838,14 @@ function phCambio(el) {
 }
 
 function phSiguientePendiente() {
-  const vacia = Array.from(document.querySelectorAll('#ctr-placeholders-container .ph-in')).find(c => !c.value.trim());
+  const vacia = Array.from(document.querySelectorAll('#ctr-placeholders-container .ph-in:not(.ph-bloqueada)')).find(c => !c.value.trim());
   if (!vacia) { toast('success', 'Todo completo', 'No quedan variables pendientes en la plantilla.'); return; }
   vacia.scrollIntoView({ block: 'center', behavior: 'smooth' });
   vacia.focus();
 }
 
 function onPlaceholderValueChanged(token, value, boxId) {
+  if (esVariableBloqueada(token)) return;
   _templatePlaceholdersValues[token] = value;
   const box = document.getElementById(boxId);
   if (box) {
