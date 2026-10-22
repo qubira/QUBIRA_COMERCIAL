@@ -5975,7 +5975,7 @@ function htmlPlantillasRapidas(tokens) {
   const valorDe = k => _templatePlaceholdersValues[tokens.find(t => limpiarToken(t) === k)] || '';
   return grupos.map((g, gi) => `<div class="phc-plantillas"><span>Pegar plantilla:</span>${g.opciones.map(o => {
     const activa = Object.entries(o.valores).every(([k, v]) => !tokens.some(t => limpiarToken(t) === k) || valorDe(k) === v);
-    return `<button type="button" class="phc-plantilla${activa ? ' activa' : ''}" onclick="aplicarPlantillaRapida(${PLANTILLAS_RAPIDAS.indexOf(g)}, '${o.id}')" title="${esc(Object.values(o.valores).join(' · '))}">${esc(o.nombre)}</button>`;
+    return `<button type="button" class="phc-plantilla${activa ? ' activa' : ''}" data-grupo="${PLANTILLAS_RAPIDAS.indexOf(g)}" data-op="${o.id}" onmousedown="event.preventDefault()" onclick="aplicarPlantillaRapida(${PLANTILLAS_RAPIDAS.indexOf(g)}, '${o.id}')" title="${esc(Object.values(o.valores).join(' · '))}">${esc(o.nombre)}</button>`;
   }).join('')}</div>`).join('');
 }
 
@@ -5983,12 +5983,17 @@ function aplicarPlantillaRapida(gi, id) {
   const op = PLANTILLAS_RAPIDAS[gi]?.opciones.find(o => o.id === id);
   if (!op) return;
   const todos = Object.keys(_templatePlaceholdersValues).concat(extraerPlaceholdersPlantillaActual());
+  // Se actualizan las casillas en su sitio (sin volver a pintar la lista ni mover el scroll)
   Object.entries(op.valores).forEach(([k, v]) => {
-    [...new Set(todos)].filter(t => limpiarToken(t) === k).forEach(t => { _templatePlaceholdersValues[t] = v; });
+    [...new Set(todos)].filter(t => limpiarToken(t) === k).forEach(t => {
+      _templatePlaceholdersValues[t] = v;
+      const casilla = Array.from(document.querySelectorAll('#ctr-placeholders-container .ph-in')).find(c => c.dataset.token === t && 'value' in c);
+      if (casilla) { casilla.value = v; phCambio(casilla); }
+    });
   });
   updatePlaceholdersProgress();
-  renderPlaceholdersForm(extraerPlaceholdersPlantillaActual(), false);
   updateContractPreview();
+  document.querySelectorAll(`#ctr-placeholders-container .phc-plantilla[data-grupo="${gi}"]`).forEach(b => b.classList.toggle('activa', b.dataset.op === id));
   toast('success', 'Plantilla aplicada', `Se pegó la plantilla «${op.nombre.replace(/^\S+\s/, '')}» en el párrafo.`);
 }
 
