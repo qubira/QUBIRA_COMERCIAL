@@ -6244,8 +6244,10 @@ function aplicarVersionAlContrato(prf) {
   if (_selectedTemplateKey) refrescarVariablesContrato(); else updateContractPreview();
 }
 
-async function abrirHistorialCotizacion() {
-  const p = proformaDelContrato();
+let _cotvHistId = null;
+async function abrirHistorialCotizacion(id) {
+  const p = id ? getStoredProformas().find(x => x.id === id) : proformaDelContrato();
+  _cotvHistId = p?.id || null;
   if (!p) return;
   document.getElementById('cotv-hist-ov')?.remove();
   const ov = document.createElement('div');
@@ -6254,7 +6256,7 @@ async function abrirHistorialCotizacion() {
   ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
   ov.innerHTML = `<div class="modal" style="max-width:820px;width:96vw">
       <div class="modal-header"><div class="qc-dlg-head"><div class="qc-dlg-icono">${QC_DLG_ICONOS.info}</div>
-        <div><div class="qc-dlg-titulo">Historial de versiones · ${esc(p.id)}</div><div class="qc-dlg-sub">La versión en uso es la que toma el contrato</div></div></div></div>
+        <div><div class="qc-dlg-titulo">Historial de versiones · ${esc(p.id)}</div><div class="qc-dlg-sub">${esc(p.cliente_nombre || '')} · la versión en uso es la que toman los contratos</div></div></div></div>
       <div class="modal-body" id="cotv-hist-body"><div class="cotv-vacio">Cargando versiones…</div></div>
       <div class="modal-footer"><button type="button" class="btn btn-outline" onclick="document.getElementById('cotv-hist-ov').remove()">Cerrar</button></div>
     </div>`;
@@ -6282,27 +6284,33 @@ let _cotvHist = [];
 
 // Ver / imprimir una versión con el mismo formato oficial de la proforma
 function verVersionCotizacion(k) {
-  const p = proformaDelContrato();
+  const p = getStoredProformas().find(x => x.id === _cotvHistId);
   const v = _cotvHist[k];
   if (!p || !v) return;
   document.getElementById('cotv-hist-ov')?.remove();
   _activeViewingProformaId = p.id;
   renderProformaOfficialModal({ ...p, items: v.items, requerimientos: v.requerimientos, subtotal: v.subtotal, descuento_pct: v.descuento_pct,
     descuento_monto: v.descuento_monto, subtotal_neto: v.subtotal_neto, igv_tipo: v.igv_tipo || p.igv_tipo, igv_monto: v.igv_monto, total: v.total,
-    version_actual: v.version });
+    version_actual: v.version, _verHist: true });
 }
 
 async function recuperarVersionCotizacion(version) {
-  const p = proformaDelContrato();
+  const p = getStoredProformas().find(x => x.id === _cotvHistId);
   if (!p) return;
   const ok = await qcConfirm(`Se creará la versión ${(p.version_actual || 1) + 1} con los datos de la v${version} y el contrato pasará a usarla. El historial no se borra.`, { titulo: `Usar la versión ${version}`, aceptar: 'Usar esta versión' });
   if (!ok) return;
   try {
     const r = await qcApiFetch(`/api/comercial/proformas/${encodeURIComponent(p.id)}/versiones/${version}/restaurar`, { method: 'POST' });
     document.getElementById('cotv-hist-ov')?.remove();
-    _cotv.editando = false;
-    aplicarVersionAlContrato(r.proforma);
-    toast('success', 'Versión recuperada', `Se creó la v${r.proforma.version_actual} a partir de la v${version}; el contrato ya la usa.`);
+    if (r.proforma.id === _ctrProformaId) {
+      _cotv.editando = false;
+      aplicarVersionAlContrato(r.proforma);
+    } else {
+      const i = _proformasCache.findIndex(x => x.id === r.proforma.id);
+      if (i >= 0) _proformasCache[i] = { ..._proformasCache[i], ...r.proforma };
+    }
+    if (document.getElementById('page-consultar-proforma')?.offsetParent) renderConsultarProformaTable();
+    toast('success', 'Versión recuperada', `Se creó la v${r.proforma.version_actual} a partir de la v${version} y pasa a ser la que se usa.`);
   } catch (e) {
     if (e.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo recuperar', e.message);
   }
@@ -11109,6 +11117,7 @@ function renderConsultarProformaTable() {
       <tr>
         <td>
           <strong style="font-family:monospace;color:var(--primary);cursor:pointer" onclick="viewProforma('${esc(p.id)}')">${esc(p.id)}</strong>
+          ${(p.version_actual || 1) > 1 ? `<span class="cotv-ver" style="cursor:pointer" title="Ver historial de versiones" onclick="abrirHistorialCotizacion('${esc(p.id)}')">v${p.version_actual}</span>` : ''}
           <div style="font-size:11px;color:var(--text-muted)">${esc(p.tipo || 'Proforma')}</div>
         </td>
         <td>
@@ -11145,6 +11154,9 @@ function renderConsultarProformaTable() {
           <div class="table-actions" style="justify-content:flex-end">
             <button class="btn-icon" title="Ver documento formal" onclick="viewProforma('${esc(p.id)}')">
               <svg class="icon"><use href="#icon-eye"></use></svg>
+            </button>
+            <button class="btn-icon" title="Historial de versiones" onclick="abrirHistorialCotizacion('${esc(p.id)}')">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><polyline points="3 3 3 8 8 8"></polyline><polyline points="12 7 12 12 15 14"></polyline></svg>
             </button>
             <button class="btn-icon" title="Editar cotización" onclick="editarProforma('${esc(p.id)}')">
               <svg class="icon"><use href="#icon-edit-2"></use></svg>
@@ -11185,7 +11197,7 @@ function viewProforma(id) {
 
 function renderProformaOfficialModal(p) {
   const codeEl = document.getElementById('proforma-modal-code');
-  if (codeEl) codeEl.textContent = `${p.id || 'PRF-2026-0001'}${p.version_actual > 1 ? ' · Versión ' + p.version_actual : ''} · Qubira ODN Cotización`;
+  if (codeEl) codeEl.textContent = `${p.id || 'PRF-2026-0001'}${p.version_actual > 1 || p._verHist ? ' · Versión ' + p.version_actual : ''} · Qubira ODN Cotización`;
 
   const titleEl = document.getElementById('proforma-modal-title');
   if (titleEl) titleEl.textContent = p.cliente_nombre ? `Proforma Comercial: ${p.cliente_nombre}` : 'Proforma Comercial';
