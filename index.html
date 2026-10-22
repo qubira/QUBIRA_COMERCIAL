@@ -6138,12 +6138,56 @@ function quitarComparecencia(html) {
   return div.innerHTML;
 }
 
+// ── 4.5 Infraestructura en planes gratuitos ──
+// Se activa cuando la proforma usa el plan FREE de una herramienta que también tiene
+// planes de pago (las que solo tienen plan FREE no cuentan). Con solo planes de pago no aplica.
+const RE_PLAN_GRATIS = /\bfree\b|gratis|gratuit/i;
+function planesGratuitosContrato() {
+  const p = _ctrProformaId ? getStoredProformas().find(x => x.id === _ctrProformaId) : null;
+  const items = Array.isArray(p?.items) ? p.items : [];
+  const catalogo = (_techCatalogCache?.tool || []).concat(_techCatalogCache?.language || []);
+  const nombres = [];
+  items.forEach(it => {
+    const m = /^\[(Herramienta|Lenguaje)\]\s*(.+?)(?:\s*\(Plan:\s*(.+)\))?$/.exec(it.descripcion || '') || [];
+    const esTech = it.is_tech_variable || m[1];
+    const esHerramienta = (it.category || '').toLowerCase() === 'tool' || m[1] === 'Herramienta';
+    if (!esTech || !esHerramienta) return;
+    const nombre = String(it.name || m[2] || '').trim();
+    const plan = String(it.plan_name || m[3] || '').trim();
+    if (!nombre || !RE_PLAN_GRATIS.test(plan)) return;
+    const ficha = catalogo.find(t => (it.tech_id && String(t.id) === String(it.tech_id)) || String(t.name || '').trim().toLowerCase() === nombre.toLowerCase());
+    if (!ficha) return;
+    const planes = normalizeTechPlans(ficha).map(pl => String(pl.name || ''));
+    if (planes.some(n => n && !RE_PLAN_GRATIS.test(n)) && !nombres.includes(nombre)) nombres.push(nombre);
+  });
+  return nombres;
+}
+
+function listaConY(xs) { return xs.length < 2 ? (xs[0] || '') : `${xs.slice(0, -1).join(', ')} y ${xs[xs.length - 1]}`; }
+
+function insertarClausulaPlanesGratuitos(html) {
+  const planes = planesGratuitosContrato();
+  if (!planes.length) return html;
+  const ini = html.search(/<b>\s*4\.4\.(?:\s|&nbsp;)/);
+  if (ini < 0) return html;
+  const fin = html.indexOf('</p>', ini);
+  if (fin < 0) return html;
+  // Los numerales siguientes de la cláusula se corren: 4.5 → 4.6, 4.6 → 4.7, …
+  const correr = t => t.replace(/\b4\.([5-9])(?=[.\s:,;)<]|&nbsp;|$)/g, (_, n) => `4.${Number(n) + 1}`);
+  const antes = html.slice(0, fin + 4);
+  const despues = correr(html.slice(fin + 4));
+  const parrafo = `<p><b>4.5. Infraestructura en planes gratuitos.</b> A solicitud de EL CLIENTE y para reducir costos, el Sistema operará sobre los planes gratuitos de ${esc(listaConY(planes))}. EL CLIENTE declara conocer y aceptar que dichos planes: (i) se suspenden tras periodos sin uso, por lo que el primer acceso puede demorar hasta un (1) minuto; (ii) tienen límites mensuales de almacenamiento, horas de uso y transferencia de datos que, al agotarse, suspenden el servicio hasta el mes siguiente; (iii) no incluyen copias de respaldo garantizadas ni soporte del proveedor; y (iv) pueden ser modificados, restringidos o retirados unilateralmente por sus proveedores, incluso por tratarse de un uso comercial. Estas situaciones no constituyen Defectos ni incumplimiento de QUBIRA. La migración a planes de pago, cuando EL CLIENTE lo requiera o el proveedor lo exija, se cotizará como Cambio de Alcance, y sus costos serán de cargo de EL CLIENTE.</p>`;
+  return antes + parrafo + despues;
+}
+
 function compileContractTemplate(templateHtml, replacements, highlightUnfilled = false) {
   if (!templateHtml) return '';
   let result = templateHtml;
 
   // 1. ELIMINAR TOTALMENTE 'COMPARECENCIA DE LAS PARTES'
   result = quitarComparecencia(result);
+  // 1b. Cláusula 4.5 de planes gratuitos (solo si la proforma los usa)
+  result = insertarClausulaPlanesGratuitos(result);
 
   // 2. Reemplazar cada token encontrado
   const allTokens = extractPlaceholdersClient(templateHtml);
@@ -6238,6 +6282,7 @@ async function renderCrearContrato() {
   const searchCli = document.getElementById('ctr-cliente-search');
   if (!selectCli) return;
   cargarPerfilQubira();
+  ensureTechCatalogLoaded().then(() => updateContractPreview()).catch(() => {});
   cargarInfoSocietariaQubira();
 
   closeCombo('ctr-cliente-search');
