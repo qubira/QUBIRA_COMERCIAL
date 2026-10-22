@@ -5758,7 +5758,13 @@ function getAutoFillValueForToken(token) {
   if (['INCLUYE_O_NO_IGV'].includes(clean)) return 'No incluye IGV (valor neto)';
   if (['DETALLE_DE_PAGOS'].includes(clean)) return modalidad;
   if (['TOTAL_DIAS', 'PLAZO EN DÍAS'].includes(clean)) return String(diasProyecto);
-  if (['FECHA_INICIO'].includes(clean)) return fInicio;
+  // 6.1 Plazo: del primer al último Sprint del cronograma de la cotización en uso
+  const plazoCrono = plazoDelCronograma();
+  if (['TOTAL_DIAS_HABILES'].includes(clean)) return plazoCrono ? `${numeroPalabras(plazoCrono.habiles)} (${plazoCrono.habiles})` : '';
+  if (['FECHA_INICIO'].includes(clean)) return plazoCrono ? fechaLarga(plazoCrono.inicio) : fInicio;
+  if (['FECHA_ENTREGA_FINAL'].includes(clean)) return plazoCrono ? fechaLarga(plazoCrono.fin) : '';
+  if (['FECHA_LIMITE_INSUMOS'].includes(clean)) return plazoCrono ? fechaLarga(plazoCrono.limiteInsumos) : '';
+  if (['LISTA_INSUMOS_INICIALES'].includes(clean)) return INSUMOS_INICIALES_BASE;
   if (['FECHA_FIN'].includes(clean)) return fFin;
   if (['DIAS_GARANTIA'].includes(clean)) return garantia;
   if (['PORCENTAJE_DISPONIBILIDAD'].includes(clean)) return '99.9%';
@@ -6255,7 +6261,8 @@ function ajustarTablas10(raiz) {
   });
 }
 const TOKENS_DE_PROFORMA = ['REQUERIMIENTOS_FUNCIONALES', 'REQUERIMIENTOS_NO_FUNCIONALES', 'MODULOS_FUNCIONALES', 'ENTREGABLES', 'STACK_HERRAMIENTAS', 'STACK_LENGUAJES', 'PRECIO_ACORDADO', 'PRECIO_EN_LETRAS', 'MONEDA', 'PLANES_GRATUITOS',
-  'DETALLE_DE_PAGOS', 'DIAS_GARANTIA', 'NECESIDAD_DEL_CLIENTE', 'OBJETO_SERVICIO', 'OBJETO', 'DURACION_SPRINT', 'NUM_TOTAL_SPRINTS', 'NUMERO_CANTIDAD_SPRINT'];
+  'DETALLE_DE_PAGOS', 'DIAS_GARANTIA', 'NECESIDAD_DEL_CLIENTE', 'OBJETO_SERVICIO', 'OBJETO', 'DURACION_SPRINT', 'NUM_TOTAL_SPRINTS', 'NUMERO_CANTIDAD_SPRINT',
+  'TOTAL_DIAS_HABILES', 'FECHA_INICIO', 'FECHA_ENTREGA_FINAL', 'FECHA_LIMITE_INSUMOS'];
 
 // Código visible de una proforma con su versión: PRF-2026-001, PRF-2026-001.V2, .V3…
 function codigoProforma(p, version) {
@@ -6737,6 +6744,37 @@ function verCotizacionActivaContrato() {
   if (p) viewProforma(p.id);
 }
 
+// ── 6.1 Plazo calculado con los Sprints del cronograma ──
+const INSUMOS_INICIALES_BASE = '(i) logotipo y paleta de colores; (ii) textos e imágenes; (iii) relación de usuarios y roles; (iv) datos de prueba; y (v) accesos al dominio y a las cuentas de terceros a su cargo';
+function plazoDelCronograma() {
+  const est = agendaDesdeTexto(proformaDelContrato()?.metodo_sprint);
+  if (!est || !est.entregables.length) return null;
+  const inicio = est.entregables[0];
+  const fin = est.entregables[est.entregables.length - 1];
+  // Día hábil anterior al primer Sprint
+  const d = fechaDeIso(inicio);
+  do { d.setDate(d.getDate() - 1); } while (d.getDay() === 0 || d.getDay() === 6);
+  return { inicio, fin, habiles: contarDias(inicio, fin).habiles, limiteInsumos: isoDia(d.getFullYear(), d.getMonth(), d.getDate()) };
+}
+// «martes 27 de octubre de 2026»
+function fechaLarga(iso) {
+  return fechaDeIso(iso).toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).replace(',', '');
+}
+// Número en letras (0–999): «cuatro», «veintiuno», «ciento cinco»
+function numeroPalabras(n) {
+  n = Math.floor(Number(n) || 0);
+  const u = ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once', 'doce', 'trece', 'catorce', 'quince',
+    'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve', 'veinte', 'veintiuno', 'veintidós', 'veintitrés', 'veinticuatro', 'veinticinco',
+    'veintiséis', 'veintisiete', 'veintiocho', 'veintinueve'];
+  const dec = ['', '', '', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
+  const cen = ['', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos', 'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'];
+  if (n < 30) return u[n];
+  if (n < 100) return dec[Math.floor(n / 10)] + (n % 10 ? ' y ' + u[n % 10] : '');
+  if (n === 100) return 'cien';
+  if (n < 1000) return cen[Math.floor(n / 100)] + (n % 100 ? ' ' + numeroPalabras(n % 100) : '');
+  return String(n);
+}
+
 // ── Herramientas (Tech Stack & Costos) para las variables de herramientas del contrato ──
 const VARIABLES_HERRAMIENTA = ['HERRAMIENTA_REUNION', 'HERRAMIENTA_COMUNICACION', 'HERRAMIENTA_REGISTRO'];
 function herramientasParaContrato() {
@@ -6857,6 +6895,12 @@ function phComboTeclas(e, el) {
 
 // ── Plantillas rápidas: rellenan de golpe las variables de un párrafo ──
 const PLANTILLAS_RAPIDAS = [
+  {
+    tokens: ['LISTA_INSUMOS_INICIALES'],
+    opciones: [
+      { id: 'insumos', nombre: '📦 Insumos estándar', valores: { LISTA_INSUMOS_INICIALES: INSUMOS_INICIALES_BASE } },
+    ],
+  },
   {
     tokens: ['HORARIO_ATENCION_QUBIRA'],
     opciones: [
