@@ -5764,8 +5764,10 @@ function getAutoFillValueForToken(token) {
   if (['STACK_LENGUAJES'].includes(clean)) return dp.lenguajes || 'JavaScript ES6+, HTML5, CSS3, SQL';
   if (['INCLUIDO_EN_ALCANCE'].includes(clean)) return 'Desarrollo, base de datos relacional, subida de archivos cloud y despliegue productivo';
   if (['FUERA_DE_ALCANCE'].includes(clean)) return 'Mantenimiento posterior a garantía, dominios de internet privados y pagos de infraestructura externa';
-  if (['DURACION_SPRINT'].includes(clean)) return '1 a 2 semanas por Sprint';
-  if (['NUM_TOTAL_SPRINTS'].includes(clean)) return '4 Sprints iterativos';
+  // Sprints del cronograma de la proforma (fecha y hora de cada entregable)
+  const sprints = sprintsDelCronograma();
+  if (['DURACION_SPRINT'].includes(clean)) return sprints.length ? sprints.join('\n') : '1 a 2 semanas por Sprint';
+  if (['NUM_TOTAL_SPRINTS'].includes(clean)) return sprints.length ? `${sprints.length} ${sprints.length === 1 ? 'Sprint' : 'Sprints'}` : '4 Sprints iterativos';
   if (['DIA_REUNION_SEMANAL'].includes(clean)) return 'Viernes 4:00 p.m.';
   if (['CANAL_COMUNICACION'].includes(clean)) return 'WhatsApp corporativo y Google Meet';
   if (['HORARIO_ATENCION'].includes(clean)) return 'Lunes a Viernes de 9:00 a.m. a 6:00 p.m.';
@@ -5958,6 +5960,15 @@ function responsableDelCronograma(token) {
   _respDerivado = false;
   _templatePlaceholdersValues[token] = responsablePorDefecto();
   repintarResponsable(token);
+}
+
+// «Sprint 1: mar 27/10/2026, 17:00–18:00» por cada entregable del cronograma (sin el inicio ni el equipo)
+function sprintsDelCronograma() {
+  const texto = String(proformaDelContrato()?.metodo_sprint || '');
+  return texto.split(' · ').map(x => x.trim()).filter(x => /^Sprint\s+\d+/i.test(x)).map(x => {
+    const m = /^(Sprint\s+\d+(?:\s*\([^)]*final[^)]*\))?)\s*:\s*(\S+\s+\d{2}\/\d{2}\/\d{4})(?:\s+(\d{2}:\d{2}\s*[–-]\s*\d{2}:\d{2}))?/i.exec(x);
+    return m ? `${m[1]}: ${m[2]}${m[3] ? ', ' + m[3].replace(/\s+/g, '') : ''}` : x.replace(/\s*\(OTI:[^)]*\)/, '');
+  });
 }
 
 // Si la proforma tiene equipo en el cronograma se ofrece ese; si no, todos los activos de RRHH
@@ -6210,7 +6221,7 @@ function ajustarTablas10(raiz) {
   });
 }
 const TOKENS_DE_PROFORMA = ['REQUERIMIENTOS_FUNCIONALES', 'REQUERIMIENTOS_NO_FUNCIONALES', 'MODULOS_FUNCIONALES', 'ENTREGABLES', 'STACK_HERRAMIENTAS', 'STACK_LENGUAJES', 'PRECIO_ACORDADO', 'PRECIO_EN_LETRAS', 'MONEDA', 'PLANES_GRATUITOS',
-  'DETALLE_DE_PAGOS', 'DIAS_GARANTIA', 'NECESIDAD_DEL_CLIENTE', 'OBJETO_SERVICIO', 'OBJETO'];
+  'DETALLE_DE_PAGOS', 'DIAS_GARANTIA', 'NECESIDAD_DEL_CLIENTE', 'OBJETO_SERVICIO', 'OBJETO', 'DURACION_SPRINT', 'NUM_TOTAL_SPRINTS'];
 
 // Código visible de una proforma con su versión: PRF-2026-001, PRF-2026-001.V2, .V3…
 function codigoProforma(p, version) {
