@@ -5831,15 +5831,26 @@ function parrafosConVariables(html, placeholders) {
   div.innerHTML = quitarComparecencia(html || '');
   const validas = new Set(placeholders);
   const items = [];
+  const porFragmento = new Map(); // párrafos partidos entre hojas: se unen en una sola tarjeta
   let seccion = 'Inicio del contrato';
   div.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li, td, th, div').forEach(b => {
     if (b.querySelector('h1, h2, h3, h4, h5, h6, p, li, td, th, div, table, ul, ol')) return; // solo bloques "hoja"
     const texto = (b.textContent || '').replace(/[\s\u00a0]+/g, ' ').trim();
     if (!texto) return;
     const tokens = (texto.match(RE_VARIABLE) || []).filter(t => validas.has(t));
+    const frag = b.getAttribute('data-frag');
+    if (frag && porFragmento.has(frag)) {
+      const it = porFragmento.get(frag);
+      it.texto += ' ' + texto;
+      it.tokens = [...new Set(it.tokens.concat(tokens))];
+      if (it.tokens.length && !items.includes(it)) items.push(it);
+      return;
+    }
     const esTitulo = /^H[1-6]$/.test(b.tagName) || (/^CL[ÁA]USULA\b/i.test(texto) && texto.length < 160);
     if (esTitulo) seccion = texto.replace(RE_VARIABLE, '').replace(/\s+/g, ' ').trim() || seccion;
-    if (tokens.length) items.push({ seccion, texto, tokens: [...new Set(tokens)] });
+    const it = { seccion, texto, tokens: [...new Set(tokens)] };
+    if (frag) porFragmento.set(frag, it);
+    if (tokens.length) items.push(it);
   });
   const vistos = new Set(items.flatMap(it => it.tokens));
   return { items, sueltos: placeholders.filter(t => !vistos.has(t)) };
@@ -6055,6 +6066,19 @@ function htmlCasillaVariable(token) {
   }
   if (limpio === 'RESPONSABLE_PROYECTO_QUBIRA' && (listaResponsables().length || _trabajadoresActivos.length)) {
     return `<span class="ph-resp" data-wrap="${esc(token)}">${htmlResponsable(token)}</span>`;
+  }
+  if (VARIABLES_HERRAMIENTA.includes(limpio)) {
+    const { cotizadas, catalogo } = herramientasParaContrato();
+    if (cotizadas.length || catalogo.length) {
+      const val = _templatePlaceholdersValues[token] || '';
+      const extra = val && !cotizadas.includes(val) && !catalogo.includes(val) ? `<option selected>${esc(val)}</option>` : '';
+      const ops = arr => arr.map(n => `<option${n === val ? ' selected' : ''}>${esc(n)}</option>`).join('');
+      return `<select class="ph-in ph-sel ${val ? 'lleno' : ''}" data-token="${esc(token)}" onchange="phCambio(this)" title="Herramientas registradas en Tech Stack & Costos">
+        <option value="">— Elige herramienta —</option>${extra}
+        ${cotizadas.length ? `<optgroup label="En la cotización">${ops(cotizadas)}</optgroup>` : ''}
+        ${catalogo.length ? `<optgroup label="Catálogo Tech Stack & Costos">${ops(catalogo)}</optgroup>` : ''}
+      </select>`;
+    }
   }
   if (limpio === 'CARGO_REPRESENTANTE_QUBIRA') {
     const val = _templatePlaceholdersValues[token] || (_templatePlaceholdersValues[token] = cargoPorDefectoQubira());
@@ -6708,8 +6732,25 @@ function verCotizacionActivaContrato() {
   if (p) viewProforma(p.id);
 }
 
+// ── Herramientas (Tech Stack & Costos) para las variables de herramientas del contrato ──
+const VARIABLES_HERRAMIENTA = ['HERRAMIENTA_REUNION', 'HERRAMIENTA_COMUNICACION', 'HERRAMIENTA_REGISTRO'];
+function herramientasParaContrato() {
+  const p = proformaDelContrato();
+  const cotizadas = [...new Set((Array.isArray(p?.items) ? p.items : []).filter(esItemTech).map(techDesdeItem)
+    .filter(t => t.category === 'tool').map(t => t.name).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+  const catalogo = [...new Set((_techCatalogCache?.tool || []).filter(t => (t.category || 'tool') === 'tool').map(t => String(t.name || '').trim()).filter(Boolean))]
+    .filter(n => !cotizadas.includes(n)).sort((a, b) => a.localeCompare(b, 'es'));
+  return { cotizadas, catalogo };
+}
+
 // ── Plantillas rápidas: rellenan de golpe las variables de un párrafo ──
 const PLANTILLAS_RAPIDAS = [
+  {
+    tokens: ['HORARIO_ATENCION_QUBIRA'],
+    opciones: [
+      { id: 'oficina', nombre: '🕘 Horario de oficina', valores: { HORARIO_ATENCION_QUBIRA: 'lunes a viernes, de 9:00 a.m. a 6:00 p.m.' } },
+    ],
+  },
   {
     tokens: ['USUARIOS_CONCURRENTES', 'NAVEGADORES_Y_DISPOSITIVOS'],
     opciones: [
