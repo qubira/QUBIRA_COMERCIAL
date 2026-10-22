@@ -6268,8 +6268,47 @@ function renderCotizacionContrato() {
   ajustarTablas10(cont);
 }
 
+// Solo se agendan en OTI las reuniones nuevas o cambiadas (las que ya estaban no se duplican)
+function soloReunionesNuevas(est, original) {
+  if (!original) return est;
+  const nuevo = { ...est, horas: { ...est.horas } };
+  const nombresDe = f => (est.equipo?.[f] || []).map(id => est.nombres?.[id] || '').filter(Boolean).map(n => n.toLowerCase()).sort().join('|');
+  [est.inicio, ...est.entregables].forEach(f => {
+    const igual = original.horas?.[f] !== undefined && original.horas[f] === est.horas?.[f]
+      && (original.nombresPorFecha?.[f] || []).map(n => n.toLowerCase()).sort().join('|') === nombresDe(f);
+    if (igual) delete nuevo.horas[f];
+  });
+  return nuevo;
+}
+
+function abrirAgendaOtiContrato() {
+  const est = _cotv.agendaEst ? { ..._cotv.agendaEst } : agendaDesdeTexto(_cotv.extras.metodo_sprint);
+  abrirAgendaOti(est, 'contrato');
+}
+
+function htmlCronogramaContrato() {
+  const est = _cotv.agendaEst || agendaDesdeTexto(_cotv.extras.metodo_sprint);
+  let cuerpo;
+  if (est) {
+    const fin = est.entregables[est.entregables.length - 1];
+    const c = contarDias(est.inicio, fin);
+    const n = est.entregables.length;
+    const hh = f => est.horas && est.horas[f] !== undefined ? ' ' + pad2(est.horas[f]) + ':00' : '';
+    const equipo = new Set(Object.values(est.nombresPorFecha || {}).flat().concat(Object.values(est.nombres || {})));
+    cuerpo = `<strong>${c.total} días · ${n} ${n === 1 ? 'entregable' : 'entregables'}</strong>
+      <small>📍 ${esc(fmtCorta(est.inicio))}${hh(est.inicio)} → ${esc(fmtCorta(fin))}${hh(fin)} (fin del proyecto) · ${c.habiles} días hábiles</small>
+      ${equipo.size ? `<small>👥 OTI: ${esc([...equipo].join(', '))}</small>` : ''}`;
+  } else {
+    cuerpo = _cotv.extras.metodo_sprint ? `<small>${esc(_cotv.extras.metodo_sprint)}</small>` : '<span class="vacio">Marca inicio y entregables en la agenda de OTI…</span>';
+  }
+  return `<label class="full"><span>Duración del sprint / ciclo de entrega (cronograma)</span>
+    <button type="button" class="agenda-oti-trigger" onclick="abrirAgendaOtiContrato()" title="Editar el cronograma con la agenda de OTI">
+      <span>${cuerpo}</span><svg class="icon" style="width:18px;height:18px;flex-shrink:0"><use href="#icon-calendar"></use></svg>
+    </button></label>`;
+}
+
 function htmlCamposExtra(campos) {
-  return `<div class="cotv-form">${campos.map(([k, label, tipo]) => `<label class="${tipo === 'textarea' ? 'full' : ''}"><span>${label}</span>${tipo === 'textarea'
+  return `<div class="cotv-form">${campos.map(([k, label, tipo]) => k === 'metodo_sprint' ? htmlCronogramaContrato() : `<label class="${tipo === 'textarea' ? 'full' : ''}"><span>${label}</span>${tipo === 'textarea'
     ? `<textarea rows="${k === 'metodo_sprint' ? 4 : 2}" oninput="_cotv.extras['${k}']=this.value">${esc(_cotv.extras[k] || '')}</textarea>`
     : `<input value="${esc(_cotv.extras[k] || '')}" oninput="_cotv.extras['${k}']=this.value">`}</label>`).join('')}</div>`;
 }
@@ -6397,6 +6436,8 @@ function editarCotizacionContrato() {
   _cotv.tech = items.filter(esItemTech).map(techDesdeItem);
   _cotv.reqs = (Array.isArray(p.requerimientos) ? p.requerimientos : []).map(r => ({ tipo: r.tipo, titulo: r.titulo || '', detalle: r.detalle || '', prioridad: r.prioridad || 'Media' }));
   _cotv.extras = {};
+  _cotv.agendaEst = null;
+  _cotv.agendaOriginal = agendaDesdeTexto(p.metodo_sprint);
   CAMPOS_METODO.concat(CAMPOS_CONDICIONES).forEach(([k]) => { _cotv.extras[k] = p[k] || ''; });
   _cotv.nota = '';
   _cotv.editando = true;
@@ -6473,6 +6514,11 @@ async function guardarVersionCotizacion() {
     _cotv.editando = false;
     aplicarVersionAlContrato(r.proforma);
     toast('success', `Versión ${r.proforma.version_actual} guardada`, `${p.id} ahora usa la versión ${r.proforma.version_actual}; la anterior queda en el historial.`);
+    if (_cotv.agendaEst) {
+      const est = soloReunionesNuevas(_cotv.agendaEst, _cotv.agendaOriginal);
+      _cotv.agendaEst = null;
+      agendarReunionesOti(r.proforma, est, r.proforma.metodo_sprint, `Proforma ${codigoProforma(r.proforma)}`);
+    }
   } catch (e) {
     if (e.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo guardar la versión', e.message);
     if (btn) { btn.disabled = false; btn.textContent = `💾 Guardar como versión ${(p.version_actual || 1) + 1}`; }
@@ -10606,11 +10652,15 @@ function actualizarTriggerSprint(forzarPlazo = false) {
   }
 }
 
-async function abrirAgendaOti() {
+async function abrirAgendaOti(estInicial, destino) {
   const sel = document.getElementById('prf-metodo-sprint');
   const h = new Date();
   let est = null;
-  try { est = sel?.selectedOptions[0]?.dataset.agenda ? JSON.parse(sel.selectedOptions[0].dataset.agenda) : null; } catch (e) {}
+  aoti.destino = destino || 'proforma';
+  aoti.equipoNombres = null;
+  if (estInicial) est = estInicial;
+  else try { est = sel?.selectedOptions[0]?.dataset.agenda ? JSON.parse(sel.selectedOptions[0].dataset.agenda) : null; } catch (e) {}
+  if (est?.nombresPorFecha) aoti.equipoNombres = est.nombresPorFecha;
   aoti.inicio = est?.inicio || null;
   aoti.entregables = Array.isArray(est?.entregables) ? est.entregables.slice() : [];
   aoti.horas = est?.horas || {};
@@ -10642,7 +10692,8 @@ function cerrarAgendaOti() {
   clearInterval(aoti.timer); aoti.timer = null;
   document.removeEventListener('keydown', aotiTeclas);
   document.getElementById('aoti-overlay')?.remove();
-  document.getElementById('prf-sprint-trigger')?.focus();
+  if (aoti.destino === 'contrato') document.querySelector('#cotv-cont .agenda-oti-trigger')?.focus();
+  else document.getElementById('prf-sprint-trigger')?.focus();
 }
 
 async function cargarAgendaOti(silencioso = false) {
@@ -10652,6 +10703,7 @@ async function cargarAgendaOti(silencioso = false) {
     const datos = await qcApiFetch(`/api/calendar/team-availability?area=TI&from=${isoDia(aoti.anio, aoti.mes, 1)}&to=${isoDia(aoti.anio, aoti.mes, ultimo)}`);
     if (pedido !== aoti.pidiendo) return; // llegó otra respuesta más nueva
     aoti.datos = datos; aoti.error = null; aoti.actualizado = new Date();
+    resolverEquipoPorNombre();
   } catch (e) {
     if (pedido !== aoti.pidiendo || e.message === 'SESSION_EXPIRED') return;
     aoti.error = e.message || 'No se pudo consultar la agenda de OTI';
@@ -10689,6 +10741,41 @@ function estadoDia(fecha) {
 }
 
 function nombrePersona(m) { return [m.nombre, m.apellidos].filter(Boolean).join(' '); }
+
+// Cronograma reconstruido desde texto: los nombres de OTI se convierten en integrantes marcados
+function resolverEquipoPorNombre() {
+  if (!aoti.equipoNombres || !aoti.datos?.members?.length) return;
+  const norm = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  Object.entries(aoti.equipoNombres).forEach(([f, nombres]) => {
+    const ids = nombres.map(n => {
+      const partes = norm(n).split(/\s+/);
+      const m = aoti.datos.members.find(x => partes.every(w => norm(nombrePersona(x)).split(/\s+/).includes(w)));
+      if (m) { aoti.nombres = aoti.nombres || {}; aoti.nombres[m.user_id] = nombrePersona(m); }
+      return m?.user_id;
+    }).filter(Boolean);
+    if (ids.length) aoti.equipo[f] = ids;
+  });
+  aoti.equipoNombres = null;
+}
+
+// Lee el texto del cronograma («Inicio: lun 26/10/2026 13:00–14:00 (OTI: …) · Sprint 1: …»)
+function agendaDesdeTexto(texto) {
+  const est = { inicio: null, entregables: [], horas: {}, equipo: {}, nombresPorFecha: {}, modalidad: /presencial/i.test(texto || '') ? 'presencial' : 'virtual' };
+  String(texto || '').split(' · ').forEach(parte => {
+    const f = /(\d{2})\/(\d{2})\/(\d{4})/.exec(parte);
+    if (!f) return;
+    const iso = `${f[3]}-${f[2]}-${f[1]}`;
+    if (/^\s*Inicio\s*:/i.test(parte)) est.inicio = iso;
+    else if (/^\s*Sprint\s+\d+/i.test(parte)) est.entregables.push(iso);
+    else return;
+    const h = /\b(\d{2}):00\s*[–-]/.exec(parte);
+    if (h) est.horas[iso] = Number(h[1]);
+    const o = /\(OTI:\s*([^)]+)\)/.exec(parte);
+    if (o) est.nombresPorFecha[iso] = o[1].split(',').map(x => x.trim()).filter(Boolean);
+  });
+  est.entregables.sort();
+  return est.inicio && est.entregables.length ? est : null;
+}
 
 function nombresOti(ids) {
   const miembros = aoti.datos?.members || [];
@@ -10831,7 +10918,7 @@ function renderAgendaOti() {
           <div class="aoti-stat"><strong>${r ? esc(fmtCorta(r.fin)) : '—'}</strong>fin del proyecto</div>
         </div>
         ${chipsMarcas ? `<div class="aoti-lista-ent" style="margin-top:0">${chipsMarcas}</div>` : ''}
-        ${nReuniones ? `<div class="aoti-nota">👥 Al guardar la proforma se agendarán <strong>${nReuniones} ${nReuniones === 1 ? 'reunión' : 'reuniones'}</strong> en el calendario de OTI con los integrantes marcados (aparecen en "Calendario — OTI" y en la agenda de cada uno).</div>` : (aoti.inicio ? '<div class="aoti-nota">Elige la hora de un día marcado y los integrantes de OTI para agendar esa reunión en el calendario de OTI.</div>' : '')}
+        ${nReuniones ? `<div class="aoti-nota">👥 ${aoti.destino === 'contrato' ? 'Al guardar la nueva versión se agendarán (solo las nuevas o cambiadas de)' : 'Al guardar la proforma se agendarán'} <strong>${nReuniones} ${nReuniones === 1 ? 'reunión' : 'reuniones'}</strong> en el calendario de OTI con los integrantes marcados (aparecen en "Calendario — OTI" y en la agenda de cada uno).</div>` : (aoti.inicio ? '<div class="aoti-nota">Elige la hora de un día marcado y los integrantes de OTI para agendar esa reunión en el calendario de OTI.</div>' : '')}
         <div class="aoti-grid">
           <div class="aoti-card">
             <div class="aoti-nav">
@@ -10934,10 +11021,10 @@ function aotiMoverMes(delta) {
 }
 
 // Crea en la agenda de OTI las reuniones del plan de la proforma recién guardada
-async function agendarReunionesOti(proforma) {
+async function agendarReunionesOti(proforma, estDado, resumenDado, origenDado) {
   const sel = document.getElementById('prf-metodo-sprint');
-  let est = null;
-  try { est = sel?.selectedOptions[0]?.dataset.agenda ? JSON.parse(sel.selectedOptions[0].dataset.agenda) : null; } catch (e) {}
+  let est = estDado || null;
+  if (!est) try { est = sel?.selectedOptions[0]?.dataset.agenda ? JSON.parse(sel.selectedOptions[0].dataset.agenda) : null; } catch (e) {}
   if (!est || !est.inicio) return;
   const dias = [est.inicio, ...(est.entregables || [])];
   const items = dias.filter(f => est.horas?.[f] !== undefined && (est.equipo?.[f] || []).length).map(f => {
@@ -10951,7 +11038,7 @@ async function agendarReunionesOti(proforma) {
   try {
     const r = await qcApiFetch('/api/calendar/team-plan', {
       method: 'POST',
-      body: JSON.stringify({ area: 'TI', modality: est.modalidad || 'virtual', origen: `Proforma ${proforma.id}`, proyecto, resumen: sel.value, items }),
+      body: JSON.stringify({ area: 'TI', modality: est.modalidad || 'virtual', origen: origenDado || `Proforma ${proforma.id}`, proyecto, resumen: resumenDado || sel?.value || '', items }),
     });
     const n = (r.created || []).length;
     toast('success', 'Agenda de OTI actualizada', `${n} ${n === 1 ? 'reunión agendada' : 'reuniones agendadas'} en el calendario de OTI para la proforma ${proforma.id}.`);
@@ -10963,6 +11050,18 @@ async function agendarReunionesOti(proforma) {
 function aotiConfirmar() {
   const r = resumenPlazo();
   if (!r) return;
+  if (aoti.destino === 'contrato') {
+    const nombres = {};
+    Object.values(aoti.equipo).flat().forEach(id => { const n = nombresOti([id])[0]; if (n) nombres[id] = n; });
+    _cotv.agendaEst = { inicio: aoti.inicio, entregables: aoti.entregables.slice(), horas: { ...aoti.horas }, equipo: JSON.parse(JSON.stringify(aoti.equipo)), modalidad: aoti.modalidad, nombres };
+    _cotv.extras.metodo_sprint = textoPlazo();
+    _cotv.extras.tiempo_entrega = textoPlazoEntrega(_cotv.agendaEst);
+    cerrarAgendaOti();
+    renderCotizacionContrato();
+    document.querySelector('#cotv-cont .agenda-oti-trigger')?.scrollIntoView({ block: 'center' });
+    toast('success', 'Cronograma actualizado', `${r.total} días · ${r.entregables} ${r.entregables === 1 ? 'entregable' : 'entregables'} (fin: ${fmtCorta(r.fin)}). Se guardará con la nueva versión.`);
+    return;
+  }
   const sel = document.getElementById('prf-metodo-sprint');
   const valor = textoPlazo();
   sel.querySelectorAll('option[data-agenda]').forEach(o => o.remove());
