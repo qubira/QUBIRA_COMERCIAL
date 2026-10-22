@@ -5922,6 +5922,7 @@ const VARIABLES_FIJAS = {
   NOMBRE_EMPRESA: 'cliente', RUC_CLIENTE: 'cliente', RUBRO_EMPRESA: 'cliente', DIRECCION_COMPLETA_EMPRESA: 'cliente',
   NUMERO_DNI_CE_REPRESENTANTE: 'representante', CARGO_REPRESENTANTE: 'representante',
   CODIGO_PROPUESTA: 'proforma', FECHA_PROPUESTA: 'proforma',
+  FECHA_DIA_MES_AÑO: 'fecha', 'NÚMERO': 'proforma', NOMBRE_REPRESENTANTE_QUBIRA_TECNICO: 'perfil', CARGO_REPRESENTANTE_QUBIRA_TECNICO: 'perfil',
 };
 const ORIGEN_FIJA = {
   sistema: 'Asignado automáticamente por el sistema',
@@ -5930,6 +5931,7 @@ const ORIGEN_FIJA = {
   cliente: 'Tomado del registro del cliente',
   representante: 'Tomado del representante legal elegido',
   proforma: 'Tomado de la proforma de origen',
+  fecha: 'Fecha del día en que se hace el contrato',
   cotizacion: 'Herramientas de la cotización en plan gratuito (las que también tienen planes de pago). Sin ellas, el numeral no va en el contrato',
 };
 function esVariableBloqueada(token) { return !!VARIABLES_FIJAS[limpiarToken(token)]; }
@@ -6127,6 +6129,15 @@ function htmlCasillaVariable(token) {
     const { cotizadas, catalogo } = herramientasParaContrato();
     if (cotizadas.length || catalogo.length) return htmlHerramientasMulti(token);
   }
+  if (DESPLEGABLES_PREDEFINIDOS[limpio]) {
+    const val = _templatePlaceholdersValues[token] || '';
+    const ops = DESPLEGABLES_PREDEFINIDOS[limpio](token);
+    const extra = val && !ops.some(o => o[0] === val) ? `<option selected>${esc(val)}</option>` : '';
+    return `<select class="ph-in ph-sel ${val ? 'lleno' : ''}" data-token="${esc(token)}" onchange="phCambio(this)">
+      <option value="">— Elige una opción —</option>${extra}
+      ${ops.map(([v, d, rec]) => `<option value="${esc(v)}"${v === val ? ' selected' : ''}>${esc(v)} · ${esc(d)}${rec ? ' ★' : ''}</option>`).join('')}
+    </select>`;
+  }
   if (limpio === 'PLAZO_ENTREGA_INFORMACION' || limpio === 'PLAZO_RESPUESTA_CLIENTE') {
     const val = _templatePlaceholdersValues[token] || '';
     const rec = plazoClienteRecomendado();
@@ -6308,7 +6319,7 @@ function ajustarTablas10(raiz) {
 const TOKENS_DE_PROFORMA = ['REQUERIMIENTOS_FUNCIONALES', 'REQUERIMIENTOS_NO_FUNCIONALES', 'MODULOS_FUNCIONALES', 'ENTREGABLES', 'STACK_HERRAMIENTAS', 'STACK_LENGUAJES', 'PRECIO_ACORDADO', 'PRECIO_EN_LETRAS', 'MONEDA', 'PLANES_GRATUITOS',
   'DETALLE_DE_PAGOS', 'DIAS_GARANTIA', 'NECESIDAD_DEL_CLIENTE', 'OBJETO_SERVICIO', 'OBJETO', 'DURACION_SPRINT', 'NUM_TOTAL_SPRINTS', 'NUMERO_CANTIDAD_SPRINT',
   'TOTAL_DIAS_HABILES', 'FECHA_INICIO', 'FECHA_ENTREGA_FINAL', 'FECHA_LIMITE_INSUMOS', 'DETALLES_SPRINTS', 'CRONOGRAMA_REUNIONES',
-  'INCLUYE_O_NO_IGV', 'DIAS_GARANTIA', 'PLAZO_ENTREGA_INFORMACION', 'PLAZO_RESPUESTA_CLIENTE'];
+  'INCLUYE_O_NO_IGV', 'DIAS_GARANTIA', 'PLAZO_ENTREGA_INFORMACION', 'PLAZO_RESPUESTA_CLIENTE', 'CORREO_CLIENTE', 'NUMERO_WHATSAPP_CLIENTE'];
 
 // Código visible de una proforma con su versión: PRF-2026-001, PRF-2026-001.V2, .V3…
 function codigoProforma(p, version) {
@@ -6850,6 +6861,32 @@ const VALORES_INICIALES = {
   DIAS_GARANTIA: t => { const g = garantiaRecomendada(); return g ? conUnidad(t, g, 'días calendario', RE_DIAS) : ''; },
   // 16.2: botón «Por defecto»
   PLAZO_RESPUESTA_GARANTIA: vacio, HORAS_CONFIRMACION: vacio, HORAS_CRITICO: vacio, DIAS_MAYOR: vacio, HORAS_DIAGNOSTICO: vacio,
+  // 16.4 / 17.1 / 18.2 / 19.2: vacíos, con botón o desplegable
+  TARIFA_MANTENIMIENTO_MENSUAL: vacio, MESES_LIMITE_RESPONSABILIDAD: vacio, PLAZO_REANUDACION: vacio, COSTO_REACTIVACION: vacio, PORCENTAJE_PENALIDAD: vacio,
+  // 20.1: correo y WhatsApp del cliente según la última cotización
+  CORREO_CLIENTE: () => { const p = proformaDelContrato(); const c = getStoredClientes().find(x => x.id === (p?.cliente_id || document.getElementById('ctr-cliente-sel')?.value)) || {}; return p?.cliente_email || c.email || c.correo_empresa || ''; },
+  NUMERO_WHATSAPP_CLIENTE: () => { const p = proformaDelContrato(); const c = getStoredClientes().find(x => x.id === (p?.cliente_id || document.getElementById('ctr-cliente-sel')?.value)) || {}; return p?.cliente_telefono || c.telefono || ''; },
+  // Cierre: fecha del día en que se hace el contrato
+  FECHA_DIA_MES_AÑO: () => formatContractDateSpanish(new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' })),
+  // Firmas: RUC / DNI de la contraparte (cotización) y firmante técnico de QUBIRA (usuario con sesión)
+  'NÚMERO': () => { const p = proformaDelContrato(); const c = getStoredClientes().find(x => x.id === (p?.cliente_id || document.getElementById('ctr-cliente-sel')?.value)) || {}; return p?.cliente_ruc || c.ruc || ''; },
+  NOMBRE_REPRESENTANTE_QUBIRA_TECNICO: () => perfilFirmanteQubira().nombre || '',
+  CARGO_REPRESENTANTE_QUBIRA_TECNICO: () => tituloCargo(perfilFirmanteQubira().cargo) || cargoPorDefectoQubira(),
+};
+// Desplegables con la opción recomendada marcada (la casilla empieza vacía)
+const DESPLEGABLES_PREDEFINIDOS = {
+  MESES_LIMITE_RESPONSABILIDAD: t => [
+    [conUnidad(t, 'doce (12)', 'meses', RE_MESES), 'Recomendado: pagos únicos, mensual o bolsa', true],
+    [conUnidad(t, 'seis (6)', 'meses', RE_MESES), 'Contratos mensuales grandes', false],
+    [conUnidad(t, 'tres (3)', 'meses', RE_MESES), 'Mínimo: no bajar de aquí', false]],
+  PLAZO_REANUDACION: t => {
+    const corto = (duracionProyecto()?.total || 99) <= 14;
+    return [[conUnidad(t, 'tres (3)', 'días', RE_DIAS), 'Recomendado', !corto], [conUnidad(t, 'un (1)', 'día', RE_DIAS), 'Proyectos muy cortos', corto]];
+  },
+  COSTO_REACTIVACION: () => [
+    ['el equivalente a dos (2) horas de la tarifa del numeral 7.2', 'Recomendado: se ajusta solo a la tarifa', true],
+    ['el equivalente a una (1) hora de la tarifa del numeral 7.2', 'Menor costo', false],
+    ['sin costo adicional', 'Sin cobro', false]],
 };
 const tk = k => `[${k}]`;
 
@@ -7004,6 +7041,10 @@ function phComboTeclas(e, el) {
 
 // ── Plantillas rápidas: rellenan de golpe las variables de un párrafo ──
 const PLANTILLAS_RAPIDAS = [
+  { tokens: ['TARIFA_MANTENIMIENTO_MENSUAL'], opciones: [
+    { id: 'mant', nombre: '⚙️ Por defecto: $ 150.00 USD / mes', valores: { TARIFA_MANTENIMIENTO_MENSUAL: '$ 150.00 USD / mes' } } ] },
+  { tokens: ['PORCENTAJE_PENALIDAD'], opciones: [
+    { id: 'penal', nombre: '⚙️ Por defecto', valores: { PORCENTAJE_PENALIDAD: '1% por cada día de retraso hasta un tope de 10%' } } ] },
   { tokens: ['PLAZO_COTIZACION_CAMBIO', 'VIGENCIA_COTIZACION'], opciones: [
     { id: 'cambio', nombre: '⚙️ Por defecto', valores: () => ({
       PLAZO_COTIZACION_CAMBIO: conUnidad(tk('PLAZO_COTIZACION_CAMBIO'), 'un (1)', 'día hábil', RE_DIAS),
@@ -7768,9 +7809,17 @@ function updateContractPreview() {
 
 async function handleGuardarContrato(e) {
   e.preventDefault();
+  // Todas las variables [ … ] deben estar completas y las opciones elegidas
   const sinElegir = alternativasPendientes();
-  if (sinElegir.length) {
-    qcAlert(`Antes de guardar, elige la opción del numeral ${sinElegir.join(', ')} en «Rellenado en contexto».`, { titulo: 'Falta elegir una opción' });
+  const faltan = extraerPlaceholdersPlantillaActual().filter(t => !String(_templatePlaceholdersValues[t] ?? '').trim());
+  if (faltan.length || sinElegir.length) {
+    const lineas = sinElegir.map(n => `• Elegir la opción del numeral ${n}`).concat(faltan.map(t => '• ' + humanizePlaceholderToken(t)));
+    const total = lineas.length;
+    await qcAlert(`No se puede guardar ni registrar el contrato: ${total === 1 ? 'falta 1 dato' : `faltan ${total} datos`} por completar en «Rellenado en contexto».\n\n${lineas.slice(0, 10).join('\n')}${total > 10 ? `\n… y ${total - 10} más` : ''}`, { titulo: 'Campos pendientes' });
+    _phFiltro = 'pendientes';
+    renderPlaceholdersForm(extraerPlaceholdersPlantillaActual(), false);
+    document.getElementById('ctr-placeholders-container')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    setTimeout(() => phSiguientePendiente(), 400);
     return;
   }
   if (!_ctrProformaId) {
