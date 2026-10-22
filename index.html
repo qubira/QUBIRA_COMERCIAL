@@ -962,6 +962,24 @@
     .cotv-pie { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); }
     .cotv-pie input { flex: 1; min-width: 200px; }
     .cotv-vacio { font-size: 12.5px; color: var(--text-muted); padding: 6px 0; }
+    .cotv-sec { border: 1px solid #eef2f7; border-radius: 10px; margin-top: 10px; background: #fff; }
+    .cotv-sec > summary { cursor: pointer; list-style: none; padding: 10px 12px; font-size: 12.5px; font-weight: 800; color: #0f766e; text-transform: uppercase; letter-spacing: .3px; display: flex; align-items: center; gap: 8px; }
+    .cotv-sec > summary::-webkit-details-marker { display: none; }
+    .cotv-sec > summary::before { content: '▸'; transition: transform .15s; color: #94a3b8; }
+    .cotv-sec[open] > summary::before { transform: rotate(90deg); }
+    .cotv-sec > summary:hover { background: #f8fafc; border-radius: 10px; }
+    .cotv-sec-body { padding: 2px 12px 12px; }
+    .cotv-sub { font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: .3px; margin: 12px 0 6px; }
+    .cotv-kvs { display: grid; gap: 6px; }
+    .cotv-kv { display: grid; grid-template-columns: 220px 1fr; gap: 10px; font-size: 12.5px; padding: 6px 0; border-bottom: 1px solid #f1f5f9; }
+    .cotv-kv > span { color: var(--text-muted); font-weight: 600; }
+    .cotv-kv > div { white-space: pre-wrap; }
+    @media (max-width: 760px) { .cotv-kv { grid-template-columns: 1fr; gap: 2px; } }
+    .cotv-ul { margin: 0 0 0 16px; padding: 0; white-space: normal; }
+    .cotv-prio { font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 1px 8px; background: #f1f5f9; color: #475569; }
+    .cotv-prio.alta { background: #fee2e2; color: #b91c1c; }
+    .cotv-prio.media { background: #fef3c7; color: #92400e; }
+    .cotv-prio.baja { background: #dcfce7; color: #166534; }
     .cotv-hist { width: 100%; border-collapse: collapse; font-size: 12.5px; }
     .cotv-hist th { text-align: left; font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; padding: 6px; border-bottom: 1px solid var(--border); }
     .cotv-hist td { padding: 8px 6px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
@@ -6141,20 +6159,7 @@ function renderCotizacionContrato() {
         ${_cotv.editando ? '' : '<button type="button" class="btn btn-primary btn-sm" onclick="editarCotizacionContrato()">✏️ Editar cotización</button>'}
       </div></div>`;
   if (!_cotv.editando) {
-    const t = totalesCotizacion(items, p);
-    const lista = (arr, f) => arr.length ? arr.slice(0, 6).map(f).join('') + (arr.length > 6 ? `<li style="color:var(--text-muted)">… y ${arr.length - 6} más</li>` : '') : '<li style="color:var(--text-muted)">—</li>';
-    cont.innerHTML = cab + `
-      <div class="cotv-resumen">
-        <div class="cotv-dato"><span>Ítems / servicios</span><b>${serv.length}</b></div>
-        <div class="cotv-dato"><span>Costos variables</span><b>${tech.length}</b></div>
-        <div class="cotv-dato"><span>RF / RNF</span><b>${reqs.filter(r => r.tipo === 'RF').length} / ${reqs.filter(r => r.tipo === 'RNF').length}</b></div>
-        <div class="cotv-dato"><span>Total</span><b style="color:#0f766e">${esc(formatCurrency(t.total, p.moneda))}</b></div>
-      </div>
-      <div class="cotv-resumen" style="grid-template-columns:repeat(3,minmax(0,1fr))">
-        <div class="cotv-dato"><span>Ítems</span><ul style="margin:4px 0 0 16px;font-size:12px">${lista(serv, it => `<li>${esc(it.descripcion)}${Number(it.cantidad) > 1 ? ' ×' + Number(it.cantidad) : ''}</li>`)}</ul></div>
-        <div class="cotv-dato"><span>Tecnologías</span><ul style="margin:4px 0 0 16px;font-size:12px">${lista(tech, x => `<li>${esc(x.name)}${x.plan_name && x.category === 'tool' ? ' — ' + esc(x.plan_name) : ''}</li>`)}</ul></div>
-        <div class="cotv-dato"><span>Requerimientos</span><ul style="margin:4px 0 0 16px;font-size:12px">${lista(reqs, r => `<li><b>${esc(r.tipo)}</b> ${esc(r.titulo)}</li>`)}</ul></div>
-      </div>`;
+    cont.innerHTML = cab + htmlCotizacionCompleta(p, serv, tech, reqs);
     return;
   }
   // Modo edición
@@ -6198,6 +6203,70 @@ function renderCotizacionContrato() {
       <button type="button" class="btn btn-outline btn-sm" onclick="cancelarEdicionCotizacion()">Cancelar</button>
       <button type="button" class="btn btn-primary btn-sm" id="cotv-guardar" onclick="guardarVersionCotizacion()">💾 Guardar como versión ${v + 1}</button>
     </div>`;
+}
+
+// Vista completa de la cotización (lo mismo que se llenó en Crear Proforma)
+function htmlCotizacionCompleta(p, serv, tech, reqs) {
+  const items = Array.isArray(p.items) ? p.items : [];
+  const t = totalesCotizacion(items, p);
+  const m = v => esc(formatCurrency(Number(v) || 0, p.moneda));
+  const vacio = txt => `<div class="cotv-vacio">${txt}</div>`;
+  const bloque = (titulo, cuerpo, abierto = true, extra = '') => `<details class="cotv-sec"${abierto ? ' open' : ''}><summary><span>${titulo}</span>${extra}</summary><div class="cotv-sec-body">${cuerpo}</div></details>`;
+  const fila = (k, v) => `<div class="cotv-kv"><span>${k}</span><div>${v ? esc(v) : '<i style="color:var(--text-muted)">—</i>'}</div></div>`;
+  const tools = tech.filter(x => x.category === 'tool');
+  const langs = tech.filter(x => x.category !== 'tool');
+  const tablaTech = (arr, nombre) => arr.length ? `<table class="cotv-tabla"><thead><tr><th>#</th><th>${nombre}</th>${nombre === 'Herramienta' ? '<th>Plan</th>' : ''}<th>Margen</th><th class="num">Propuesta</th></tr></thead><tbody>
+      ${arr.map((x, k) => `<tr><td>${k + 1}</td><td><b>${esc(x.name)}</b></td>${nombre === 'Herramienta' ? `<td>${esc(x.plan_name || '—')}</td>` : ''}
+        <td style="white-space:nowrap;color:var(--text-muted)">${x.margen_min != null || x.margen_max != null ? m(x.margen_min) + ' – ' + m(x.margen_max) : '—'}</td>
+        <td class="num"><b>${m(x.propuesta)}</b></td></tr>`).join('')}</tbody></table>` : '';
+  const listaReqs = tipo => {
+    const arr = reqs.filter(r => r.tipo === tipo);
+    return arr.length ? `<table class="cotv-tabla"><thead><tr><th>Código</th><th>Requerimiento</th><th>Detalle</th><th>Prioridad</th></tr></thead><tbody>
+      ${arr.map((r, k) => `<tr><td style="white-space:nowrap"><b>${tipo}-${String(k + 1).padStart(2, '0')}</b></td><td>${esc(r.titulo)}</td><td style="color:var(--text-muted)">${esc(r.detalle || '—')}</td><td><span class="cotv-prio ${esc((r.prioridad || 'Media').toLowerCase())}">${esc(r.prioridad || 'Media')}</span></td></tr>`).join('')}</tbody></table>` : vacio(`Sin requerimientos ${tipo === 'RF' ? 'funcionales' : 'no funcionales'}.`);
+  };
+  const sprint = String(p.metodo_sprint || '').split(' · ').map(x => x.trim()).filter(Boolean);
+  const emision = p.fecha_emision ? String(p.fecha_emision).slice(0, 10) : '';
+  const vence = p.fecha_vencimiento ? String(p.fecha_vencimiento).slice(0, 10) : '';
+  return `
+    <div class="cotv-resumen">
+      <div class="cotv-dato"><span>Ítems / servicios</span><b>${serv.length}</b></div>
+      <div class="cotv-dato"><span>Costos variables</span><b>${tech.length}</b></div>
+      <div class="cotv-dato"><span>RF / RNF</span><b>${reqs.filter(r => r.tipo === 'RF').length} / ${reqs.filter(r => r.tipo === 'RNF').length}</b></div>
+      <div class="cotv-dato"><span>Total</span><b style="color:#0f766e">${m(t.total)}</b></div>
+    </div>
+    ${bloque('2. Solución tecnológica y cotización detallada', `
+      <div class="cotv-kvs">${fila('Tipo de servicio', p.tipo)}${fila('Producto / solución', p.producto_nombre)}${fila('Moneda', p.moneda)}</div>
+      <h6 class="cotv-sub">Ítems, licencias y servicios cotizados (${serv.length})</h6>
+      ${serv.length ? `<table class="cotv-tabla"><thead><tr><th>#</th><th>Descripción del concepto / servicio</th><th class="num">Cant.</th><th class="num">P. unitario</th><th class="num">Subtotal</th></tr></thead><tbody>
+        ${serv.map((it, k) => `<tr><td>${k + 1}</td><td>${esc(it.descripcion)}</td><td class="num">${Number(it.cantidad) || 1}</td><td class="num">${m(it.precio)}</td><td class="num"><b>${m((Number(it.cantidad) || 1) * (Number(it.precio) || 0))}</b></td></tr>`).join('')}
+        </tbody></table>` : vacio('Sin ítems.')}
+      <h6 class="cotv-sub">Ítems, servicios y costos variables — Herramientas (${tools.length})</h6>
+      ${tablaTech(tools, 'Herramienta') || vacio('Sin herramientas.')}
+      <h6 class="cotv-sub">Lenguajes (${langs.length})</h6>
+      ${tablaTech(langs, 'Lenguaje') || vacio('Sin lenguajes.')}
+      <div class="cotv-totales">${htmlTotalesCotv(t, p)}</div>`)}
+    ${bloque('2.1 Requerimientos del proyecto (funcionales y no funcionales)', `
+      <h6 class="cotv-sub">Requerimientos funcionales (RF)</h6>${listaReqs('RF')}
+      <h6 class="cotv-sub">Requerimientos no funcionales (RNF)</h6>${listaReqs('RNF')}`)}
+    ${bloque('3. Método de trabajo (metodología de desarrollo)', `
+      <div class="cotv-kvs">
+        ${fila('Marco / metodología de trabajo', p.metodo_trabajo)}
+        <div class="cotv-kv"><span>Duración del sprint / ciclo de entrega</span><div>${sprint.length ? '<ul class="cotv-ul">' + sprint.map(x => `<li>${esc(x)}</li>`).join('') + '</ul>' : '<i style="color:var(--text-muted)">—</i>'}</div></div>
+        ${fila('Seguimiento y coordinación con el cliente', p.metodo_reuniones)}
+        ${fila('Herramientas de tablero y gestión ágil', p.metodo_herramientas)}
+        ${fila('Roles y acompañamiento Qubira', p.metodo_roles)}
+        ${fila('Descripción del método operativo y dinámica de trabajo', p.metodo_detalle)}
+      </div>`)}
+    ${bloque('4. Condiciones comerciales y términos', `
+      <div class="cotv-kvs">
+        ${fila('Forma de pago propuesta', p.modalidad_pago)}
+        ${fila('Plazo estimado de entrega', p.tiempo_entrega)}
+        ${fila('Garantía / SLA incluido', p.garantia)}
+        ${fila('Alcance y entregables técnicos comprendidos', p.alcance)}
+        ${fila('Observaciones y notas comerciales', p.observaciones)}
+        ${fila('Emisión / vigencia', [emision, vence ? 'vence ' + vence : (p.validez_dias ? p.validez_dias + ' días' : '')].filter(Boolean).join(' · '))}
+        ${fila('Asesor comercial Qubira', p.responsable)}
+      </div>`)}`;
 }
 
 function htmlTotalesCotv(t, p) {
