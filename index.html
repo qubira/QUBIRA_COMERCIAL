@@ -832,6 +832,23 @@
       color: #166534; font-size: 12px; font-weight: 700; display: flex; align-items: center;
       justify-content: space-between; margin-bottom: 18px;
     }
+    /* ── Rellenado en contexto: párrafos de la plantilla con casillas en línea ── */
+    .phc-barra { position: sticky; top: 0; z-index: 3; background: var(--bg-card); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 0 10px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+    .phc-tab { border: 1px solid var(--border); background: #fff; border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .phc-tab.activo { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .phc-barra input[type="search"] { flex: 1; min-width: 180px; font-size: 12.5px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; }
+    .phc-lista { display: flex; flex-direction: column; gap: 10px; max-height: 72vh; overflow-y: auto; padding-right: 4px; }
+    .phc { border: 1px solid #fde68a; background: #fffdf3; border-radius: 10px; padding: 10px 14px; transition: border-color .15s, background .15s; }
+    .phc.completo { border-color: #a7f3d0; background: #f6fffb; }
+    .phc-seccion { font-size: 10.5px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #0f766e; margin-bottom: 6px; display: flex; justify-content: space-between; gap: 8px; }
+    .phc-seccion span { color: var(--text-muted); font-weight: 700; }
+    .phc-texto { font-family: 'Times New Roman', Georgia, serif; font-size: 14px; line-height: 2.05; color: #1e293b; text-align: left; }
+    .phc-texto input.ph-in { display: inline-block !important; width: auto !important; height: auto !important; min-height: 0 !important; }
+    .ph-in { font: inherit; font-family: 'Inter', sans-serif !important; font-size: 12.5px !important; line-height: 1.4 !important; padding: 2px 7px !important; margin: 0 2px; border: 1px dashed #f59e0b !important; background: #fef3c7 !important; border-radius: 5px !important; color: #0f172a; min-width: 9ch; max-width: 100%; vertical-align: baseline; box-shadow: none; }
+    .ph-in:focus { outline: none; border-style: solid !important; border-color: #0f766e !important; background: #fff !important; box-shadow: 0 0 0 3px rgba(15,118,110,.15) !important; }
+    .ph-in.lleno { border-style: solid !important; border-color: #6ee7b7 !important; background: #ecfdf5 !important; }
+    textarea.ph-in { display: block !important; width: 100% !important; margin: 6px 0; min-height: 70px; resize: vertical; white-space: pre-wrap; line-height: 1.5 !important; }
+    .phc-vacio { padding: 16px; background: var(--bg-card2); border-radius: 8px; text-align: center; color: var(--text-muted); font-size: 12.5px; }
     .placeholders-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; margin-top: 10px;
     }
@@ -1692,7 +1709,7 @@
             <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:20px">
               <div style="display:flex;align-items:center;gap:6px">
                 <svg class="icon" style="width:15px;height:15px"><use href="#icon-edit-3"></use></svg>
-                <span>5. Campos Personalizables de la Plantilla [ ... ] (Llenado Manual & Asistido)</span>
+                <span>5. Rellenado en contexto de la plantilla [ ... ]</span>
               </div>
               <div style="display:flex;gap:6px;align-items:center">
                 <span class="badge b-vigente" id="ctr-placeholders-badge" style="font-size:11px">0 campos detectados</span>
@@ -1702,7 +1719,7 @@
               </div>
             </div>
             <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5">
-              Las partes de la plantilla marcadas con corchetes <code>[ ... ]</code> se rellenan aquí manualmente. Los datos del cliente, montos y fechas se completan automáticamente según los datos ingresados pero puedes modificarlos libremente. Lo demás conserva el formato y redacción aprobados por ODACL.
+              Cada tarjeta muestra el <strong>párrafo completo</strong> de la plantilla donde aparece una variable <code>[ ... ]</code>: escribe en la casilla amarilla leyendo su contexto. Una variable que se repite se completa en todos sus párrafos a la vez. Los datos del cliente, montos y fechas llegan prellenados y puedes cambiarlos; el resto del texto conserva la redacción aprobada por ODACL.
             </div>
 
             <div id="ctr-placeholders-container">
@@ -5254,66 +5271,146 @@ function autoFillPlaceholdersFromForm(overwriteAll = false) {
   }
 }
 
+// ══════════ RELLENADO EN CONTEXTO ══════════
+// En vez de casillas sueltas, se muestran los párrafos completos de la
+// plantilla donde aparece cada variable [ ... ], con la casilla dentro del
+// texto. Detecta cualquier variable (también nuevas agregadas por ODACL).
+let _phFiltro = 'pendientes';
+let _phBusqueda = '';
+const RE_VARIABLE = /\[[^\]\n\r]{2,80}\]/g;
+const esVariableLista = (token, valor) => /REQUERIMIENTOS|MODULOS|ENTREGABLES|STACK_|ALCANCE/i.test(token) || String(valor || '').includes('\n');
+
+function parrafosConVariables(html, placeholders) {
+  const div = document.createElement('div');
+  div.innerHTML = quitarComparecencia(html || '');
+  const validas = new Set(placeholders);
+  const items = [];
+  let seccion = 'Inicio del contrato';
+  div.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li, td, th, div').forEach(b => {
+    if (b.querySelector('h1, h2, h3, h4, h5, h6, p, li, td, th, div, table, ul, ol')) return; // solo bloques "hoja"
+    const texto = (b.textContent || '').replace(/[\s\u00a0]+/g, ' ').trim();
+    if (!texto) return;
+    const tokens = (texto.match(RE_VARIABLE) || []).filter(t => validas.has(t));
+    const esTitulo = /^H[1-6]$/.test(b.tagName) || (/^CL[ÁA]USULA\b/i.test(texto) && texto.length < 160);
+    if (esTitulo) seccion = texto.replace(RE_VARIABLE, '').replace(/\s+/g, ' ').trim() || seccion;
+    if (tokens.length) items.push({ seccion, texto, tokens: [...new Set(tokens)] });
+  });
+  const vistos = new Set(items.flatMap(it => it.tokens));
+  return { items, sueltos: placeholders.filter(t => !vistos.has(t)) };
+}
+
+function htmlCasillaVariable(token) {
+  const valor = _templatePlaceholdersValues[token] || '';
+  const etiqueta = humanizePlaceholderToken(token);
+  const lleno = valor.trim() !== '';
+  if (esVariableLista(token, valor)) {
+    return `<textarea class="ph-in ${lleno ? 'lleno' : ''}" data-token="${esc(token)}" rows="${Math.min(10, Math.max(3, valor.split('\n').length + 1))}" placeholder="${esc(etiqueta)} (una línea por elemento)" title="${esc(token)}" oninput="phCambio(this)">${esc(valor)}</textarea>`;
+  }
+  const ancho = Math.min(60, Math.max(etiqueta.length, valor.length, 8) + 2);
+  return `<input type="text" class="ph-in ${lleno ? 'lleno' : ''}" data-token="${esc(token)}" value="${esc(valor)}" placeholder="${esc(etiqueta)}" title="${esc(token)} · ${esc(etiqueta)}" size="${ancho}" oninput="phCambio(this)">`;
+}
+
+function htmlParrafoConCasillas(texto, validas) {
+  let out = '', ultimo = 0, m;
+  RE_VARIABLE.lastIndex = 0;
+  while ((m = RE_VARIABLE.exec(texto))) {
+    out += esc(texto.slice(ultimo, m.index));
+    out += validas.has(m[0]) ? htmlCasillaVariable(m[0]) : esc(m[0]);
+    ultimo = m.index + m[0].length;
+  }
+  return out + esc(texto.slice(ultimo));
+}
+
 function renderPlaceholdersForm(placeholders, reset = false) {
   const container = document.getElementById('ctr-placeholders-container');
   const badge = document.getElementById('ctr-placeholders-badge');
   if (!container) return;
-
   if (reset) _templatePlaceholdersValues = {};
 
   if (!placeholders || placeholders.length === 0) {
-    container.innerHTML = '<div style="padding:16px;background:var(--bg-card2);border-radius:8px;text-align:center;color:var(--text-muted);font-size:12.5px">Esta plantilla no contiene campos en corchetes pendientes de rellenar. Se generará con el formato íntegro oficial de ODACL.</div>';
+    container.innerHTML = '<div class="phc-vacio">Esta plantilla no contiene campos en corchetes pendientes de rellenar. Se generará con el formato íntegro oficial de ODACL.</div>';
     if (badge) badge.textContent = '0 campos';
     return;
   }
 
-  // Asegurar que cada placeholder tenga su valor (autocompletado si no existe)
-  let filledCount = 0;
+  // Valor inicial de cada variable (autocompletado con los datos del formulario)
   placeholders.forEach(token => {
-    if (_templatePlaceholdersValues[token] === undefined) {
-      _templatePlaceholdersValues[token] = getAutoFillValueForToken(token) || '';
-    }
-    if (_templatePlaceholdersValues[token] && _templatePlaceholdersValues[token].trim() !== '') {
-      filledCount++;
-    }
+    if (_templatePlaceholdersValues[token] === undefined) _templatePlaceholdersValues[token] = getAutoFillValueForToken(token) || '';
   });
+  updatePlaceholdersProgress();
 
-  if (badge) {
-    badge.textContent = `${filledCount} / ${placeholders.length} completados`;
-    badge.className = filledCount === placeholders.length ? 'badge b-vigente' : 'badge b-pendiente';
-  }
+  const tpl = (_odaclTemplatesCache || []).find(t => t.clave === _selectedTemplateKey);
+  const { items, sueltos } = parrafosConVariables(tpl?.contenido_html || '', placeholders);
+  const validas = new Set(placeholders);
+  const lleno = t => (_templatePlaceholdersValues[t] || '').trim() !== '';
+  const pendientesTotal = items.filter(it => it.tokens.some(t => !lleno(t))).length + sueltos.filter(t => !lleno(t)).length;
+  const q = _phBusqueda.trim().toLowerCase();
+  const visible = it => (_phFiltro === 'todos' || it.tokens.some(t => !lleno(t)))
+    && (!q || it.texto.toLowerCase().includes(q) || it.seccion.toLowerCase().includes(q) || it.tokens.some(t => humanizePlaceholderToken(t).toLowerCase().includes(q)));
 
-  // Generar HTML de inputs
-  const itemsHtml = placeholders.map((token, idx) => {
-    const val = _templatePlaceholdersValues[token] || '';
-    const label = humanizePlaceholderToken(token);
-    const isUnfilled = !val || val.trim() === '';
-    const inputId = `p_holder_${idx}`;
-    const multilinea = /REQUERIMIENTOS|MODULOS|ENTREGABLES|STACK_|ALCANCE/.test(token.toUpperCase()) || String(val).includes('\n');
-
-    return `
-      <div class="placeholder-item ${isUnfilled ? 'is-unfilled' : ''} ${multilinea ? 'multilinea' : ''}" id="ph_box_${idx}">
-        <div class="placeholder-label">
-          <span>${esc(label)}</span>
-          <span class="placeholder-tag">${esc(token)}</span>
-        </div>
-        ${multilinea
-          ? `<textarea id="${inputId}" class="placeholder-input" rows="${Math.min(10, Math.max(3, String(val).split('\n').length + 1))}"
-              placeholder="Rellenar ${esc(token)}… (una línea por elemento)"
-              oninput="onPlaceholderValueChanged('${esc(token)}', this.value, 'ph_box_${idx}')">${esc(val)}</textarea>`
-          : `<input type="text" id="${inputId}" class="placeholder-input"
-              value="${esc(val)}"
-              placeholder="Rellenar ${esc(token)}..."
-              oninput="onPlaceholderValueChanged('${esc(token)}', this.value, 'ph_box_${idx}')">`}
-      </div>
-    `;
-  }).join('');
+  const tarjetas = items.filter(visible).map(it => `
+    <div class="phc ${it.tokens.every(lleno) ? 'completo' : ''}" data-tokens="${esc(it.tokens.join('|'))}">
+      <div class="phc-seccion">${esc(it.seccion)}<span>${it.tokens.length} ${it.tokens.length === 1 ? 'variable' : 'variables'}</span></div>
+      <div class="phc-texto">${htmlParrafoConCasillas(it.texto, validas)}</div>
+    </div>`).join('');
+  const sueltosVisibles = sueltos.filter(t => (_phFiltro === 'todos' || !lleno(t)) && (!q || humanizePlaceholderToken(t).toLowerCase().includes(q) || t.toLowerCase().includes(q)));
+  const otros = sueltosVisibles.length ? `
+    <div class="phc ${sueltosVisibles.every(lleno) ? 'completo' : ''}" data-tokens="${esc(sueltosVisibles.join('|'))}">
+      <div class="phc-seccion">Otros campos de la plantilla<span>${sueltosVisibles.length}</span></div>
+      <div class="phc-texto">${sueltosVisibles.map(t => `<div>${esc(humanizePlaceholderToken(t))}: ${htmlCasillaVariable(t)}</div>`).join('')}</div>
+    </div>` : '';
 
   container.innerHTML = `
-    <div class="placeholders-grid">
-      ${itemsHtml}
+    <div class="phc-barra">
+      <button type="button" class="phc-tab ${_phFiltro === 'pendientes' ? 'activo' : ''}" onclick="phFiltrar('pendientes')">Pendientes (${pendientesTotal})</button>
+      <button type="button" class="phc-tab ${_phFiltro === 'todos' ? 'activo' : ''}" onclick="phFiltrar('todos')">Todos los párrafos (${items.length + (sueltos.length ? 1 : 0)})</button>
+      <input type="search" placeholder="Buscar en los párrafos o variables…" value="${esc(_phBusqueda)}" oninput="phBuscar(this.value)">
+      <button type="button" class="btn btn-outline btn-sm" onclick="phSiguientePendiente()">Siguiente pendiente →</button>
     </div>
-  `;
+    <div class="phc-lista">
+      ${tarjetas || otros ? tarjetas + otros : `<div class="phc-vacio">${_phFiltro === 'pendientes' && !q ? '✓ Todas las variables de la plantilla están completas.' : 'No hay párrafos que coincidan con la búsqueda.'}</div>`}
+    </div>`;
+}
+
+function phFiltrar(f) { _phFiltro = f; renderPlaceholdersForm(extraerPlaceholdersPlantillaActual(), false); }
+function phBuscar(v) {
+  _phBusqueda = v;
+  clearTimeout(phBuscar._t);
+  phBuscar._t = setTimeout(() => {
+    renderPlaceholdersForm(extraerPlaceholdersPlantillaActual(), false);
+    const inp = document.querySelector('.phc-barra input[type="search"]');
+    if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+  }, 250);
+}
+function extraerPlaceholdersPlantillaActual() {
+  const tpl = (_odaclTemplatesCache || []).find(t => t.clave === _selectedTemplateKey);
+  return tpl ? (tpl.placeholders || extractPlaceholdersClient(tpl.contenido_html)) : [];
+}
+
+// Escribir en una casilla: sincroniza la misma variable en todos sus párrafos
+function phCambio(el) {
+  const token = el.dataset.token;
+  const valor = el.value;
+  document.querySelectorAll('#ctr-placeholders-container .ph-in').forEach(otro => {
+    if (otro !== el && otro.dataset.token === token) otro.value = valor;
+  });
+  document.querySelectorAll('#ctr-placeholders-container .ph-in').forEach(c => {
+    if (c.dataset.token !== token) return;
+    c.classList.toggle('lleno', valor.trim() !== '');
+    if (c.tagName === 'INPUT') c.size = Math.min(60, Math.max((c.placeholder || '').length, valor.length, 8) + 2);
+  });
+  onPlaceholderValueChanged(token, valor, null);
+  document.querySelectorAll('#ctr-placeholders-container .phc').forEach(card => {
+    const toks = (card.dataset.tokens || '').split('|').filter(Boolean);
+    card.classList.toggle('completo', toks.every(t => (_templatePlaceholdersValues[t] || '').trim() !== ''));
+  });
+}
+
+function phSiguientePendiente() {
+  const vacia = Array.from(document.querySelectorAll('#ctr-placeholders-container .ph-in')).find(c => !c.value.trim());
+  if (!vacia) { toast('success', 'Todo completo', 'No quedan variables pendientes en la plantilla.'); return; }
+  vacia.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  vacia.focus();
 }
 
 function onPlaceholderValueChanged(token, value, boxId) {
