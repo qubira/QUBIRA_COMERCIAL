@@ -2277,7 +2277,8 @@
 
               <div class="form-group">
                 <label for="prf-tiempo-entrega">Plazo Estimado de Entrega *</label>
-                <input type="text" id="prf-tiempo-entrega" placeholder="Ej. 15 días hábiles tras confirmación" required oninput="updateProformaPreview()">
+                <input type="text" id="prf-tiempo-entrega" placeholder="Se completa al definir el sprint en la agenda de OTI" required oninput="updateProformaPreview()">
+                <div class="form-hint" id="prf-tiempo-entrega-hint" style="font-size:11px;color:var(--text-muted);margin-top:4px">Se calcula automáticamente desde «Duración del Sprint / Ciclo de Entrega».</div>
               </div>
 
               <div class="form-group">
@@ -6988,6 +6989,7 @@ function cargarProformaEnFormulario(p) {
   asegurarOpcion(document.getElementById('prf-impuesto-opcion'), p.igv_tipo || 'igv_18');
   asegurarOpcion(document.getElementById('prf-modalidad-pago'), p.modalidad_pago);
   set('prf-tiempo-entrega', p.tiempo_entrega || '');
+  delete document.getElementById('prf-tiempo-entrega')?.dataset.auto;
   asegurarOpcion(document.getElementById('prf-garantia'), p.garantia);
   set('prf-alcance', p.alcance || '');
   set('prf-observaciones', p.observaciones || '');
@@ -7069,7 +7071,7 @@ async function renderCrearProforma() {
   const garEl0 = document.getElementById('prf-garantia');
   const estadoEl0 = document.getElementById('prf-estado');
   if (modPagoEl0) modPagoEl0.value = '';
-  if (plazoEl0) plazoEl0.value = '';
+  if (plazoEl0) { plazoEl0.value = ''; delete plazoEl0.dataset.auto; }
   if (garEl0) garEl0.value = '';
   if (estadoEl0) estadoEl0.value = '';
 
@@ -9401,14 +9403,49 @@ function textoPlazo() {
   return partes.join(' · ');
 }
 
-function actualizarTriggerSprint() {
+// Plazo Estimado de Entrega calculado a partir de la agenda del sprint
+function textoPlazoEntrega(est) {
+  if (!est || !est.inicio || !est.entregables?.length) return '';
+  const fin = est.entregables[est.entregables.length - 1];
+  const c = contarDias(est.inicio, fin);
+  const n = est.entregables.length;
+  return `${c.total} ${c.total === 1 ? 'día calendario' : 'días calendario'} (${c.habiles} ${c.habiles === 1 ? 'día hábil' : 'días hábiles'}) · `
+    + `${n} ${n === 1 ? 'entregable' : 'entregables'} · del ${fmtCorta(est.inicio)} al ${fmtCorta(fin)} (entrega final)`;
+}
+
+// Rellena el plazo con lo del sprint. Sin «forzar» respeta lo que el usuario escribió a mano.
+function sincronizarPlazoEntrega(est, forzar) {
+  const el = document.getElementById('prf-tiempo-entrega');
+  const hint = document.getElementById('prf-tiempo-entrega-hint');
+  if (!el) return;
+  const auto = textoPlazoEntrega(est);
+  if (!auto) { if (hint) hint.textContent = 'Se calcula automáticamente desde «Duración del Sprint / Ciclo de Entrega».'; return; }
+  const actual = el.value.trim();
+  if (forzar || !actual || actual === el.dataset.auto) el.value = auto;
+  el.dataset.auto = auto;
+  if (hint) {
+    hint.innerHTML = el.value.trim() === auto
+      ? '✓ Calculado desde la agenda del sprint.'
+      : 'Editado a mano. <a href="#" onclick="event.preventDefault();usarPlazoDelSprint()">Usar el plazo del sprint</a>';
+  }
+}
+
+function usarPlazoDelSprint() {
+  const el = document.getElementById('prf-tiempo-entrega');
+  if (!el || !el.dataset.auto) return;
+  el.value = el.dataset.auto;
+  updateProformaPreview();
+}
+
+function actualizarTriggerSprint(forzarPlazo = false) {
   const sel = document.getElementById('prf-metodo-sprint');
   const cont = document.getElementById('prf-sprint-trigger-texto');
   if (!sel || !cont) return;
   const op = sel.selectedOptions[0];
-  if (!sel.value || !op) { cont.innerHTML = '<span class="vacio">Marca inicio y entregables en la agenda de OTI…</span>'; return; }
+  if (!sel.value || !op) { cont.innerHTML = '<span class="vacio">Marca inicio y entregables en la agenda de OTI…</span>'; sincronizarPlazoEntrega(null); return; }
   let est = null;
   try { est = op.dataset.agenda ? JSON.parse(op.dataset.agenda) : null; } catch (e) {}
+  sincronizarPlazoEntrega(est, forzarPlazo);
   if (est && est.inicio && est.entregables?.length) {
     const fin = est.entregables[est.entregables.length - 1];
     const c = contarDias(est.inicio, fin);
@@ -9791,7 +9828,8 @@ function aotiConfirmar() {
   sel.appendChild(op);
   sel.value = valor;
   sel.dispatchEvent(new Event('change'));
-  actualizarTriggerSprint();
+  actualizarTriggerSprint(true);
+  updateProformaPreview();
   cerrarAgendaOti();
   toast('success', 'Plazo definido', `${r.total} días · ${r.entregables} ${r.entregables === 1 ? 'entregable' : 'entregables'} (fin: ${fmtCorta(r.fin)}).`);
 }
