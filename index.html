@@ -5657,9 +5657,15 @@ function getAutoFillValueForToken(token) {
   }
   // Propuesta comercial = proforma de la que nace el contrato
   const prfOrigen = _ctrProformaId ? getStoredProformas().find(x => x.id === _ctrProformaId) : null;
-  if (['CODIGO_PROPUESTA', 'NUMERO_PROPUESTA', 'CODIGO_PROFORMA'].includes(clean)) return prfOrigen?.id || '';
+  // Con versiones, el contrato cita la versión de la proforma que usa
+  const verPrf = Number(prfOrigen?.version_actual) || 1;
+  if (['CODIGO_PROPUESTA', 'NUMERO_PROPUESTA', 'CODIGO_PROFORMA'].includes(clean)) return prfOrigen ? `${prfOrigen.id}${verPrf > 1 ? ` (versión ${verPrf})` : ''}` : '';
   if (['PLANES_GRATUITOS'].includes(clean)) return textoPlanesGratuitos();
-  if (['FECHA_PROPUESTA', 'FECHA_PROFORMA'].includes(clean)) return prfOrigen?.fecha_emision ? formatContractDateSpanish(String(prfOrigen.fecha_emision).slice(0, 10)) : '';
+  if (['FECHA_PROPUESTA', 'FECHA_PROFORMA'].includes(clean)) {
+    // Fecha de la versión en uso (la v1 es la fecha de emisión)
+    const f = verPrf > 1 && prfOrigen?.updated_at ? new Date(prfOrigen.updated_at).toLocaleDateString('en-CA', { timeZone: 'America/Lima' }) : prfOrigen?.fecha_emision;
+    return f ? formatContractDateSpanish(String(f).slice(0, 10)) : '';
+  }
   const repFirma = representanteContrato() || {};
   if (['NOMBRE_COMPLETO_CLIENTE', 'REPRESENTANTE LEGAL', 'NOMBRE_COMPLETO_REPRESENTANTE', 'NOMBRE DEL TRABAJADOR', 'NOMBRE DEL PROFESIONAL', 'NOMBRE DEL ESTUDIANTE'].includes(clean)) {
     return repFirma.nombre || cliente.contacto_nombre || '';
