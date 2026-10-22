@@ -101,6 +101,28 @@
     @keyframes pulseAnim { from{opacity:1;transform:scale(1)} to{opacity:0;transform:scale(2.2)} }
     .mob-overlay { display: none; }
 
+    /* ── Barra lateral reducida a íconos (como ADG / ODACL) ── */
+    .sidebar { transition: transform .3s, width .2s; }
+    .main { transition: margin-left .2s, width .2s; }
+    .sb-toggle { margin-left: auto; flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06); color: #cbd5e1; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .15s, color .15s; }
+    .sb-toggle:hover { background: var(--sidebar-bg-hover); color: #fff; border-color: rgba(15,118,110,.6); }
+    .sb-toggle .icon { width: 16px; height: 16px; transition: transform .2s; }
+    body.sidebar-colapsada { --sidebar-w: 76px; }
+    body.sidebar-colapsada .sidebar-logo { flex-direction: column; justify-content: center; padding: 16px 0; gap: 10px; }
+    body.sidebar-colapsada .sidebar-logo img { width: 40px; height: 40px; }
+    body.sidebar-colapsada .sidebar-brand-txt { display: none; }
+    body.sidebar-colapsada .sb-toggle { margin-left: 0; }
+    body.sidebar-colapsada .sb-toggle .icon { transform: rotate(180deg); }
+    body.sidebar-colapsada .nav-section { font-size: 0; padding: 10px 0 4px; margin: 0 18px; border-top: 1px solid rgba(255,255,255,.06); }
+    body.sidebar-colapsada .nav-item { justify-content: center; padding: 11px 0; margin: 0 12px 2px; gap: 0; border-left-width: 0; }
+    body.sidebar-colapsada .nav-txt, body.sidebar-colapsada .sf-txt, body.sidebar-colapsada .sf-user-meta, body.sidebar-colapsada .sf-copy { display: none; }
+    body.sidebar-colapsada .sidebar-footer { padding: 14px 8px; }
+    body.sidebar-colapsada .sidebar-footer-user { justify-content: center; }
+    body.sidebar-colapsada .sf-acciones { flex-direction: column; }
+    body.sidebar-colapsada .sf-estado { justify-content: center; }
+    @media (max-width: 768px) { .sb-toggle { display: none; } body.sidebar-colapsada { --sidebar-w: 265px; } }
+
     /* ── MAIN ── */
     .main {
       margin-left: var(--sidebar-w);
@@ -1278,78 +1300,81 @@
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <img src="https://raw.githubusercontent.com/qubira/IMAGENES/main/logo2.png" alt="Qubira" onerror="this.style.display='none'">
-    <div>
+    <div class="sidebar-brand-txt">
       <div class="brand">QUBIRA</div>
       <div class="sub">ODN · DESARROLLO DE NEGOCIOS</div>
     </div>
+    <button type="button" class="sb-toggle" id="sb-toggle" onclick="alternarSidebarColapsada()" title="Reducir menú a íconos" aria-label="Reducir o expandir el menú">
+      <svg class="icon"><use href="#icon-chevron-left"></use></svg>
+    </button>
   </div>
   <nav class="sidebar-nav">
     <div class="nav-section">Principal</div>
-    <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
-      <svg class="icon"><use href="#icon-trending-up"></use></svg> Dashboard
+    <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')" title="Dashboard">
+      <svg class="icon"><use href="#icon-trending-up"></use></svg> <span class="nav-txt">Dashboard</span>
     </div>
-    <div class="nav-item" data-page="calendario" onclick="navigate('calendario')">
-      <svg class="icon"><use href="#icon-calendar"></use></svg> Calendario
+    <div class="nav-item" data-page="calendario" onclick="navigate('calendario')" title="Calendario">
+      <svg class="icon"><use href="#icon-calendar"></use></svg> <span class="nav-txt">Calendario</span>
     </div>
-    <div class="nav-item" data-page="catalogo" onclick="navigate('catalogo')">
-      <svg class="icon"><use href="#icon-package"></use></svg> Catálogo de Productos
+    <div class="nav-item" data-page="catalogo" onclick="navigate('catalogo')" title="Catálogo de Productos">
+      <svg class="icon"><use href="#icon-package"></use></svg> <span class="nav-txt">Catálogo de Productos</span>
     </div>
-    <div class="nav-item" data-page="costo-herramientas" onclick="navigate('costo-herramientas')">
-      <svg class="icon"><use href="#icon-tag"></use></svg> Tech Stack & Costos
+    <div class="nav-item" data-page="costo-herramientas" onclick="navigate('costo-herramientas')" title="Tech Stack & Costos">
+      <svg class="icon"><use href="#icon-tag"></use></svg> <span class="nav-txt">Tech Stack & Costos</span>
     </div>
-    <div class="nav-item" data-page="info-tecnico" onclick="navigate('info-tecnico')">
-      <svg class="icon"><use href="#icon-cpu"></use></svg> Info Técnico
+    <div class="nav-item" data-page="info-tecnico" onclick="navigate('info-tecnico')" title="Info Técnico">
+      <svg class="icon"><use href="#icon-cpu"></use></svg> <span class="nav-txt">Info Técnico</span>
     </div>
 
     <div class="nav-section">Contratos</div>
-    <div class="nav-item" data-page="crear-contrato" onclick="navigate('crear-contrato')">
-      <svg class="icon"><use href="#icon-file-plus"></use></svg> Crear Contrato
+    <div class="nav-item" data-page="crear-contrato" onclick="navigate('crear-contrato')" title="Crear Contrato">
+      <svg class="icon"><use href="#icon-file-plus"></use></svg> <span class="nav-txt">Crear Contrato</span>
     </div>
-    <div class="nav-item" data-page="revisar-contrato" onclick="navigate('revisar-contrato')">
-      <svg class="icon"><use href="#icon-file-text"></use></svg> Revisar Contrato
+    <div class="nav-item" data-page="revisar-contrato" onclick="navigate('revisar-contrato')" title="Revisar Contrato">
+      <svg class="icon"><use href="#icon-file-text"></use></svg> <span class="nav-txt">Revisar Contrato</span>
     </div>
 
     <div class="nav-section">Proformas</div>
-    <div class="nav-item" data-page="crear-proforma" onclick="navigate('crear-proforma')">
-      <svg class="icon"><use href="#icon-clipboard"></use></svg> Crear Proforma
+    <div class="nav-item" data-page="crear-proforma" onclick="navigate('crear-proforma')" title="Crear Proforma">
+      <svg class="icon"><use href="#icon-clipboard"></use></svg> <span class="nav-txt">Crear Proforma</span>
     </div>
-    <div class="nav-item" data-page="consultar-proforma" onclick="navigate('consultar-proforma')">
-      <svg class="icon"><use href="#icon-search"></use></svg> Consultar Proforma
+    <div class="nav-item" data-page="consultar-proforma" onclick="navigate('consultar-proforma')" title="Consultar Proforma">
+      <svg class="icon"><use href="#icon-search"></use></svg> <span class="nav-txt">Consultar Proforma</span>
     </div>
 
     <div class="nav-section">Clientes</div>
-    <div class="nav-item" data-page="crear-clientes" onclick="navigate('crear-clientes')">
-      <svg class="icon"><use href="#icon-user-plus"></use></svg> Crear Clientes
+    <div class="nav-item" data-page="crear-clientes" onclick="navigate('crear-clientes')" title="Crear Clientes">
+      <svg class="icon"><use href="#icon-user-plus"></use></svg> <span class="nav-txt">Crear Clientes</span>
     </div>
-    <div class="nav-item" data-page="editar-clientes" onclick="navigate('editar-clientes')">
-      <svg class="icon"><use href="#icon-users"></use></svg> Editar Clientes
+    <div class="nav-item" data-page="editar-clientes" onclick="navigate('editar-clientes')" title="Editar Clientes">
+      <svg class="icon"><use href="#icon-users"></use></svg> <span class="nav-txt">Editar Clientes</span>
     </div>
 
     <div class="nav-section">Configuración</div>
-    <div class="nav-item" data-page="configuracion" onclick="navigate('configuracion')">
-      <svg class="icon"><use href="#icon-settings"></use></svg> Configuración
+    <div class="nav-item" data-page="configuracion" onclick="navigate('configuracion')" title="Configuración">
+      <svg class="icon"><use href="#icon-settings"></use></svg> <span class="nav-txt">Configuración</span>
     </div>
   </nav>
   <div class="sidebar-footer">
     <div class="sidebar-footer-user">
       <div class="sidebar-avatar" id="sf-avatar">–</div>
-      <div style="min-width:0">
+      <div style="min-width:0" class="sf-user-meta">
         <div class="sf-user-name" id="sf-name">—</div>
         <div class="sf-user-role" id="sf-role">—</div>
       </div>
     </div>
-    <div style="display:flex;gap:8px">
+    <div class="sf-acciones" style="display:flex;gap:8px">
       <button class="sidebar-logout-btn" id="sf-switch-btn" title="Cambiar de módulo">
-        <svg class="icon" style="width:13px;height:13px"><use href="#icon-grid"></use></svg> Módulos
+        <svg class="icon" style="width:13px;height:13px"><use href="#icon-grid"></use></svg> <span class="sf-txt">Módulos</span>
       </button>
       <button class="sidebar-logout-btn" id="sf-logout-btn" title="Cerrar sesión">
-        <svg class="icon" style="width:13px;height:13px"><use href="#icon-log-out"></use></svg> Cerrar sesión
+        <svg class="icon" style="width:13px;height:13px"><use href="#icon-log-out"></use></svg> <span class="sf-txt">Cerrar sesión</span>
       </button>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
-      <span class="pulse-dot"></span> Sistema activo
+    <div class="sf-estado" style="display:flex;align-items:center;gap:8px;margin-top:10px" title="Sistema activo">
+      <span class="pulse-dot"></span> <span class="sf-txt">Sistema activo</span>
     </div>
-    <div style="font-size:10px;opacity:.5;margin-top:2px">© 2026 Qubira S.A.C.</div>
+    <div class="sf-copy" style="font-size:10px;opacity:.5;margin-top:2px">© 2026 Qubira S.A.C.</div>
   </div>
 </aside>
 <div class="mob-overlay" id="mob-overlay" onclick="closeSidebar()"></div>
@@ -3198,6 +3223,20 @@ function qcAlert(mensaje, opciones = {}) {
 
 // Cualquier alert() restante (incluido el del Tech Stack) usa el diseño del sistema
 window.alert = mensaje => { qcAlert(mensaje); };
+
+// ── Barra lateral: reducir a solo íconos (se recuerda la preferencia) ──
+function alternarSidebarColapsada(forzar) {
+  const colapsada = document.body.classList.toggle('sidebar-colapsada', forzar);
+  try { localStorage.setItem('qc_sidebar_colapsada', colapsada ? '1' : '0'); } catch (e) {}
+  const btn = document.getElementById('sb-toggle');
+  if (btn) btn.title = colapsada ? 'Expandir menú' : 'Reducir menú a íconos';
+}
+try {
+  if (localStorage.getItem('qc_sidebar_colapsada') === '1') {
+    if (document.body) alternarSidebarColapsada(true);
+    else document.addEventListener('DOMContentLoaded', () => alternarSidebarColapsada(true));
+  }
+} catch (e) {}
 
 function toast(type, title, msg) {
   const w = document.getElementById('toast-wrap');
