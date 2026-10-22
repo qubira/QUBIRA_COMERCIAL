@@ -5610,6 +5610,7 @@ function getAutoFillValueForToken(token) {
   // Propuesta comercial = proforma de la que nace el contrato
   const prfOrigen = _ctrProformaId ? getStoredProformas().find(x => x.id === _ctrProformaId) : null;
   if (['CODIGO_PROPUESTA', 'NUMERO_PROPUESTA', 'CODIGO_PROFORMA'].includes(clean)) return prfOrigen?.id || '';
+  if (['PLANES_GRATUITOS'].includes(clean)) return textoPlanesGratuitos();
   if (['FECHA_PROPUESTA', 'FECHA_PROFORMA'].includes(clean)) return prfOrigen?.fecha_emision ? formatContractDateSpanish(String(prfOrigen.fecha_emision).slice(0, 10)) : '';
   const repFirma = representanteContrato() || {};
   if (['NOMBRE_COMPLETO_CLIENTE', 'REPRESENTANTE LEGAL', 'NOMBRE_COMPLETO_REPRESENTANTE', 'NOMBRE DEL TRABAJADOR', 'NOMBRE DEL PROFESIONAL', 'NOMBRE DEL ESTUDIANTE'].includes(clean)) {
@@ -5738,6 +5739,7 @@ const VARIABLES_FIJAS = {
   NOMBRE_EMPRESA: 'cliente', RUC_CLIENTE: 'cliente', RUBRO_EMPRESA: 'cliente', DIRECCION_COMPLETA_EMPRESA: 'cliente',
   NUMERO_DNI_CE_REPRESENTANTE: 'representante', CARGO_REPRESENTANTE: 'representante',
   CODIGO_PROPUESTA: 'proforma', FECHA_PROPUESTA: 'proforma',
+  PLANES_GRATUITOS: 'cotizacion',
 };
 const ORIGEN_FIJA = {
   sistema: 'Asignado automáticamente por el sistema',
@@ -5746,6 +5748,7 @@ const ORIGEN_FIJA = {
   cliente: 'Tomado del registro del cliente',
   representante: 'Tomado del representante legal elegido',
   proforma: 'Tomado de la proforma de origen',
+  cotizacion: 'Herramientas de la cotización en plan gratuito (las que también tienen planes de pago). Sin ellas, el numeral no va en el contrato',
 };
 function esVariableBloqueada(token) { return !!VARIABLES_FIJAS[limpiarToken(token)]; }
 
@@ -6165,8 +6168,36 @@ function planesGratuitosContrato() {
 
 function listaConY(xs) { return xs.length < 2 ? (xs[0] || '') : `${xs.slice(0, -1).join(', ')} y ${xs[xs.length - 1]}`; }
 
+// Texto de [PLANES_GRATUITOS]: herramientas de la cotización usadas en plan gratuito
+const NO_APLICA_PLANES = 'No aplica — la cotización no usa planes gratuitos';
+function textoPlanesGratuitos() {
+  const planes = planesGratuitosContrato();
+  return planes.length ? listaConY(planes) : NO_APLICA_PLANES;
+}
+
 function insertarClausulaPlanesGratuitos(html) {
   const planes = planesGratuitosContrato();
+  // La plantilla ya trae el numeral con [PLANES_GRATUITOS]
+  const iTok = html.indexOf('[PLANES_GRATUITOS]');
+  if (iTok >= 0) {
+    if (planes.length) {
+      // Cierra la enumeración con punto si la plantilla no lo trae
+      return html.replace(/\[PLANES_GRATUITOS\](?!\s*[.,;:])/g, '[PLANES_GRATUITOS].');
+    }
+    // Sin planes gratuitos: se quita el párrafo (y su continuación en otra hoja) y se corre la numeración hacia atrás
+    const ini = html.lastIndexOf('<p', iTok);
+    const fin = html.indexOf('</p>', iTok);
+    if (ini < 0 || fin < 0) return html;
+    const frag = (/data-frag="([^"]+)"/.exec(html.slice(ini, html.indexOf('>', ini))) || [])[1];
+    let despues = html.slice(fin + 4);
+    if (frag) despues = despues.replace(new RegExp(`<p[^>]*data-frag="${frag}"[^>]*data-cont[^>]*>[\\s\\S]*?</p>`, 'g'), '');
+    const num = (/(\d+)\.(\d+)\./.exec(html.slice(ini, fin).replace(/<[^>]+>/g, '')) || []);
+    if (num[1]) {
+      const c = num[1], n0 = Number(num[2]);
+      despues = despues.replace(new RegExp(`\\b${c}\\.(\\d+)(?=[.\\s:,;)<]|&nbsp;|$)`, 'g'), (m, n) => Number(n) > n0 ? `${c}.${Number(n) - 1}` : m);
+    }
+    return html.slice(0, ini) + despues;
+  }
   if (!planes.length) return html;
   const ini = html.search(/<b>\s*4\.4\.(?:\s|&nbsp;)/);
   if (ini < 0) return html;
@@ -6282,7 +6313,7 @@ async function renderCrearContrato() {
   const searchCli = document.getElementById('ctr-cliente-search');
   if (!selectCli) return;
   cargarPerfilQubira();
-  ensureTechCatalogLoaded().then(() => updateContractPreview()).catch(() => {});
+  ensureTechCatalogLoaded().then(() => { if (_selectedTemplateKey) refrescarVariablesContrato(); else updateContractPreview(); }).catch(() => {});
   cargarInfoSocietariaQubira();
 
   closeCombo('ctr-cliente-search');
