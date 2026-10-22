@@ -5644,7 +5644,7 @@ function getAutoFillValueForToken(token) {
   if (['CCI'].includes(clean)) return '002-191-009876543204-51';
   if (['NUMERO_YAPE_PLIN'].includes(clean)) return '910 827 344';
   if (['CUENTA_DETRACCIONES'].includes(clean)) return '00-068-123456 (Banco de la Nación)';
-  if (['RESPONSABLE_PROYECTO_QUBIRA'].includes(clean)) return 'Abraham Aranda Cerna (CEO TI)';
+  if (['RESPONSABLE_PROYECTO_QUBIRA'].includes(clean)) return responsablePorDefecto();
 
   // Cliente
   if (['NOMBRE_EMPRESA', 'NOMBRE O RAZÓN SOCIAL DEL CLIENTE', 'NOMBRE DEL CLIENTE', 'NOMBRE DEL LOCADOR / EMPRESA'].includes(clean)) {
@@ -5821,6 +5821,29 @@ async function cargarInfoSocietariaQubira() {
   if (_selectedTemplateKey) refrescarVariablesContrato();
 }
 
+// ── Trabajadores activos de RRHH (responsable del proyecto) ──
+let _trabajadoresActivos = [];
+async function cargarTrabajadoresActivos() {
+  try {
+    const { trabajadores } = await qcApiFetch('/api/comercial/trabajadores-activos');
+    _trabajadoresActivos = (trabajadores || []).filter(t => t.nombre && !/^admin\b/i.test(t.nombre));
+  } catch (e) { /* sin lista: la casilla queda como texto */ }
+  // Si la casilla aún tiene el valor de antes, se reemplaza por el trabajador por defecto
+  Object.keys(_templatePlaceholdersValues).forEach(t => {
+    const v = String(_templatePlaceholdersValues[t] || '');
+    if (limpiarToken(t) === 'RESPONSABLE_PROYECTO_QUBIRA' && (!v.trim() || !opcionesResponsable().includes(v))) _templatePlaceholdersValues[t] = responsablePorDefecto();
+  });
+  if (_selectedTemplateKey) refrescarVariablesContrato();
+}
+function etiquetaTrabajador(t) { return t.cargo ? `${t.nombre} (${t.cargo})` : t.nombre; }
+function opcionesResponsable() { return _trabajadoresActivos.map(etiquetaTrabajador); }
+function responsablePorDefecto() {
+  if (!_trabajadoresActivos.length) return '';
+  const yo = perfilFirmanteQubira().nombre.toLowerCase();
+  const t = _trabajadoresActivos.find(x => x.nombre.toLowerCase() === yo) || _trabajadoresActivos.find(x => /\bti\b/i.test(x.area || '')) || _trabajadoresActivos[0];
+  return etiquetaTrabajador(t);
+}
+
 // ── Firmante de QUBIRA: el usuario con sesión ──
 let _perfilQubira = null;
 // El nombre es el mismo que se muestra en la barra lateral (usuario con sesión)
@@ -5886,6 +5909,15 @@ function htmlCasillaVariable(token) {
       return `<button type="button" class="ph-in ph-falta" data-token="${esc(token)}" onclick="completarDatoFijo('${esc(token)}')" title="${esc(origen)} · no editable aquí">⚠ Falta: ${esc(humanizePlaceholderToken(token))}</button>`;
     }
     return `<span class="ph-in ph-bloqueada" data-token="${esc(token)}" title="${esc(origen)} · no se puede editar">🔒 ${esc(val)}</span>`;
+  }
+  if (limpio === 'RESPONSABLE_PROYECTO_QUBIRA' && _trabajadoresActivos.length) {
+    const ops = opcionesResponsable();
+    const val = _templatePlaceholdersValues[token] || (_templatePlaceholdersValues[token] = responsablePorDefecto());
+    if (val && !ops.includes(val)) ops.unshift(val);
+    return `<select class="ph-in ph-sel lleno" data-token="${esc(token)}" onchange="phCambio(this)" title="Trabajadores activos registrados en RRHH">${ops.map(o => {
+      const t = _trabajadoresActivos.find(x => etiquetaTrabajador(x) === o);
+      return `<option value="${esc(o)}"${o === val ? ' selected' : ''}>${esc(o)}${t?.area ? ' · ' + esc(t.area) : ''}</option>`;
+    }).join('')}</select>`;
   }
   if (limpio === 'CARGO_REPRESENTANTE_QUBIRA') {
     const val = _templatePlaceholdersValues[token] || (_templatePlaceholdersValues[token] = cargoPorDefectoQubira());
@@ -6708,6 +6740,7 @@ async function renderCrearContrato() {
     if (_selectedTemplateKey) refrescarVariablesContrato(); else updateContractPreview();
   }).catch(() => {});
   cargarInfoSocietariaQubira();
+  cargarTrabajadoresActivos();
 
   closeCombo('ctr-cliente-search');
   // En blanco por defecto al abrir el módulo — solo se precarga si viene
