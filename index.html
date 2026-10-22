@@ -970,6 +970,7 @@
     .phc-plantilla { border: 1px solid #99f6e4; background: #fff; color: #0f766e; border-radius: 999px; padding: 3px 11px; font-size: 11.5px; font-weight: 700; cursor: pointer; }
     .phc-plantilla:hover { background: #f0fdfa; }
     .phc-plantilla.activa { background: #0f766e; border-color: #0f766e; color: #fff; }
+    .ph-origen { font-size: 10px; font-weight: 700; color: #0f766e; background: #ecfdf5; border-radius: 999px; padding: 1px 7px; margin-left: 2px; vertical-align: middle; }
     .ph-in.ph-falta { display: inline-block; cursor: pointer; border: 1px dashed #ef4444 !important; background: #fef2f2 !important; color: #b91c1c; font-weight: 600; }
     .ph-in.ph-falta:hover { background: #fee2e2 !important; }
     .phc-texto select.ph-in.ph-sel, select.ph-in.ph-sel { display: inline-block !important; width: auto !important; max-width: 100% !important; height: auto !important; min-height: 0 !important; padding: 2px 24px 2px 7px !important; cursor: pointer; }
@@ -5836,11 +5837,30 @@ async function cargarTrabajadoresActivos() {
   if (_selectedTemplateKey) refrescarVariablesContrato();
 }
 function etiquetaTrabajador(t) { return t.cargo ? `${t.nombre} (${t.cargo})` : t.nombre; }
-function opcionesResponsable() { return _trabajadoresActivos.map(etiquetaTrabajador); }
+
+// Trabajadores de OTI que se marcaron en el cronograma de la proforma (agenda del sprint).
+// Se cruzan con RRHH para tener su nombre completo y cargo.
+function trabajadoresDelCronograma() {
+  const p = proformaDelContrato();
+  const texto = String(p?.metodo_sprint || '');
+  const nombres = [];
+  texto.replace(/\(OTI:\s*([^)]+)\)/g, (_, lista) => { lista.split(',').map(n => n.trim()).filter(Boolean).forEach(n => { if (!nombres.includes(n)) nombres.push(n); }); return _; });
+  const norm = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const vistos = new Set();
+  return nombres.map(n => {
+    const partes = norm(n).split(/\s+/).filter(Boolean);
+    const t = _trabajadoresActivos.find(x => partes.every(w => norm(x.nombre).split(/\s+/).includes(w)));
+    return t ? { ...t, cronograma: true } : { nombre: n, cargo: '', area: 'OTI', cronograma: true };
+  }).filter(t => !vistos.has(t.nombre) && vistos.add(t.nombre));
+}
+// Si la proforma tiene equipo en el cronograma se ofrece ese; si no, todos los activos de RRHH
+function listaResponsables() { const c = trabajadoresDelCronograma(); return c.length ? c : _trabajadoresActivos; }
+function opcionesResponsable() { return listaResponsables().map(etiquetaTrabajador); }
 function responsablePorDefecto() {
-  if (!_trabajadoresActivos.length) return '';
+  const lista = listaResponsables();
+  if (!lista.length) return '';
   const yo = perfilFirmanteQubira().nombre.toLowerCase();
-  const t = _trabajadoresActivos.find(x => x.nombre.toLowerCase() === yo) || _trabajadoresActivos.find(x => /\bti\b/i.test(x.area || '')) || _trabajadoresActivos[0];
+  const t = (lista[0].cronograma ? null : lista.find(x => x.nombre.toLowerCase() === yo)) || lista.find(x => /\bti\b/i.test(x.area || '')) || lista[0];
   return etiquetaTrabajador(t);
 }
 
@@ -5910,14 +5930,14 @@ function htmlCasillaVariable(token) {
     }
     return `<span class="ph-in ph-bloqueada" data-token="${esc(token)}" title="${esc(origen)} · no se puede editar">🔒 ${esc(val)}</span>`;
   }
-  if (limpio === 'RESPONSABLE_PROYECTO_QUBIRA' && _trabajadoresActivos.length) {
-    const ops = opcionesResponsable();
-    const val = _templatePlaceholdersValues[token] || (_templatePlaceholdersValues[token] = responsablePorDefecto());
-    if (val && !ops.includes(val)) ops.unshift(val);
-    return `<select class="ph-in ph-sel lleno" data-token="${esc(token)}" onchange="phCambio(this)" title="Trabajadores activos registrados en RRHH">${ops.map(o => {
-      const t = _trabajadoresActivos.find(x => etiquetaTrabajador(x) === o);
-      return `<option value="${esc(o)}"${o === val ? ' selected' : ''}>${esc(o)}${t?.area ? ' · ' + esc(t.area) : ''}</option>`;
-    }).join('')}</select>`;
+  if (limpio === 'RESPONSABLE_PROYECTO_QUBIRA' && listaResponsables().length) {
+    const lista = listaResponsables();
+    const ops = lista.map(etiquetaTrabajador);
+    let val = _templatePlaceholdersValues[token];
+    // Si cambió la proforma (y su equipo), se toma el primero del nuevo cronograma
+    if (!val || !ops.includes(val)) val = _templatePlaceholdersValues[token] = responsablePorDefecto();
+    const delCrono = !!lista[0]?.cronograma;
+    return `<select class="ph-in ph-sel lleno" data-token="${esc(token)}" onchange="phCambio(this)" title="${delCrono ? 'Trabajadores de OTI elegidos en el cronograma de la proforma' : 'Trabajadores activos registrados en RRHH'}">${ops.map((o, i) => `<option value="${esc(o)}"${o === val ? ' selected' : ''}>${esc(o)}${lista[i].area ? ' · ' + esc(lista[i].area) : ''}</option>`).join('')}</select>${delCrono ? '<small class="ph-origen">del cronograma</small>' : ''}`;
   }
   if (limpio === 'CARGO_REPRESENTANTE_QUBIRA') {
     const val = _templatePlaceholdersValues[token] || (_templatePlaceholdersValues[token] = cargoPorDefectoQubira());
