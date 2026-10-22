@@ -2583,6 +2583,12 @@
             <input type="text" id="cli-direccion" placeholder="Ej: Av. Rivera Navarrete 501, San Isidro">
           </div>
 
+          <div class="form-group" style="margin-top:14px">
+            <label for="cli-correo-empresa">Correo Electrónico de la Empresa</label>
+            <input type="email" id="cli-correo-empresa" placeholder="Ej: contacto@empresa.com o facturacion@empresa.com">
+            <span class="form-help">Buzón corporativo o correo de notificaciones institucionales de la empresa</span>
+          </div>
+
           <div class="form-grid-3" style="margin-top:14px">
             <div class="form-group">
               <label for="cli-pais">País</label>
@@ -5614,7 +5620,10 @@ function getAutoFillValueForToken(token) {
   if (['CARGO_REPRESENTANTE_CLIENTE', 'CARGO_REPRESENTANTE'].includes(clean)) return repFirma.cargo || cliente.contacto_cargo || '';
   if (['NUMERO_DNI_CE_REPRESENTANTE'].includes(clean)) return repFirma.dni || '';
   if (['NUMERO_DNI_CE', 'DNI'].includes(clean)) return repFirma.dni || (cliente.ruc ? cliente.ruc.slice(0, 8) : '');
-  if (['CORREO_CLIENTE'].includes(clean)) return cliente.email || '';
+  if (['CORREO_EMPRESA', 'EMAIL_EMPRESA', 'CORREO_INSTITUCIONAL', 'CORREO_CORPORATIVO_EMPRESA'].includes(clean)) {
+    return cliente.correo_empresa || cliente.email || '';
+  }
+  if (['CORREO_CLIENTE'].includes(clean)) return cliente.email || cliente.correo_empresa || '';
   if (['NUMERO_WHATSAPP_CLIENTE'].includes(clean)) return cliente.telefono || '';
   if (['NOMBRE_PRODUCT_OWNER'].includes(clean)) return repFirma.nombre || cliente.contacto_nombre || 'Representante del Cliente';
 
@@ -10766,6 +10775,8 @@ function startProformaForClient(cliId) {
 function renderCrearClientes() {
   const form = document.getElementById('form-crear-cliente');
   if (form) form.reset();
+  const cEmp = document.getElementById('cli-correo-empresa');
+  if (cEmp) cEmp.value = '';
   iniciarEditorRepresentantes('cli', null);
   Object.keys(COMBO_TYPES).forEach(tipo => closeCombo('cli-' + tipo));
   // En segundo plano, sin bloquear ni volver a tocar el formulario — si
@@ -11131,6 +11142,7 @@ async function handleGuardarCliente(e) {
   const ruc = document.getElementById('cli-ruc')?.value.trim();
   const sector = document.getElementById('cli-sector')?.value;
   const direccion = document.getElementById('cli-direccion')?.value.trim();
+  const correo_empresa = document.getElementById('cli-correo-empresa')?.value.trim() || '';
   const pais = document.getElementById('cli-pais')?.value.trim() || 'Perú';
   const provincia = document.getElementById('cli-provincia')?.value.trim();
   const distrito = document.getElementById('cli-distrito')?.value.trim();
@@ -11153,7 +11165,7 @@ async function handleGuardarCliente(e) {
   try {
     const { client } = await qcApiFetch('/api/comercial/clients', {
       method: 'POST',
-      body: JSON.stringify({ razon_social: razon, ruc, sector, direccion, pais, provincia, distrito, contacto_nombre: contacto, contacto_cargo: cargo, telefono, email, tipo, estado, origen, notas,
+      body: JSON.stringify({ razon_social: razon, ruc, sector, direccion, correo_empresa, pais, provincia, distrito, contacto_nombre: contacto, contacto_cargo: cargo, telefono, email, tipo, estado, origen, notas,
         representantes: representantesFormulario('cli', { nombre: contacto, cargo, dni: document.getElementById('cli-dni')?.value.trim() || '', telefono, email }) }),
     });
     await reloadClientes();
@@ -11196,7 +11208,7 @@ function renderEditarClientesTable() {
     if (fTipo && c.tipo !== fTipo) return false;
     if (fEstado && c.estado !== fEstado) return false;
     if (q) {
-      const haystack = (c.razon_social + ' ' + c.ruc + ' ' + c.contacto_nombre + ' ' + representantesDe(c).map(r => r.nombre).join(' ') + ' ' + c.email + ' ' + c.sector + ' ' + (c.distrito || '') + ' ' + (c.provincia || '') + ' ' + (c.contacto_cargo || '')).toLowerCase();
+      const haystack = (c.razon_social + ' ' + c.ruc + ' ' + (c.correo_empresa || '') + ' ' + c.contacto_nombre + ' ' + representantesDe(c).map(r => r.nombre).join(' ') + ' ' + c.email + ' ' + c.sector + ' ' + (c.distrito || '') + ' ' + (c.provincia || '') + ' ' + (c.contacto_cargo || '')).toLowerCase();
       if (!haystack.includes(q)) return false;
     }
     return true;
@@ -11221,6 +11233,7 @@ function renderEditarClientesTable() {
         <td>
           <div style="font-weight:700;color:var(--text)">${esc(c.razon_social)}</div>
           <div style="font-size:11.5px;color:var(--text-muted);font-family:monospace">RUC: ${esc(c.ruc)} · ${esc(c.id)}</div>
+          ${c.correo_empresa ? `<div style="font-size:11px;color:#0f766e;margin-top:2px;display:flex;align-items:center;gap:4px" title="Correo Electrónico de la Empresa"><svg class="icon" style="width:11px;height:11px"><use href="#icon-mail"></use></svg><span>${esc(c.correo_empresa)}</span></div>` : ''}
         </td>
         <td>
           <strong>${esc(c.contacto_nombre)}</strong>
@@ -11357,6 +11370,11 @@ function openEditClientModal(id) {
         </div>
       </div>
 
+      <div class="form-group">
+        <label>Correo Electrónico de la Empresa</label>
+        <input type="email" id="edit-cli-correo-empresa" value="${esc(c.correo_empresa || '')}" placeholder="Ej: corporativo@empresa.com o contacto@empresa.com">
+      </div>
+
       <div class="form-grid-3">
         <div class="form-group">
           <label>País</label>
@@ -11440,6 +11458,7 @@ async function submitEditClientForm() {
   const ruc = document.getElementById('edit-cli-ruc')?.value.trim();
   const sector = document.getElementById('edit-cli-sector')?.value;
   const direccion = document.getElementById('edit-cli-direccion')?.value.trim();
+  const correo_empresa = document.getElementById('edit-cli-correo-empresa')?.value.trim() || '';
   const pais = document.getElementById('edit-cli-pais')?.value.trim() || 'Perú';
   const provincia = document.getElementById('edit-cli-provincia')?.value.trim();
   const distrito = document.getElementById('edit-cli-distrito')?.value.trim();
@@ -11459,7 +11478,7 @@ async function submitEditClientForm() {
   try {
     const { client } = await qcApiFetch(`/api/comercial/clients/${encodeURIComponent(_editingClientId)}`, {
       method: 'PUT',
-      body: JSON.stringify({ razon_social: razon, ruc, sector, direccion, pais, provincia, distrito, contacto_nombre: contacto, contacto_cargo: cargo, telefono, email, tipo, estado, notas,
+      body: JSON.stringify({ razon_social: razon, ruc, sector, direccion, correo_empresa, pais, provincia, distrito, contacto_nombre: contacto, contacto_cargo: cargo, telefono, email, tipo, estado, notas,
         representantes: representantesFormulario('edit-cli', { nombre: contacto, cargo, dni: document.getElementById('edit-cli-dni')?.value.trim() || '', telefono, email }) }),
     });
     // El backend ya refleja estos datos en los contratos que sigan en borrador.
