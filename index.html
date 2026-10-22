@@ -5659,7 +5659,7 @@ function getAutoFillValueForToken(token) {
   const prfOrigen = _ctrProformaId ? getStoredProformas().find(x => x.id === _ctrProformaId) : null;
   // Con versiones, el contrato cita la versión de la proforma que usa
   const verPrf = Number(prfOrigen?.version_actual) || 1;
-  if (['CODIGO_PROPUESTA', 'NUMERO_PROPUESTA', 'CODIGO_PROFORMA'].includes(clean)) return prfOrigen ? `${prfOrigen.id}${verPrf > 1 ? ` (versión ${verPrf})` : ''}` : '';
+  if (['CODIGO_PROPUESTA', 'NUMERO_PROPUESTA', 'CODIGO_PROFORMA'].includes(clean)) return prfOrigen ? codigoProforma(prfOrigen) : '';
   if (['PLANES_GRATUITOS'].includes(clean)) return textoPlanesGratuitos();
   if (['FECHA_PROPUESTA', 'FECHA_PROFORMA'].includes(clean)) {
     // Fecha de la versión en uso (la v1 es la fecha de emisión)
@@ -6016,6 +6016,13 @@ function phCambio(el) {
 const _cotv = { editando: false, items: [], tech: [], reqs: [], nota: '' };
 const TOKENS_DE_PROFORMA = ['REQUERIMIENTOS_FUNCIONALES', 'REQUERIMIENTOS_NO_FUNCIONALES', 'MODULOS_FUNCIONALES', 'ENTREGABLES', 'STACK_HERRAMIENTAS', 'STACK_LENGUAJES', 'PRECIO_ACORDADO', 'PRECIO_EN_LETRAS', 'MONEDA'];
 
+// Código visible de una proforma con su versión: PRF-2026-001, PRF-2026-001.V2, .V3…
+function codigoProforma(p, version) {
+  if (!p) return '';
+  const v = Number(version ?? p.version_actual) || 1;
+  return v > 1 ? `${p.id}.V${v}` : p.id;
+}
+
 function proformaDelContrato() { return _ctrProformaId ? getStoredProformas().find(x => x.id === _ctrProformaId) : null; }
 function esItemTech(it) { return !!(it.is_tech_variable || /^\[(Herramienta|Lenguaje)\]/.test(it.descripcion || '')); }
 
@@ -6067,13 +6074,13 @@ function renderCotizacionContrato() {
   }
   const v = p.version_actual || 1;
   if (badge) badge.textContent = `Versión ${v} en uso`;
-  if (btnVer) { btnVer.style.display = ''; document.getElementById('btn-ver-cotizacion-txt').textContent = `Ver Cotización ${p.id} · v${v}`; }
+  if (btnVer) { btnVer.style.display = ''; document.getElementById('btn-ver-cotizacion-txt').textContent = `Ver Cotización ${codigoProforma(p)}`; }
   const items = Array.isArray(p.items) ? p.items : [];
   const serv = items.filter(it => !esItemTech(it));
   const tech = items.filter(esItemTech).map(techDesdeItem);
   const reqs = Array.isArray(p.requerimientos) ? p.requerimientos : [];
   const cab = `<div class="cotv-head">
-      <div><strong>${esc(p.id)} <span class="cotv-ver">v${v}</span></strong><small>${_cotv.editando ? 'Editando: al guardar se crea la versión ' + (v + 1) + ' y el contrato pasa a usarla.' : 'Datos de la cotización que usa este contrato.'}</small></div>
+      <div><strong>${esc(codigoProforma(p))} <span class="cotv-ver">v${v}</span></strong><small>${_cotv.editando ? 'Editando: al guardar se crea la versión ' + (v + 1) + ' y el contrato pasa a usarla.' : 'Datos de la cotización que usa este contrato.'}</small></div>
       <div class="cotv-acciones">
         <button type="button" class="btn btn-outline btn-sm" onclick="abrirHistorialCotizacion()">🕘 Historial de versiones</button>
         ${_cotv.editando ? '' : '<button type="button" class="btn btn-primary btn-sm" onclick="editarCotizacionContrato()">✏️ Editar cotización</button>'}
@@ -6275,7 +6282,7 @@ async function abrirHistorialCotizacion(id) {
     const fecha = d => d ? new Date(d).toLocaleString('es-PE', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
     document.getElementById('cotv-hist-body').innerHTML = `<table class="cotv-hist"><thead><tr><th>Versión</th><th>Fecha</th><th>Por</th><th>Cambio</th><th>Contenido</th><th style="text-align:right">Total</th><th></th></tr></thead><tbody>
       ${_cotvHist.map((v, k) => { const its = Array.isArray(v.items) ? v.items : []; const rq = Array.isArray(v.requerimientos) ? v.requerimientos : [];
-        return `<tr class="${v.version === actual ? 'activa' : ''}"><td><b>v${v.version}</b>${v.version === actual ? ' <span class="cotv-ver">en uso</span>' : ''}</td>
+        return `<tr class="${v.version === actual ? 'activa' : ''}"><td><b style="font-family:monospace">${esc(codigoProforma(p, v.version))}</b>${v.version === actual ? ' <span class="cotv-ver">en uso</span>' : ''}</td>
         <td style="white-space:nowrap">${esc(fecha(v.created_at))}</td><td>${esc(v.creado_por || '—')}</td><td>${esc(v.nota || '—')}</td>
         <td style="font-size:11.5px;color:var(--text-muted)">${its.filter(x => !esItemTech(x)).length} ítems · ${its.filter(esItemTech).length} tecnologías · ${rq.length} requerimientos</td>
         <td style="text-align:right;white-space:nowrap"><b>${esc(formatCurrency(v.total, v.moneda || p.moneda))}</b></td>
@@ -11122,8 +11129,7 @@ function renderConsultarProformaTable() {
     return `
       <tr>
         <td>
-          <strong style="font-family:monospace;color:var(--primary);cursor:pointer" onclick="viewProforma('${esc(p.id)}')">${esc(p.id)}</strong>
-          ${(p.version_actual || 1) > 1 ? `<span class="cotv-ver" style="cursor:pointer" title="Ver historial de versiones" onclick="abrirHistorialCotizacion('${esc(p.id)}')">v${p.version_actual}</span>` : ''}
+          <strong style="font-family:monospace;color:var(--primary);cursor:pointer" onclick="viewProforma('${esc(p.id)}')">${esc(codigoProforma(p))}</strong>
           <div style="font-size:11px;color:var(--text-muted)">${esc(p.tipo || 'Proforma')}</div>
         </td>
         <td>
@@ -11203,7 +11209,8 @@ function viewProforma(id) {
 
 function renderProformaOfficialModal(p) {
   const codeEl = document.getElementById('proforma-modal-code');
-  if (codeEl) codeEl.textContent = `${p.id || 'PRF-2026-0001'}${p.version_actual > 1 || p._verHist ? ' · Versión ' + p.version_actual : ''} · Qubira ODN Cotización`;
+  _codigoEnVisor = codigoProforma(p);
+  if (codeEl) codeEl.textContent = `${codigoProforma(p) || 'PRF-2026-0001'} · Qubira ODN Cotización`;
 
   const titleEl = document.getElementById('proforma-modal-title');
   if (titleEl) titleEl.textContent = p.cliente_nombre ? `Proforma Comercial: ${p.cliente_nombre}` : 'Proforma Comercial';
@@ -11259,7 +11266,7 @@ function renderProformaOfficialModal(p) {
         </div>
         <div style="text-align:center;background:#f8fafc;padding:10px 18px;border-radius:8px;border:1px solid #e2e8f0;min-width:170px">
           <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#0f766e;font-weight:700">PROFORMA COMERCIAL</div>
-          <div style="font-size:16px;font-weight:800;font-family:monospace;color:#0f172a">${esc(p.id)}</div>
+          <div style="font-size:16px;font-weight:800;font-family:monospace;color:#0f172a">${esc(codigoProforma(p))}</div>
           <div style="font-size:11px;color:#64748b;margin-top:2px">Emisión: ${esc(p.fecha_emision || hoyFormato)}</div>
         </div>
       </div>
@@ -11414,9 +11421,10 @@ function quickPrintProforma(id) {
   setTimeout(() => printProforma(), 300);
 }
 
+let _codigoEnVisor = '';
 function printProforma() {
   const p = getStoredProformas().find(x => x.id === _activeViewingProformaId);
-  imprimirDocumentoAislado(document.getElementById('official-proforma-sheet'), `${p?.id || 'Proforma'} - ${p?.cliente_nombre || 'QUBIRA'}`, `
+  imprimirDocumentoAislado(document.getElementById('official-proforma-sheet'), `${_codigoEnVisor || p?.id || 'Proforma'} - ${p?.cliente_nombre || 'QUBIRA'}`, `
     @page { size: A4 portrait; margin: 12mm; }
     .proforma-paper { box-shadow: none !important; border: none !important; border-radius: 0 !important; padding: 0 !important; margin: 0 !important; }`);
 }
