@@ -478,6 +478,22 @@
     .close-btn:hover { border-color: var(--danger); color: var(--danger); }
 
     /* ── Diálogos del sistema (reemplazan alert/confirm del navegador) ── */
+    /* ── Representantes legales del cliente ── */
+    .reps-bloque { margin-top: 14px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .reps-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 10px 12px; background: var(--bg-card2); border-bottom: 1px solid var(--border); }
+    .reps-head strong { font-size: 13px; }
+    .reps-head small { display: block; font-size: 11px; color: var(--text-muted); font-weight: 400; }
+    .rep-fila { display: grid; grid-template-columns: 1.6fr 1.2fr .9fr; gap: 8px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    .rep-fila .rep-acciones { justify-content: flex-end; }
+    .rep-fila:last-child { border-bottom: none; }
+    .rep-fila input { width: 100%; font-size: 12.5px; padding: 7px 9px; }
+    @media (max-width: 640px) { .rep-fila { grid-template-columns: 1fr; } }
+    .rep-acciones { display: flex; gap: 4px; }
+    .rep-acciones button { border: 1px solid var(--border); background: #fff; border-radius: 6px; padding: 5px 8px; font-size: 11.5px; cursor: pointer; white-space: nowrap; font-family: inherit; }
+    .rep-acciones button:hover { border-color: var(--primary); color: var(--primary); }
+    .rep-acciones button.quitar:hover { border-color: var(--danger); color: var(--danger); }
+    .reps-vacio { padding: 12px; font-size: 12px; color: var(--text-muted); text-align: center; }
+    .reps-badge { display: inline-block; margin-top: 3px; font-size: 10.5px; font-weight: 700; color: var(--primary-dark); background: var(--primary-light); border-radius: 999px; padding: 1px 8px; cursor: help; }
     .qc-dlg { z-index: 9500; }
     .qc-dlg .modal { max-width: 460px; }
     .qc-dlg-head { display: flex; gap: 14px; align-items: center; }
@@ -1626,6 +1642,12 @@
               </div>
             </div>
 
+            <div class="form-group" id="ctr-rep-grupo" style="display:none;margin-top:14px">
+              <label for="ctr-representante-sel">Representante legal que firma por el cliente</label>
+              <select id="ctr-representante-sel" onchange="onRepresentanteContratoChange()"></select>
+              <span class="form-help">Este cliente tiene varios representantes: el elegido llena nombre, DNI y cargo en el contrato.</span>
+            </div>
+
             <div class="form-grid-2" style="margin-top:14px">
               <div class="form-group">
                 <label for="ctr-tipo">Tipo de Contrato / Naturaleza *</label>
@@ -2003,7 +2025,8 @@
             <div class="form-grid-3" style="margin-top:14px">
               <div class="form-group">
                 <label for="prf-contacto">Atención a (Contacto) *</label>
-                <input type="text" id="prf-contacto" placeholder="Representante / Contacto" required oninput="updateProformaPreview()">
+                <input type="text" id="prf-contacto" placeholder="Representante / Contacto" required list="prf-contacto-opciones" autocomplete="off" oninput="updateProformaPreview()">
+                <datalist id="prf-contacto-opciones"></datalist>
               </div>
 
               <div class="form-group">
@@ -2550,7 +2573,7 @@
           <!-- Contacto Principal -->
           <div class="form-section-title">
             <svg class="icon" style="width:15px;height:15px"><use href="#icon-user-plus"></use></svg>
-            2. Contacto Principal / Decisor
+            2. Representante Legal Principal y otros representantes
           </div>
 
           <div class="form-grid-2">
@@ -2572,7 +2595,11 @@
             </div>
           </div>
 
-          <div class="form-grid-2" style="margin-top:14px">
+          <div class="form-grid-3" style="margin-top:14px">
+            <div class="form-group">
+              <label for="cli-dni">DNI / CE del representante</label>
+              <input type="text" id="cli-dni" placeholder="Ej: 45678912" maxlength="20">
+            </div>
             <div class="form-group">
               <label for="cli-telefono">Teléfono / WhatsApp *</label>
               <input type="tel" id="cli-telefono" placeholder="Ej: +51 987 654 321" required>
@@ -2583,6 +2610,7 @@
               <input type="email" id="cli-email" placeholder="Ej: contacto@empresa.com" required>
             </div>
           </div>
+          <div id="cli-reps"></div>
 
           <!-- Segmentación Comercial -->
           <div class="form-section-title">
@@ -3237,6 +3265,111 @@ try {
     else document.addEventListener('DOMContentLoaded', () => alternarSidebarColapsada(true));
   }
 } catch (e) {}
+
+// ══════════ REPRESENTANTES LEGALES DEL CLIENTE ══════════
+// Un cliente (razón social / RUC) puede tener varios representantes legales.
+// El principal se guarda también como contacto_* (lo usan proformas y contratos).
+const _repsEdicion = {}; // prefijo de formulario -> representantes adicionales en edición
+
+function representantesDe(c) {
+  if (!c) return [];
+  if (Array.isArray(c.representantes) && c.representantes.length) return c.representantes;
+  return c.contacto_nombre ? [{ nombre: c.contacto_nombre, cargo: c.contacto_cargo || '', dni: '', telefono: c.telefono || '', email: c.email || '', principal: true }] : [];
+}
+
+function iniciarEditorRepresentantes(prefijo, cliente) {
+  _repsEdicion[prefijo] = representantesDe(cliente).slice(1).map(r => ({ ...r, principal: false }));
+  renderEditorRepresentantes(prefijo);
+}
+
+function renderEditorRepresentantes(prefijo) {
+  const cont = document.getElementById(`${prefijo}-reps`);
+  if (!cont) return;
+  const lista = _repsEdicion[prefijo] || (_repsEdicion[prefijo] = []);
+  cont.innerHTML = `<div class="reps-bloque">
+    <div class="reps-head">
+      <div><strong>Otros representantes legales (${lista.length})</strong><small>Personas con poderes para firmar por esta razón social / RUC.</small></div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="agregarRepresentante('${prefijo}')">+ Agregar representante</button>
+    </div>
+    ${lista.length ? lista.map((r, i) => `
+      <div class="rep-fila">
+        <input type="text" placeholder="Nombre y apellidos *" value="${esc(r.nombre)}" oninput="editarRepresentante('${prefijo}', ${i}, 'nombre', this.value)" aria-label="Nombre del representante">
+        <input type="text" placeholder="Cargo" value="${esc(r.cargo)}" oninput="editarRepresentante('${prefijo}', ${i}, 'cargo', this.value)" aria-label="Cargo">
+        <input type="text" placeholder="DNI / CE" value="${esc(r.dni)}" maxlength="20" oninput="editarRepresentante('${prefijo}', ${i}, 'dni', this.value)" aria-label="DNI o CE">
+        <input type="tel" placeholder="Teléfono" value="${esc(r.telefono)}" oninput="editarRepresentante('${prefijo}', ${i}, 'telefono', this.value)" aria-label="Teléfono">
+        <input type="email" placeholder="Correo" value="${esc(r.email)}" oninput="editarRepresentante('${prefijo}', ${i}, 'email', this.value)" aria-label="Correo">
+        <div class="rep-acciones">
+          <button type="button" title="Convertir en representante principal" onclick="hacerPrincipal('${prefijo}', ${i})">★ Principal</button>
+          <button type="button" class="quitar" title="Quitar representante" onclick="quitarRepresentante('${prefijo}', ${i})">✕</button>
+        </div>
+      </div>`).join('') : '<div class="reps-vacio">Solo tiene el representante principal. Agrega otros si la empresa tiene más apoderados.</div>'}
+  </div>`;
+}
+
+function agregarRepresentante(prefijo) {
+  (_repsEdicion[prefijo] = _repsEdicion[prefijo] || []).push({ nombre: '', cargo: '', dni: '', telefono: '', email: '', principal: false });
+  renderEditorRepresentantes(prefijo);
+  const filas = document.querySelectorAll(`#${prefijo}-reps .rep-fila`);
+  filas[filas.length - 1]?.querySelector('input')?.focus();
+}
+function editarRepresentante(prefijo, i, campo, valor) { if (_repsEdicion[prefijo]?.[i]) _repsEdicion[prefijo][i][campo] = valor; }
+function quitarRepresentante(prefijo, i) { _repsEdicion[prefijo].splice(i, 1); renderEditorRepresentantes(prefijo); }
+
+// Intercambia un representante adicional con el principal del formulario
+function hacerPrincipal(prefijo, i) {
+  const r = _repsEdicion[prefijo]?.[i];
+  if (!r || !r.nombre.trim()) { toast('error', 'Falta el nombre', 'Completa el nombre del representante antes de hacerlo principal.'); return; }
+  const campo = id => document.getElementById(`${prefijo}-${id}`);
+  const actual = { nombre: campo('contacto')?.value || '', cargo: campo('cargo')?.value || '', dni: campo('dni')?.value || '', telefono: campo('telefono')?.value || '', email: campo('email')?.value || '', principal: false };
+  if (campo('contacto')) campo('contacto').value = r.nombre;
+  if (campo('cargo')) campo('cargo').value = r.cargo;
+  if (campo('dni')) campo('dni').value = r.dni;
+  if (r.telefono && campo('telefono')) campo('telefono').value = r.telefono;
+  if (r.email && campo('email')) campo('email').value = r.email;
+  if (actual.nombre.trim()) _repsEdicion[prefijo][i] = actual; else _repsEdicion[prefijo].splice(i, 1);
+  renderEditorRepresentantes(prefijo);
+  toast('info', 'Representante principal', `${r.nombre} es ahora el representante principal (guarda para confirmar).`);
+}
+
+// Lista completa para guardar: principal (campos del formulario) + adicionales
+function representantesFormulario(prefijo, principal) {
+  const extra = (_repsEdicion[prefijo] || []).filter(r => (r.nombre || '').trim()).map(r => ({ ...r, nombre: r.nombre.trim(), principal: false }));
+  return [{ ...principal, principal: true }, ...extra];
+}
+
+// ── Contrato: representante que firma por el cliente ──
+let _ctrRepClienteId = null;
+function poblarRepresentantesContrato() {
+  const cliId = document.getElementById('ctr-cliente-sel')?.value || '';
+  const grupo = document.getElementById('ctr-rep-grupo');
+  const sel = document.getElementById('ctr-representante-sel');
+  if (!grupo || !sel) return;
+  if (cliId === _ctrRepClienteId) return;
+  _ctrRepClienteId = cliId;
+  const reps = representantesDe(getStoredClientes().find(c => c.id === cliId));
+  grupo.style.display = reps.length > 1 ? '' : 'none';
+  sel.innerHTML = reps.map((r, i) => `<option value="${i}">${esc(r.nombre)}${r.cargo ? ' — ' + esc(r.cargo) : ''}${r.principal ? ' (principal)' : ''}</option>`).join('');
+  sel.value = '0';
+}
+
+function representanteContrato() {
+  const cliId = document.getElementById('ctr-cliente-sel')?.value || '';
+  const reps = representantesDe(getStoredClientes().find(c => c.id === cliId));
+  const i = Number(document.getElementById('ctr-representante-sel')?.value || 0);
+  return reps[i] || reps[0] || null;
+}
+
+const TOKENS_REPRESENTANTE = ['NOMBRE_COMPLETO_REPRESENTANTE', 'NUMERO_DNI_CE_REPRESENTANTE', 'CARGO_REPRESENTANTE', 'NOMBRE_COMPLETO_CLIENTE', 'REPRESENTANTE LEGAL', 'CARGO_REPRESENTANTE_CLIENTE', 'NUMERO_DNI_CE', 'DNI', 'NOMBRE_PRODUCT_OWNER'];
+function onRepresentanteContratoChange() {
+  Object.keys(_templatePlaceholdersValues).forEach(t => {
+    const limpio = t.replace(/^\[/, '').replace(/\]$/, '').trim().toUpperCase();
+    if (TOKENS_REPRESENTANTE.includes(limpio)) _templatePlaceholdersValues[t] = getAutoFillValueForToken(t) || '';
+  });
+  renderPlaceholdersForm(extraerPlaceholdersPlantillaActual(), false);
+  updateContractPreview();
+  const r = representanteContrato();
+  if (r) toast('info', 'Representante que firma', `${r.nombre} figurará como representante de EL CLIENTE en el contrato.`);
+}
 
 function toast(type, title, msg) {
   const w = document.getElementById('toast-wrap');
@@ -5307,14 +5440,16 @@ function getAutoFillValueForToken(token) {
   if (['DIRECCION_COMPLETA_EMPRESA', 'DIRECCIÓN COMPLETA', 'DIRECCIÓN'].includes(clean)) {
     return cliente.direccion || (cliente.pais ? `${cliente.distrito || ''} ${cliente.provincia || ''}, ${cliente.pais}`.trim() : 'Lima, Perú');
   }
-  if (['NOMBRE_COMPLETO_CLIENTE', 'REPRESENTANTE LEGAL', 'NOMBRE DEL TRABAJADOR', 'NOMBRE DEL PROFESIONAL', 'NOMBRE DEL ESTUDIANTE'].includes(clean)) {
-    return cliente.contacto_nombre || 'Representante Autorizado';
+  const repFirma = representanteContrato() || {};
+  if (['NOMBRE_COMPLETO_CLIENTE', 'REPRESENTANTE LEGAL', 'NOMBRE_COMPLETO_REPRESENTANTE', 'NOMBRE DEL TRABAJADOR', 'NOMBRE DEL PROFESIONAL', 'NOMBRE DEL ESTUDIANTE'].includes(clean)) {
+    return repFirma.nombre || cliente.contacto_nombre || '';
   }
-  if (['CARGO_REPRESENTANTE_CLIENTE'].includes(clean)) return cliente.contacto_cargo || 'Gerente General / Representante Legal';
-  if (['NUMERO_DNI_CE', 'DNI'].includes(clean)) return cliente.ruc ? cliente.ruc.slice(0, 8) : '';
+  if (['CARGO_REPRESENTANTE_CLIENTE', 'CARGO_REPRESENTANTE'].includes(clean)) return repFirma.cargo || cliente.contacto_cargo || '';
+  if (['NUMERO_DNI_CE_REPRESENTANTE'].includes(clean)) return repFirma.dni || '';
+  if (['NUMERO_DNI_CE', 'DNI'].includes(clean)) return repFirma.dni || (cliente.ruc ? cliente.ruc.slice(0, 8) : '');
   if (['CORREO_CLIENTE'].includes(clean)) return cliente.email || '';
   if (['NUMERO_WHATSAPP_CLIENTE'].includes(clean)) return cliente.telefono || '';
-  if (['NOMBRE_PRODUCT_OWNER'].includes(clean)) return cliente.contacto_nombre || 'Representante del Cliente';
+  if (['NOMBRE_PRODUCT_OWNER'].includes(clean)) return repFirma.nombre || cliente.contacto_nombre || 'Representante del Cliente';
 
   // Económicos y cronograma
   if (['PRECIO_ACORDADO', 'MONTO TOTAL', 'MONTO', 'HONORARIOS TOTALES', 'MONTO MENSUAL'].includes(clean)) {
@@ -5782,6 +5917,9 @@ async function renderCrearContrato() {
 }
 
 function onContractClientSelected(cliId) {
+  _ctrRepClienteId = null;
+  poblarRepresentantesContrato();
+  onRepresentanteContratoChange();
   autoFillPlaceholdersFromForm(false);
   updateContractPreview();
 }
@@ -5819,6 +5957,7 @@ function actualizarTcContrato() {
 }
 
 function updateContractPreview() {
+  poblarRepresentantesContrato();
   actualizarTcContrato();
   const clientes = getStoredClientes();
   const cliId = document.getElementById('ctr-cliente-sel')?.value;
@@ -7008,6 +7147,8 @@ function onProformaClientSelected(cliId) {
     const emailEl   = document.getElementById('prf-email');
     const telEl     = document.getElementById('prf-telefono');
     if (contactEl) contactEl.value = c.contacto_nombre || c.razon_social;
+    const dl = document.getElementById('prf-contacto-opciones');
+    if (dl) dl.innerHTML = representantesDe(c).map(r => `<option value="${esc(r.nombre)}">${esc(r.cargo || 'Representante')}</option>`).join('');
     if (emailEl) emailEl.value = c.email || '';
     if (telEl) telEl.value = c.telefono || '';
   }
@@ -10410,6 +10551,7 @@ function startProformaForClient(cliId) {
 function renderCrearClientes() {
   const form = document.getElementById('form-crear-cliente');
   if (form) form.reset();
+  iniciarEditorRepresentantes('cli', null);
   Object.keys(COMBO_TYPES).forEach(tipo => closeCombo('cli-' + tipo));
   // En segundo plano, sin bloquear ni volver a tocar el formulario — si
   // esto esperara aquí, una carga lenta podría borrar lo que el usuario
@@ -10796,7 +10938,8 @@ async function handleGuardarCliente(e) {
   try {
     const { client } = await qcApiFetch('/api/comercial/clients', {
       method: 'POST',
-      body: JSON.stringify({ razon_social: razon, ruc, sector, direccion, pais, provincia, distrito, contacto_nombre: contacto, contacto_cargo: cargo, telefono, email, tipo, estado, origen, notas }),
+      body: JSON.stringify({ razon_social: razon, ruc, sector, direccion, pais, provincia, distrito, contacto_nombre: contacto, contacto_cargo: cargo, telefono, email, tipo, estado, origen, notas,
+        representantes: representantesFormulario('cli', { nombre: contacto, cargo, dni: document.getElementById('cli-dni')?.value.trim() || '', telefono, email }) }),
     });
     await reloadClientes();
     toast('success', 'Cliente Registrado', `${client.razon_social} ha sido agregado a la cartera comercial.`);
@@ -10838,7 +10981,7 @@ function renderEditarClientesTable() {
     if (fTipo && c.tipo !== fTipo) return false;
     if (fEstado && c.estado !== fEstado) return false;
     if (q) {
-      const haystack = (c.razon_social + ' ' + c.ruc + ' ' + c.contacto_nombre + ' ' + c.email + ' ' + c.sector + ' ' + (c.distrito || '') + ' ' + (c.provincia || '') + ' ' + (c.contacto_cargo || '')).toLowerCase();
+      const haystack = (c.razon_social + ' ' + c.ruc + ' ' + c.contacto_nombre + ' ' + representantesDe(c).map(r => r.nombre).join(' ') + ' ' + c.email + ' ' + c.sector + ' ' + (c.distrito || '') + ' ' + (c.provincia || '') + ' ' + (c.contacto_cargo || '')).toLowerCase();
       if (!haystack.includes(q)) return false;
     }
     return true;
@@ -10867,6 +11010,7 @@ function renderEditarClientesTable() {
         <td>
           <strong>${esc(c.contacto_nombre)}</strong>
           <div style="font-size:11.5px;color:var(--text-muted)">${esc(c.contacto_cargo || 'Contacto')}</div>
+          ${(() => { const otros = representantesDe(c).slice(1); return otros.length ? `<span class="reps-badge" title="${esc(otros.map(r => `${r.nombre}${r.cargo ? ' — ' + r.cargo : ''}`).join('\n'))}">+${otros.length} ${otros.length === 1 ? 'representante' : 'representantes'}</span>` : ''; })()}
         </td>
         <td>
           <div style="font-size:12.5px">${esc(c.telefono)}</div>
@@ -11015,7 +11159,7 @@ function openEditClientModal(id) {
 
       <div class="form-grid-2">
         <div class="form-group">
-          <label>Contacto Principal *</label>
+          <label>Representante legal principal *</label>
           <input type="text" id="edit-cli-contacto" value="${esc(c.contacto_nombre)}" required>
         </div>
         <div class="form-group">
@@ -11024,7 +11168,11 @@ function openEditClientModal(id) {
         </div>
       </div>
 
-      <div class="form-grid-2">
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label>DNI / CE del representante</label>
+          <input type="text" id="edit-cli-dni" value="${esc((representantesDe(c)[0] || {}).dni || '')}" maxlength="20">
+        </div>
         <div class="form-group">
           <label>Teléfono / WhatsApp *</label>
           <input type="tel" id="edit-cli-telefono" value="${esc(c.telefono)}" required>
@@ -11034,6 +11182,7 @@ function openEditClientModal(id) {
           <input type="email" id="edit-cli-email" value="${esc(c.email)}" required>
         </div>
       </div>
+      <div id="edit-cli-reps"></div>
 
       <div class="form-grid-2">
         <div class="form-group">
@@ -11060,6 +11209,7 @@ function openEditClientModal(id) {
     </div>
   `;
 
+  iniciarEditorRepresentantes('edit-cli', c);
   document.getElementById('client-edit-modal').classList.add('open');
 }
 
@@ -11094,7 +11244,8 @@ async function submitEditClientForm() {
   try {
     const { client } = await qcApiFetch(`/api/comercial/clients/${encodeURIComponent(_editingClientId)}`, {
       method: 'PUT',
-      body: JSON.stringify({ razon_social: razon, ruc, sector, direccion, pais, provincia, distrito, contacto_nombre: contacto, contacto_cargo: cargo, telefono, email, tipo, estado, notas }),
+      body: JSON.stringify({ razon_social: razon, ruc, sector, direccion, pais, provincia, distrito, contacto_nombre: contacto, contacto_cargo: cargo, telefono, email, tipo, estado, notas,
+        representantes: representantesFormulario('edit-cli', { nombre: contacto, cargo, dni: document.getElementById('edit-cli-dni')?.value.trim() || '', telefono, email }) }),
     });
     // El backend ya refleja estos datos en los contratos que sigan en borrador.
     await Promise.all([reloadClientes(), reloadContratos()]);
