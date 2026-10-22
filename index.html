@@ -930,7 +930,15 @@
     .phc-texto input.ph-in { display: inline-block !important; width: auto !important; height: auto !important; min-height: 0 !important; }
     .ph-in { font: inherit; font-family: 'Inter', sans-serif !important; font-size: 12.5px !important; line-height: 1.4 !important; padding: 2px 7px !important; margin: 0 2px; border: 1px dashed #f59e0b !important; background: #fef3c7 !important; border-radius: 5px !important; color: #0f172a; min-width: 9ch; max-width: 100%; vertical-align: baseline; box-shadow: none; }
     .ph-in:focus { outline: none; border-style: solid !important; border-color: #0f766e !important; background: #fff !important; box-shadow: 0 0 0 3px rgba(15,118,110,.15) !important; }
-    .ph-in.ph-bloqueada { display: inline-block; font-family: monospace !important; font-weight: 700; border: 1px solid #cbd5e1 !important; background: #f1f5f9 !important; color: #334155; cursor: not-allowed; user-select: all; }
+    .ph-in.ph-falta { display: inline-block; cursor: pointer; border: 1px dashed #ef4444 !important; background: #fef2f2 !important; color: #b91c1c; font-weight: 600; }
+    .ph-in.ph-falta:hover { background: #fee2e2 !important; }
+    .phc-texto select.ph-in.ph-sel, select.ph-in.ph-sel { display: inline-block !important; width: auto !important; max-width: 100% !important; height: auto !important; min-height: 0 !important; padding: 2px 24px 2px 7px !important; cursor: pointer; }
+    .rep-nuevo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+    .rep-nuevo-grid .full { grid-column: 1 / -1; }
+    @media (max-width: 560px) { .rep-nuevo-grid { grid-template-columns: 1fr; } }
+    .rep-nuevo-nota { font-size: 11.5px; color: var(--text-muted); margin-top: 10px; }
+    .rep-nuevo-error { margin-top: 8px; font-size: 12px; color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 7px 10px; }
+    .ph-in.ph-bloqueada { display: inline-block; font-weight: 600; border: 1px solid #cbd5e1 !important; background: #f1f5f9 !important; color: #334155; cursor: not-allowed; user-select: all; }
     .ph-in.lleno { border-style: solid !important; border-color: #6ee7b7 !important; background: #ecfdf5 !important; }
     textarea.ph-in { display: block !important; width: 100% !important; margin: 6px 0; min-height: 70px; resize: vertical; white-space: pre-wrap; line-height: 1.5 !important; }
     .phc-vacio { padding: 16px; background: var(--bg-card2); border-radius: 8px; text-align: center; color: var(--text-muted); font-size: 12.5px; }
@@ -5585,13 +5593,15 @@ function getAutoFillValueForToken(token) {
   // Mapeos institucionales
   if (['CODIGO_CONTRATO'].includes(clean)) return codigo;
   if (['FECHA_DIA_MES_AÑO'].includes(clean)) return formatContractDateSpanish(fInicio);
-  if (['RAZON_SOCIAL_QUBIRA'].includes(clean)) return 'QUBIRA';
+  if (['RAZON_SOCIAL_QUBIRA'].includes(clean)) return 'QUBIRA S.A.C.';
   if (['RUC_QUBIRA'].includes(clean)) return '10764275981';
   if (['DOMICILIO_QUBIRA'].includes(clean)) return 'Lima, República del Perú';
   if (['DISTRITO_QUBIRA'].includes(clean)) return 'Santiago de Surco';
-  if (['NOMBRE_REPRESENTANTE_QUBIRA'].includes(clean)) return 'Melani A. Luyo R. / Abraham Aranda Cerna';
-  if (['DNI_REPRESENTANTE_QUBIRA'].includes(clean)) return '76427598 / 76543210';
-  if (['CARGO_REPRESENTANTE_QUBIRA'].includes(clean)) return 'CEO Comercial / CEO de TI';
+  // Representante de QUBIRA = usuario con sesión (perfil de usuario / RRHH)
+  const perfil = perfilFirmanteQubira();
+  if (['NOMBRE_REPRESENTANTE_QUBIRA'].includes(clean)) return perfil.nombre || '';
+  if (['DNI_REPRESENTANTE_QUBIRA'].includes(clean)) return perfil.dni || '';
+  if (['CARGO_REPRESENTANTE_QUBIRA'].includes(clean)) return cargoPorDefectoQubira();
   if (['PARTIDA_QUBIRA'].includes(clean)) return 'Partida Electrónica N° 14892011';
   if (['CORREO_QUBIRA'].includes(clean)) return 'qubirasac@gmail.com';
   if (['BANCO'].includes(clean)) return 'Banco de Crédito del Perú (BCP)';
@@ -5609,10 +5619,16 @@ function getAutoFillValueForToken(token) {
   if (['RUC_CLIENTE', 'NÚMERO DE DOCUMENTO', 'RUC/DNI', 'RUC', 'DOCUMENTO'].includes(clean)) {
     return cliente.ruc || '';
   }
-  if (['RUBRO_EMPRESA'].includes(clean)) return cliente.sector || 'Tecnología y Comercio';
+  if (['RUBRO_EMPRESA'].includes(clean)) return cliente.sector || '';
   if (['DIRECCION_COMPLETA_EMPRESA', 'DIRECCIÓN COMPLETA', 'DIRECCIÓN'].includes(clean)) {
-    return cliente.direccion || (cliente.pais ? `${cliente.distrito || ''} ${cliente.provincia || ''}, ${cliente.pais}`.trim() : 'Lima, Perú');
+    // Dirección fiscal / sede + distrito + provincia + país (del registro del cliente)
+    const partes = [cliente.direccion, cliente.distrito, cliente.provincia, cliente.pais].map(v => String(v || '').trim()).filter(Boolean);
+    return partes.filter((v, i) => partes.findIndex(o => o.toLowerCase() === v.toLowerCase()) === i).join(', ');
   }
+  // Propuesta comercial = proforma de la que nace el contrato
+  const prfOrigen = _ctrProformaId ? getStoredProformas().find(x => x.id === _ctrProformaId) : null;
+  if (['CODIGO_PROPUESTA', 'NUMERO_PROPUESTA', 'CODIGO_PROFORMA'].includes(clean)) return prfOrigen?.id || '';
+  if (['FECHA_PROPUESTA', 'FECHA_PROFORMA'].includes(clean)) return prfOrigen?.fecha_emision ? formatContractDateSpanish(String(prfOrigen.fecha_emision).slice(0, 10)) : '';
   const repFirma = representanteContrato() || {};
   if (['NOMBRE_COMPLETO_CLIENTE', 'REPRESENTANTE LEGAL', 'NOMBRE_COMPLETO_REPRESENTANTE', 'NOMBRE DEL TRABAJADOR', 'NOMBRE DEL PROFESIONAL', 'NOMBRE DEL ESTUDIANTE'].includes(clean)) {
     return repFirma.nombre || cliente.contacto_nombre || '';
@@ -5689,6 +5705,7 @@ function autoFillPlaceholdersFromForm(overwriteAll = false) {
   const placeholders = tpl.placeholders || extractPlaceholdersClient(tpl.contenido_html);
   placeholders.forEach(token => {
     const autoVal = getAutoFillValueForToken(token);
+    if (esVariableBloqueada(token)) { _templatePlaceholdersValues[token] = autoVal || ''; return; }
     if (overwriteAll || !_templatePlaceholdersValues[token] || _templatePlaceholdersValues[token].trim() === '') {
       if (autoVal) _templatePlaceholdersValues[token] = autoVal;
     }
@@ -5730,15 +5747,102 @@ function parrafosConVariables(html, placeholders) {
 }
 
 // Variables que el sistema asigna y no se editan (el código del contrato es correlativo)
-function esVariableBloqueada(token) {
-  const limpio = String(token || '').replace(/[\[\]]/g, '').trim().toUpperCase().replace(/\s+/g, '_');
-  return limpio === 'CODIGO_CONTRATO' || limpio === 'CODIGO_DEL_CONTRATO';
+function limpiarToken(token) { return String(token || '').replace(/[\[\]]/g, '').trim().toUpperCase().replace(/\s+/g, '_'); }
+// Se completan solos desde el sistema, el perfil del usuario, el registro del cliente o la proforma
+const VARIABLES_FIJAS = {
+  CODIGO_CONTRATO: 'sistema', CODIGO_DEL_CONTRATO: 'sistema',
+  RAZON_SOCIAL_QUBIRA: 'qubira', RUC_QUBIRA: 'qubira', DISTRITO_QUBIRA: 'qubira',
+  NOMBRE_REPRESENTANTE_QUBIRA: 'perfil', DNI_REPRESENTANTE_QUBIRA: 'perfil',
+  NOMBRE_EMPRESA: 'cliente', RUC_CLIENTE: 'cliente', RUBRO_EMPRESA: 'cliente', DIRECCION_COMPLETA_EMPRESA: 'cliente',
+  NUMERO_DNI_CE_REPRESENTANTE: 'representante', CARGO_REPRESENTANTE: 'representante',
+  CODIGO_PROPUESTA: 'proforma', FECHA_PROPUESTA: 'proforma',
+};
+const ORIGEN_FIJA = {
+  sistema: 'Asignado automáticamente por el sistema',
+  qubira: 'Dato institucional de QUBIRA',
+  perfil: 'Tomado de tu perfil de usuario (quien firma por QUBIRA)',
+  cliente: 'Tomado del registro del cliente',
+  representante: 'Tomado del representante legal elegido',
+  proforma: 'Tomado de la proforma de origen',
+};
+function esVariableBloqueada(token) { return !!VARIABLES_FIJAS[limpiarToken(token)]; }
+
+// ── Firmante de QUBIRA: el usuario con sesión ──
+let _perfilQubira = null;
+function perfilFirmanteQubira() {
+  if (_perfilQubira) return _perfilQubira;
+  const u = qcUser || {};
+  return { nombre: `${u.nombre || ''} ${u.apellidos || ''}`.replace(/\s+/g, ' ').trim(), dni: u.dni || '', cargo: u.cargo || '' };
+}
+async function cargarPerfilQubira() {
+  if (_perfilQubira) return _perfilQubira;
+  try {
+    const { perfil } = await qcApiFetch('/api/comercial/mi-perfil');
+    if (perfil) _perfilQubira = perfil;
+  } catch (e) { /* se usan los datos de la sesión */ }
+  if (_selectedTemplateKey) refrescarVariablesContrato();
+  return _perfilQubira;
+}
+const CARGOS_QUBIRA = ['CEO', 'CEO Comercial', 'CEO de TI', 'Gerente General', 'Gerente Comercial', 'Representante Legal', 'Apoderado'];
+function tituloCargo(t) { return String(t || '').toLowerCase().replace(/(^|\s)\S/g, m => m.toUpperCase()).replace(/\bDe\b/g, 'de').replace(/\bTi\b/g, 'TI').replace(/\bCeo\b/g, 'CEO'); }
+function opcionesCargoQubira() {
+  const c = tituloCargo(perfilFirmanteQubira().cargo);
+  return c && !CARGOS_QUBIRA.some(x => x.toLowerCase() === c.toLowerCase()) ? [c, ...CARGOS_QUBIRA] : CARGOS_QUBIRA.slice();
+}
+function cargoPorDefectoQubira() {
+  const c = tituloCargo(perfilFirmanteQubira().cargo);
+  return CARGOS_QUBIRA.find(x => x.toLowerCase() === c.toLowerCase()) || c || 'CEO';
+}
+
+// Recalcula las variables fijas con los datos actuales y vuelve a pintar
+function sincronizarVariablesFijas() {
+  Object.keys(_templatePlaceholdersValues).forEach(t => {
+    if (esVariableBloqueada(t)) _templatePlaceholdersValues[t] = getAutoFillValueForToken(t) || '';
+  });
+}
+function refrescarVariablesContrato() {
+  sincronizarVariablesFijas();
+  renderPlaceholdersForm(extraerPlaceholdersPlantillaActual(), false);
+  updateContractPreview();
+}
+
+// Dónde corregir un dato fijo que falta
+function completarDatoFijo(token) {
+  const origen = VARIABLES_FIJAS[limpiarToken(token)];
+  const cliId = document.getElementById('ctr-cliente-sel')?.value;
+  if ((origen === 'cliente' || origen === 'representante') && cliId) { openEditClientModal(cliId); return; }
+  if (origen === 'cliente' || origen === 'representante') { toast('info', 'Primero el cliente', 'Selecciona el cliente del contrato.'); return; }
+  if (origen === 'perfil') { toast('info', 'Dato de tu perfil', 'Tu nombre y DNI se toman de tu usuario y de tu ficha en RRHH. Pide que los completen para que aparezcan aquí.'); return; }
+  if (origen === 'proforma') { toast('info', 'Dato de la proforma', 'Elige la proforma de origen en «0. Origen del contrato».'); return; }
 }
 
 function htmlCasillaVariable(token) {
+  const limpio = limpiarToken(token);
   if (esVariableBloqueada(token)) {
-    const cod = _templatePlaceholdersValues[token] = getAutoFillValueForToken(token) || _templatePlaceholdersValues[token] || '';
-    return `<span class="ph-in ph-bloqueada" data-token="${esc(token)}" title="Código asignado automáticamente por el sistema; no se puede editar">🔒 ${esc(cod)}</span>`;
+    const val = _templatePlaceholdersValues[token] = getAutoFillValueForToken(token) || '';
+    const origen = ORIGEN_FIJA[VARIABLES_FIJAS[limpio]] || '';
+    if (!val.trim()) {
+      return `<button type="button" class="ph-in ph-falta" data-token="${esc(token)}" onclick="completarDatoFijo('${esc(token)}')" title="${esc(origen)} · no editable aquí">⚠ Falta: ${esc(humanizePlaceholderToken(token))}</button>`;
+    }
+    return `<span class="ph-in ph-bloqueada" data-token="${esc(token)}" title="${esc(origen)} · no se puede editar">🔒 ${esc(val)}</span>`;
+  }
+  if (limpio === 'CARGO_REPRESENTANTE_QUBIRA') {
+    const val = _templatePlaceholdersValues[token] || (_templatePlaceholdersValues[token] = cargoPorDefectoQubira());
+    const ops = opcionesCargoQubira();
+    if (val && !ops.includes(val)) ops.unshift(val);
+    return `<select class="ph-in ph-sel lleno" data-token="${esc(token)}" onchange="phCambio(this)" title="Cargo con el que firmas por QUBIRA">${ops.map(o => `<option${o === val ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+  }
+  if (limpio === 'NOMBRE_COMPLETO_REPRESENTANTE') {
+    const cliId = document.getElementById('ctr-cliente-sel')?.value || '';
+    if (!cliId) return `<button type="button" class="ph-in ph-falta" data-token="${esc(token)}" onclick="completarDatoFijo('[NUMERO_DNI_CE_REPRESENTANTE]')">⚠ Selecciona el cliente</button>`;
+    poblarRepresentantesContrato();
+    const reps = representantesDe(getStoredClientes().find(c => c.id === cliId));
+    const actual = String(document.getElementById('ctr-representante-sel')?.value || '0');
+    _templatePlaceholdersValues[token] = getAutoFillValueForToken(token) || '';
+    return `<select class="ph-in ph-sel ${reps.length ? 'lleno' : ''}" data-token="${esc(token)}" onchange="phRepresentanteCambio(this)" title="Representante legal que firma por EL CLIENTE">
+      ${reps.length ? '' : '<option value="" selected>— Sin representante —</option>'}
+      ${reps.map((r, i) => `<option value="${i}"${String(i) === actual ? ' selected' : ''} title="${esc(r.cargo || '')}">${esc(r.nombre)}</option>`).join('')}
+      <option value="__nuevo">＋ Agregar representante…</option></select>`;
   }
   const valor = _templatePlaceholdersValues[token] || '';
   const etiqueta = humanizePlaceholderToken(token);
@@ -5846,8 +5950,83 @@ function phCambio(el) {
   });
 }
 
+// Representante del cliente elegido desde el párrafo (o «Agregar»)
+function phRepresentanteCambio(el) {
+  if (el.value === '__nuevo') {
+    el.value = String(document.getElementById('ctr-representante-sel')?.value || '0');
+    abrirNuevoRepresentanteContrato();
+    return;
+  }
+  const sel = document.getElementById('ctr-representante-sel');
+  if (sel) sel.value = el.value;
+  onRepresentanteContratoChange();
+}
+
+function abrirNuevoRepresentanteContrato() {
+  const cliId = document.getElementById('ctr-cliente-sel')?.value;
+  const cli = getStoredClientes().find(c => c.id === cliId);
+  if (!cli) { toast('info', 'Primero el cliente', 'Selecciona el cliente del contrato.'); return; }
+  document.getElementById('rep-nuevo-ov')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'rep-nuevo-ov';
+  ov.className = 'modal-overlay open qc-dlg info';
+  ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+  ov.innerHTML = `
+    <form class="modal" style="max-width:520px" onsubmit="event.preventDefault(); guardarNuevoRepresentanteContrato()">
+      <div class="modal-header"><div class="qc-dlg-head">
+        <div class="qc-dlg-icono">${QC_DLG_ICONOS.info}</div>
+        <div><div class="qc-dlg-titulo">Nuevo representante legal</div><div class="qc-dlg-sub">${esc(cli.razon_social)} · RUC ${esc(cli.ruc || '—')}</div></div>
+      </div></div>
+      <div class="modal-body">
+        <div class="rep-nuevo-grid">
+          <div class="form-group full"><label for="repn-nombre">Nombre y apellidos *</label><input id="repn-nombre" required maxlength="160" placeholder="Ej: Eduardo Anthony Merino Mendoza"></div>
+          <div class="form-group"><label for="repn-dni">DNI / CE *</label><input id="repn-dni" required maxlength="20" placeholder="Ej: 45678912"></div>
+          <div class="form-group"><label for="repn-cargo">Cargo en la empresa *</label><input id="repn-cargo" required maxlength="120" placeholder="Ej: Gerente General"></div>
+          <div class="form-group"><label for="repn-tel">Teléfono</label><input id="repn-tel" type="tel" maxlength="40"></div>
+          <div class="form-group"><label for="repn-email">Correo</label><input id="repn-email" type="email" maxlength="160"></div>
+        </div>
+        <p class="rep-nuevo-nota">Se guardará en el registro del cliente y quedará como quien firma este contrato.</p>
+        <div class="rep-nuevo-error" id="repn-error" hidden></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('rep-nuevo-ov').remove()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="repn-guardar">Guardar representante</button>
+      </div>
+    </form>`;
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  ov.addEventListener('keydown', e => { if (e.key === 'Escape') ov.remove(); });
+  document.body.appendChild(ov);
+  setTimeout(() => document.getElementById('repn-nombre')?.focus(), 30);
+}
+
+async function guardarNuevoRepresentanteContrato() {
+  const cliId = document.getElementById('ctr-cliente-sel')?.value;
+  const v = id => document.getElementById(id)?.value.trim() || '';
+  const rep = { nombre: v('repn-nombre'), dni: v('repn-dni'), cargo: v('repn-cargo'), telefono: v('repn-tel'), email: v('repn-email') };
+  const err = document.getElementById('repn-error');
+  const btn = document.getElementById('repn-guardar');
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+  try {
+    const { client } = await qcApiFetch(`/api/comercial/clients/${encodeURIComponent(cliId)}/representantes`, { method: 'POST', body: JSON.stringify(rep) });
+    const i = _clientesCache.findIndex(c => c.id === client.id);
+    if (i >= 0) _clientesCache[i] = client; else _clientesCache.push(client);
+    document.getElementById('rep-nuevo-ov')?.remove();
+    _ctrRepClienteId = null;
+    poblarRepresentantesContrato();
+    const idx = representantesDe(client).findIndex(r => r.nombre.trim().toLowerCase() === rep.nombre.toLowerCase());
+    const sel = document.getElementById('ctr-representante-sel');
+    if (sel && idx >= 0) sel.value = String(idx);
+    onRepresentanteContratoChange();
+    toast('success', 'Representante agregado', `${rep.nombre} se guardó en ${client.razon_social} y firmará este contrato.`);
+  } catch (e) {
+    if (e.message === 'SESSION_EXPIRED') return;
+    if (err) { err.hidden = false; err.textContent = e.message; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Guardar representante'; }
+  }
+}
+
 function phSiguientePendiente() {
-  const vacia = Array.from(document.querySelectorAll('#ctr-placeholders-container .ph-in:not(.ph-bloqueada)')).find(c => !c.value.trim());
+  const vacia = Array.from(document.querySelectorAll('#ctr-placeholders-container .ph-in:not(.ph-bloqueada):not(.ph-falta)')).find(c => !String(c.value || '').trim());
   if (!vacia) { toast('success', 'Todo completo', 'No quedan variables pendientes en la plantilla.'); return; }
   vacia.scrollIntoView({ block: 'center', behavior: 'smooth' });
   vacia.focus();
@@ -5999,6 +6178,7 @@ async function renderCrearContrato() {
   const selectCli = document.getElementById('ctr-cliente-sel');
   const searchCli = document.getElementById('ctr-cliente-search');
   if (!selectCli) return;
+  cargarPerfilQubira();
 
   closeCombo('ctr-cliente-search');
   // En blanco por defecto al abrir el módulo — solo se precarga si viene
@@ -11486,6 +11666,9 @@ async function submitEditClientForm() {
     closeEditClientModal();
     toast('success', 'Cliente Actualizado', `${client.razon_social} ha sido guardado exitosamente.`);
     renderEditarClientes();
+    if (_selectedTemplateKey && document.getElementById('ctr-cliente-sel')?.value === client.id) {
+      _ctrRepClienteId = null; poblarRepresentantesContrato(); refrescarVariablesContrato();
+    }
   } catch (err) {
     if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo guardar', err.message);
   }
