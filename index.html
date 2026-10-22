@@ -5793,7 +5793,6 @@ const VARIABLES_FIJAS = {
   NOMBRE_EMPRESA: 'cliente', RUC_CLIENTE: 'cliente', RUBRO_EMPRESA: 'cliente', DIRECCION_COMPLETA_EMPRESA: 'cliente',
   NUMERO_DNI_CE_REPRESENTANTE: 'representante', CARGO_REPRESENTANTE: 'representante',
   CODIGO_PROPUESTA: 'proforma', FECHA_PROPUESTA: 'proforma',
-  PLANES_GRATUITOS: 'cotizacion',
 };
 const ORIGEN_FIJA = {
   sistema: 'Asignado automáticamente por el sistema',
@@ -6014,7 +6013,7 @@ function phCambio(el) {
 // Si se cambian desde el contrato, se guardan como versión nueva de la proforma
 // (la anterior queda en el historial) y el contrato pasa a usar esa versión.
 const _cotv = { editando: false, items: [], tech: [], reqs: [], nota: '' };
-const TOKENS_DE_PROFORMA = ['REQUERIMIENTOS_FUNCIONALES', 'REQUERIMIENTOS_NO_FUNCIONALES', 'MODULOS_FUNCIONALES', 'ENTREGABLES', 'STACK_HERRAMIENTAS', 'STACK_LENGUAJES', 'PRECIO_ACORDADO', 'PRECIO_EN_LETRAS', 'MONEDA'];
+const TOKENS_DE_PROFORMA = ['REQUERIMIENTOS_FUNCIONALES', 'REQUERIMIENTOS_NO_FUNCIONALES', 'MODULOS_FUNCIONALES', 'ENTREGABLES', 'STACK_HERRAMIENTAS', 'STACK_LENGUAJES', 'PRECIO_ACORDADO', 'PRECIO_EN_LETRAS', 'MONEDA', 'PLANES_GRATUITOS'];
 
 // Código visible de una proforma con su versión: PRF-2026-001, PRF-2026-001.V2, .V3…
 function codigoProforma(p, version) {
@@ -6554,12 +6553,16 @@ function textoPlanesGratuitos() {
   return planes.length ? listaConY(planes) : NO_APLICA_PLANES;
 }
 
-function insertarClausulaPlanesGratuitos(html) {
+// El numeral va si [PLANES_GRATUITOS] tiene contenido (se jala de la cotización y se puede editar)
+function insertarClausulaPlanesGratuitos(html, valores) {
   const planes = planesGratuitosContrato();
+  const k = valores && Object.keys(valores).find(t => limpiarToken(t) === 'PLANES_GRATUITOS');
+  const valor = String(k ? valores[k] : textoPlanesGratuitos()).trim();
+  const aplica = !!valor && valor !== NO_APLICA_PLANES && !/^no aplica/i.test(valor);
   // La plantilla ya trae el numeral con [PLANES_GRATUITOS]
   const iTok = html.indexOf('[PLANES_GRATUITOS]');
   if (iTok >= 0) {
-    if (planes.length) {
+    if (aplica) {
       // Cierra la enumeración con punto si la plantilla no lo trae
       return html.replace(/\[PLANES_GRATUITOS\](?!\s*[.,;:])/g, '[PLANES_GRATUITOS].');
     }
@@ -6597,7 +6600,7 @@ function compileContractTemplate(templateHtml, replacements, highlightUnfilled =
   // 1. ELIMINAR TOTALMENTE 'COMPARECENCIA DE LAS PARTES'
   result = quitarComparecencia(result);
   // 1b. Cláusula 4.5 de planes gratuitos (solo si la proforma los usa)
-  result = insertarClausulaPlanesGratuitos(result);
+  result = insertarClausulaPlanesGratuitos(result, replacements);
 
   // 2. Reemplazar cada token encontrado
   const allTokens = extractPlaceholdersClient(templateHtml);
@@ -6692,7 +6695,14 @@ async function renderCrearContrato() {
   const searchCli = document.getElementById('ctr-cliente-search');
   if (!selectCli) return;
   cargarPerfilQubira();
-  ensureTechCatalogLoaded().then(() => { if (_selectedTemplateKey) refrescarVariablesContrato(); else updateContractPreview(); }).catch(() => {});
+  ensureTechCatalogLoaded().then(() => {
+    // Con el catálogo ya cargado se sabe qué planes son gratuitos (si nadie lo editó aún)
+    Object.keys(_templatePlaceholdersValues).forEach(t => {
+      const v = String(_templatePlaceholdersValues[t] || '').trim();
+      if (limpiarToken(t) === 'PLANES_GRATUITOS' && (!v || v === NO_APLICA_PLANES)) _templatePlaceholdersValues[t] = textoPlanesGratuitos();
+    });
+    if (_selectedTemplateKey) refrescarVariablesContrato(); else updateContractPreview();
+  }).catch(() => {});
   cargarInfoSocietariaQubira();
 
   closeCombo('ctr-cliente-search');
