@@ -5593,17 +5593,19 @@ function getAutoFillValueForToken(token) {
   // Mapeos institucionales
   if (['CODIGO_CONTRATO'].includes(clean)) return codigo;
   if (['FECHA_DIA_MES_AÑO'].includes(clean)) return formatContractDateSpanish(fInicio);
-  if (['RAZON_SOCIAL_QUBIRA'].includes(clean)) return 'QUBIRA S.A.C.';
-  if (['RUC_QUBIRA'].includes(clean)) return '10764275981';
-  if (['DOMICILIO_QUBIRA'].includes(clean)) return 'Lima, República del Perú';
-  if (['DISTRITO_QUBIRA'].includes(clean)) return 'Santiago de Surco';
+  // Datos de QUBIRA: ficha «Información Societaria Oficial» de ODACL
+  const soc = infoSocietariaQubira();
+  if (['RAZON_SOCIAL_QUBIRA'].includes(clean)) return soc.razon_social;
+  if (['RUC_QUBIRA'].includes(clean)) return soc.ruc;
+  if (['DOMICILIO_QUBIRA'].includes(clean)) return soc.domicilio;
+  if (['DISTRITO_QUBIRA'].includes(clean)) return soc.distrito;
   // Representante de QUBIRA = usuario con sesión (perfil de usuario / RRHH)
   const perfil = perfilFirmanteQubira();
   if (['NOMBRE_REPRESENTANTE_QUBIRA'].includes(clean)) return perfil.nombre || '';
   if (['DNI_REPRESENTANTE_QUBIRA'].includes(clean)) return perfil.dni || '';
   if (['CARGO_REPRESENTANTE_QUBIRA'].includes(clean)) return cargoPorDefectoQubira();
   if (['PARTIDA_QUBIRA'].includes(clean)) return 'Partida Electrónica N° 14892011';
-  if (['CORREO_QUBIRA'].includes(clean)) return 'qubirasac@gmail.com';
+  if (['CORREO_QUBIRA'].includes(clean)) return soc.correo;
   if (['BANCO'].includes(clean)) return 'Banco de Crédito del Perú (BCP)';
   if (['TITULAR_CUENTA_COBRO'].includes(clean)) return 'QUBIRA';
   if (['NUMERO_CUENTA'].includes(clean)) return '191-98765432-0-45';
@@ -5759,13 +5761,25 @@ const VARIABLES_FIJAS = {
 };
 const ORIGEN_FIJA = {
   sistema: 'Asignado automáticamente por el sistema',
-  qubira: 'Dato institucional de QUBIRA',
+  qubira: 'Tomado de la Información Societaria Oficial de ODACL',
   perfil: 'Tomado de tu perfil de usuario (quien firma por QUBIRA)',
   cliente: 'Tomado del registro del cliente',
   representante: 'Tomado del representante legal elegido',
   proforma: 'Tomado de la proforma de origen',
 };
 function esVariableBloqueada(token) { return !!VARIABLES_FIJAS[limpiarToken(token)]; }
+
+// ── Ficha societaria de QUBIRA (la mantiene ODACL) ──
+const INFO_SOCIETARIA_BASE = { razon_social: 'QUBIRA', ruc: '10764275981', domicilio: 'Lima, República del Perú', distrito: 'Ancón', provincia: 'Lima', departamento: 'Lima', correo: 'qubirasac@gmail.com' };
+let _infoSocietaria = null;
+function infoSocietariaQubira() { return { ...INFO_SOCIETARIA_BASE, ...(_infoSocietaria || {}) }; }
+async function cargarInfoSocietariaQubira() {
+  try {
+    const { info } = await qcApiFetch('/api/odacl/info-societaria');
+    if (info) _infoSocietaria = info;
+  } catch (e) { /* se usan los datos base */ }
+  if (_selectedTemplateKey) refrescarVariablesContrato();
+}
 
 // ── Firmante de QUBIRA: el usuario con sesión ──
 let _perfilQubira = null;
@@ -6186,6 +6200,7 @@ async function renderCrearContrato() {
   const searchCli = document.getElementById('ctr-cliente-search');
   if (!selectCli) return;
   cargarPerfilQubira();
+  cargarInfoSocietariaQubira();
 
   closeCombo('ctr-cliente-search');
   // En blanco por defecto al abrir el módulo — solo se precarga si viene
@@ -7053,6 +7068,8 @@ function renderContractOfficialModal(c) {
     `;
   }
 
+  const socQ = infoSocietariaQubira();
+  const firQ = perfilFirmanteQubira();
   const fallbackPagesHtml = `
     <div class="a4-page-export" data-page="1">
       <h2 style="text-align:center;font-size:16px;font-weight:800;margin-bottom:14px;text-transform:uppercase;color:#0f172a">
@@ -7060,7 +7077,7 @@ function renderContractOfficialModal(c) {
         <span style="font-size:13px;font-weight:600;color:#475569"><b>${esc(c.id)}</b></span>
       </h2>
       <p>Conste por el presente documento el Contrato de Prestación de Servicios de Desarrollo de Software que celebran, en la ciudad de Lima, República del Perú, con fecha <strong>${fechaInicioFormato}</strong>:</p>
-      <p style="margin-top:6px">De una parte, <strong>QUBIRA</strong>, con RUC N.° 10764275981, con domicilio en Lima, República del Perú, distrito de Santiago de Surco, debidamente representada por Melani A. Luyo R. / Abraham Aranda Cerna, identificados con DNI N.° 76427598 / 76543210, en su calidad de CEO Comercial / CEO de TI, según facultades inscritas en la Partida Electrónica N.° 14892011, a quien en adelante se denominará «QUBIRA» o «EL PROVEEDOR».</p>
+      <p style="margin-top:6px">De una parte, <strong>${esc(socQ.razon_social)}</strong>, con RUC N.° ${esc(socQ.ruc)}, con domicilio en ${esc(socQ.domicilio)}, distrito de ${esc(socQ.distrito)}, debidamente representada por ${esc(firQ.nombre || '—')}, identificado(a) con DNI N.° ${esc(firQ.dni || '—')}, en su calidad de ${esc(cargoPorDefectoQubira())}, según facultades inscritas en la Partida Electrónica N.° 14892011, a quien en adelante se denominará «QUBIRA» o «EL PROVEEDOR».</p>
       <p style="margin-top:6px">De la otra parte, <strong>${esc(cliNombre)}</strong>, con RUC / DNI N.° <strong>${esc(cliRuc)}</strong>, dedicada al rubro de ${esc(c.rubro || 'Tecnología y Comercio')}, con domicilio en ${esc(cliDireccion)}, debidamente representada por ${esc(cliContacto)}, identificado(a) con DNI/CE N.° ${esc(c.cliente_dni || cliRuc.slice(0,8))}, en su calidad de ${esc(cliCargo)}, a quien en adelante se denominará «EL CLIENTE».</p>
       <p style="margin-top:6px">QUBIRA y EL CLIENTE serán denominados conjuntamente «LAS PARTES» e individualmente «LA PARTE». Ambas declaran tener capacidad legal suficiente para contratar y celebran el presente contrato en los términos y condiciones siguientes:</p>
       <div class="contract-clause">
