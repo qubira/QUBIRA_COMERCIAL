@@ -270,6 +270,37 @@
     .ctr-origen-vinculo { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
       background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 10px 14px; font-size: 12.5px; color: #065f46; }
     .ctr-origen-vinculo strong { font-family: monospace; font-size: 13px; }
+    /* Buscador de proformas registradas (origen del contrato) */
+    .pfb { position: relative; }
+    .pfb-campo { display: flex; align-items: center; gap: 8px; background: #fff; border: 1.5px solid var(--border); border-radius: 10px; padding: 0 10px; transition: border-color .15s, box-shadow .15s; }
+    .pfb-campo:focus-within { border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15,118,110,.14); }
+    .pfb-campo .icon { width: 16px; height: 16px; color: #94a3b8; flex-shrink: 0; }
+    .pfb-campo input { flex: 1; min-width: 0; border: 0 !important; outline: 0; box-shadow: none !important; background: transparent !important; padding: 10px 0 !important; font-size: 13px; }
+    .pfb-total { font-size: 10.5px; font-weight: 700; color: #0f766e; background: #ecfdf5; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+    .pfb-panel { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 60; background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      box-shadow: 0 18px 40px rgba(15,23,42,.16); overflow: hidden; width: max(100%, min(560px, calc(100vw - 48px))); }
+    .pfb-filtros { display: flex; gap: 6px; padding: 10px 10px 8px; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; }
+    .pfb-filtro { border: 1px solid var(--border); background: #fff; color: #475569; border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 600; cursor: pointer; }
+    .pfb-filtro b { font-weight: 700; color: #94a3b8; margin-left: 3px; }
+    .pfb-filtro.activo { background: #0f766e; border-color: #0f766e; color: #fff; }
+    .pfb-filtro.activo b { color: #a7f3d0; }
+    .pfb-lista { max-height: 320px; overflow-y: auto; padding: 6px; }
+    .pfb-item { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 3px 14px; padding: 9px 10px; border-radius: 9px; cursor: pointer; border: 1px solid transparent; }
+    .pfb-item:hover, .pfb-item.foco { background: #f0fdfa; border-color: #99f6e4; }
+    .pfb-item + .pfb-item { margin-top: 2px; }
+    .pfb-cab { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .pfb-codigo { font-family: monospace; font-size: 12px; font-weight: 700; color: #0f766e; white-space: nowrap; }
+    .pfb-cliente { grid-column: 1; font-size: 13.5px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pfb-sub { grid-column: 1; font-size: 11.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pfb-monto { grid-row: 1 / span 2; grid-column: 2; align-self: center; text-align: right; font-size: 13px; font-weight: 800; color: var(--text); white-space: nowrap; }
+    .pfb-fecha { grid-column: 2; grid-row: 3; text-align: right; font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+    .pfb-estado { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; border-radius: 999px; padding: 1px 7px; background: #f1f5f9; color: #475569; white-space: nowrap; }
+    .pfb-estado.aprobada, .pfb-estado.aceptada { background: #dcfce7; color: #166534; }
+    .pfb-estado.enviada { background: #dbeafe; color: #1e40af; }
+    .pfb-estado.borrador, .pfb-estado.pendiente { background: #fef3c7; color: #92400e; }
+    .pfb-estado.convertida { background: #ede9fe; color: #5b21b6; }
+    .pfb-item mark { background: #fef08a; color: inherit; border-radius: 2px; padding: 0 1px; }
+    .pfb-vacio { padding: 22px 12px; text-align: center; font-size: 12.5px; color: var(--text-muted); }
     #form-crear-contrato.sin-origen > :not(.ctr-origen) { opacity: .4; pointer-events: none; filter: grayscale(.35); user-select: none; }
     .prf-aviso-contrato { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; border-radius: 10px; padding: 10px 14px; font-size: 12.5px; margin-bottom: 16px; display: none; }
 
@@ -1572,9 +1603,22 @@
                 <div class="ctr-origen-op" id="ctr-origen-op-existente">
                   <strong>📄 Desde una proforma registrada</strong>
                   <span>Jala cliente, producto, moneda, monto, condiciones y alcance de una proforma ya guardada.</span>
-                  <select id="ctr-proforma-sel" onchange="if(this.value) seleccionarProformaParaContrato(this.value)">
+                  <select id="ctr-proforma-sel" style="display:none" onchange="if(this.value) seleccionarProformaParaContrato(this.value)">
                     <option value="">Selecciona una proforma…</option>
                   </select>
+                  <div class="pfb" id="ctr-pfb">
+                    <div class="pfb-campo">
+                      <svg class="icon"><use href="#icon-search"></use></svg>
+                      <input type="text" id="ctr-proforma-buscar" autocomplete="off" placeholder="Código, cliente, RUC, producto…" title="Busca por código, cliente, RUC, producto o monto"
+                        onfocus="abrirBuscadorProformas()" oninput="filtrarBuscadorProformas()" onkeydown="teclasBuscadorProformas(event)"
+                        role="combobox" aria-expanded="false" aria-controls="ctr-pfb-panel" aria-autocomplete="list">
+                      <span class="pfb-total" id="ctr-pfb-total"></span>
+                    </div>
+                    <div class="pfb-panel" id="ctr-pfb-panel" role="listbox" hidden>
+                      <div class="pfb-filtros" id="ctr-pfb-filtros"></div>
+                      <div class="pfb-lista" id="ctr-pfb-lista"></div>
+                    </div>
+                  </div>
                 </div>
                 <div class="ctr-origen-op" id="ctr-origen-op-nueva">
                   <strong>➕ Aún no hay proforma</strong>
@@ -4936,7 +4980,128 @@ function poblarProformasParaContrato() {
   sel.innerHTML = `<option value="">${lista.length ? 'Selecciona una proforma…' : 'No hay proformas registradas'}</option>`
     + lista.map(p => `<option value="${esc(p.id)}">${esc(etiquetaProformaContrato(p))}</option>`).join('');
   sel.value = _ctrProformaId || '';
+  const buscar = document.getElementById('ctr-proforma-buscar');
+  if (buscar) buscar.value = '';
+  const tot = document.getElementById('ctr-pfb-total');
+  if (tot) tot.textContent = lista.length ? `${lista.length} ${lista.length === 1 ? 'proforma' : 'proformas'}` : 'Sin proformas';
+  cerrarBuscadorProformas();
 }
+
+// ── Buscador de proformas registradas ──
+const _pfb = { filtro: 'todas', foco: 0, visibles: [] };
+const PFB_FILTROS = [
+  ['todas', 'Todas', () => true],
+  ['disponibles', 'Sin contrato', p => p.estado !== 'convertida'],
+  ['convertida', 'Ya con contrato', p => p.estado === 'convertida'],
+];
+
+function pfbNormalizar(t) { return String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+
+function pfbResaltar(texto, terminos) {
+  let html = esc(texto ?? '');
+  if (!terminos.length) return html;
+  const base = pfbNormalizar(texto);
+  const marcas = [];
+  terminos.forEach(t => { let i = base.indexOf(t); while (t && i >= 0) { marcas.push([i, i + t.length]); i = base.indexOf(t, i + t.length); } });
+  if (!marcas.length) return html;
+  marcas.sort((a, b) => a[0] - b[0]);
+  const orig = String(texto); let out = '', ult = 0;
+  marcas.forEach(([a, b]) => { if (a < ult) return; out += esc(orig.slice(ult, a)) + '<mark>' + esc(orig.slice(a, b)) + '</mark>'; ult = b; });
+  return out + esc(orig.slice(ult));
+}
+
+function abrirBuscadorProformas() {
+  const panel = document.getElementById('ctr-pfb-panel');
+  if (!panel) return;
+  panel.hidden = false;
+  document.getElementById('ctr-proforma-buscar')?.setAttribute('aria-expanded', 'true');
+  filtrarBuscadorProformas();
+}
+
+function cerrarBuscadorProformas() {
+  const panel = document.getElementById('ctr-pfb-panel');
+  if (panel) panel.hidden = true;
+  document.getElementById('ctr-proforma-buscar')?.setAttribute('aria-expanded', 'false');
+}
+
+function filtroBuscadorProformas(clave) {
+  _pfb.filtro = clave;
+  filtrarBuscadorProformas();
+  document.getElementById('ctr-proforma-buscar')?.focus();
+}
+
+function filtrarBuscadorProformas() {
+  const lista = getStoredProformas().filter(p => !['rechazada'].includes(p.estado));
+  const clientes = getStoredClientes() || [];
+  const q = pfbNormalizar(document.getElementById('ctr-proforma-buscar')?.value || '').trim();
+  const terminos = q.split(/\s+/).filter(Boolean);
+  const ruc = p => clientes.find(c => c.id === p.cliente_id)?.ruc || '';
+  const coincide = p => {
+    const heno = pfbNormalizar([p.id, p.cliente_nombre, ruc(p), p.producto_nombre, p.tipo, p.estado, p.moneda, p.total, formatCurrency(p.total, p.moneda)].join(' '));
+    return terminos.every(t => heno.includes(t));
+  };
+  const porTexto = lista.filter(coincide);
+  const filtros = document.getElementById('ctr-pfb-filtros');
+  if (filtros) filtros.innerHTML = PFB_FILTROS.map(([k, n, f]) =>
+    `<button type="button" class="pfb-filtro${_pfb.filtro === k ? ' activo' : ''}" onmousedown="event.preventDefault()" onclick="filtroBuscadorProformas('${k}')">${n}<b>${porTexto.filter(f).length}</b></button>`).join('');
+  const f = (PFB_FILTROS.find(x => x[0] === _pfb.filtro) || PFB_FILTROS[0])[2];
+  _pfb.visibles = porTexto.filter(f);
+  _pfb.foco = 0;
+  const cont = document.getElementById('ctr-pfb-lista');
+  if (!cont) return;
+  if (!_pfb.visibles.length) {
+    cont.innerHTML = `<div class="pfb-vacio">${lista.length ? 'Ninguna proforma coincide con la búsqueda.' : 'Aún no hay proformas registradas.<br>Usa «Crear proforma para este contrato».'}</div>`;
+    return;
+  }
+  cont.innerHTML = _pfb.visibles.map((p, i) => {
+    const r = ruc(p);
+    const sub = [r ? 'RUC ' + r : '', p.producto_nombre, p.tipo].filter(Boolean);
+    const fecha = p.fecha_emision ? String(p.fecha_emision).slice(0, 10).split('-').reverse().join('/') : '';
+    return `<div class="pfb-item${i === 0 ? ' foco' : ''}" role="option" data-i="${i}" onmousedown="event.preventDefault()" onclick="elegirProformaBuscador(${i})" onmousemove="focoBuscadorProformas(${i})">
+      <div class="pfb-cab"><span class="pfb-codigo">${pfbResaltar(p.id, terminos)}</span><span class="pfb-estado ${esc(p.estado || '')}">${esc(p.estado === 'convertida' ? 'con contrato' : (p.estado || '—'))}</span></div>
+      <div class="pfb-cliente">${pfbResaltar(p.cliente_nombre || 'Sin cliente', terminos)}</div>
+      <div class="pfb-monto">${esc(formatCurrency(p.total, p.moneda))}</div>
+      <div class="pfb-sub">${sub.map(s => pfbResaltar(s, terminos)).join(' · ') || '—'}</div>
+      <div class="pfb-fecha">${fecha ? '📅 ' + esc(fecha) : ''}</div>
+    </div>`;
+  }).join('');
+}
+
+function focoBuscadorProformas(i) {
+  if (_pfb.foco === i) return;
+  _pfb.foco = i;
+  document.querySelectorAll('#ctr-pfb-lista .pfb-item').forEach((el, k) => el.classList.toggle('foco', k === i));
+}
+
+function teclasBuscadorProformas(e) {
+  const panel = document.getElementById('ctr-pfb-panel');
+  if (e.key === 'Escape') { cerrarBuscadorProformas(); return; }
+  if (panel?.hidden && (e.key === 'ArrowDown' || e.key === 'Enter')) { e.preventDefault(); abrirBuscadorProformas(); return; }
+  const n = _pfb.visibles.length;
+  if (!n) { if (e.key === 'Enter') e.preventDefault(); return; }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    focoBuscadorProformas((_pfb.foco + (e.key === 'ArrowDown' ? 1 : n - 1)) % n);
+    document.querySelector(`#ctr-pfb-lista .pfb-item[data-i="${_pfb.foco}"]`)?.scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    elegirProformaBuscador(_pfb.foco);
+  }
+}
+
+function elegirProformaBuscador(i) {
+  const p = _pfb.visibles[i];
+  if (!p) return;
+  cerrarBuscadorProformas();
+  const sel = document.getElementById('ctr-proforma-sel');
+  if (sel) sel.value = p.id;
+  seleccionarProformaParaContrato(p.id);
+}
+
+document.addEventListener('mousedown', e => {
+  const pfb = document.getElementById('ctr-pfb');
+  if (pfb && !pfb.contains(e.target)) cerrarBuscadorProformas();
+});
 
 function mostrarOrigenContrato() {
   const form = document.getElementById('form-crear-contrato');
@@ -6040,7 +6205,7 @@ async function handleGuardarContrato(e) {
   e.preventDefault();
   if (!_ctrProformaId) {
     toast('error', 'Falta el origen', 'Elige una proforma registrada o crea la proforma primero.');
-    document.getElementById('ctr-proforma-sel')?.focus();
+    document.getElementById('ctr-proforma-buscar')?.focus();
     return;
   }
   const clientes = getStoredClientes();
