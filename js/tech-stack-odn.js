@@ -355,6 +355,9 @@
             <span style="font-size:11px;font-weight:600;color:#0f766e;background:#ecfdf5;padding:5px 12px;border-radius:8px;border:1px solid #a7f3d0;display:flex;align-items:center;gap:6px">
               💼 <span>Modo Cotización ODN (Estructura técnica fijada por TI)</span>
             </span>
+            <button type="button" id="ts-odn-btn-print" class="btn btn-outline" style="padding:6px 14px;font-size:12px;font-weight:700;background:#fff" title="Imprimir o guardar en PDF el árbol y el detalle de costos">
+              🖨 Imprimir estructura
+            </button>
             <button type="button" id="ts-odn-btn-save" class="btn btn-primary" style="padding:6px 18px;font-size:12px;font-weight:700">
               Guardar Cambios
             </button>
@@ -771,7 +774,163 @@
     }
   }
 
+  // ── Imprimir la estructura: el árbol tal cual (en hojas A4 horizontales,
+  //    cortando entre columnas) y luego el detalle por columna con precios ──
+  function precioDeItem(it) {
+    const catalogMatch = (_techCatalog.tool || []).concat(_techCatalog.language || []).find(c => c.name.toLowerCase() === (it.name || '').toLowerCase());
+    const plans = (catalogMatch && Array.isArray(catalogMatch.plans) && catalogMatch.plans.length) ? catalogMatch.plans : [];
+    const plan = plans.find(p => (p.name || '').toLowerCase() === (it.plan_name || '').toLowerCase()) || plans[0] || null;
+    const pr = resolvePlanPricing(plan, it);
+    const per = it.periodo === 'año' ? 'año' : 'mes';
+    return {
+      plan: (plan && plan.name) || it.plan_name || 'Free',
+      precio: pr.type === 'free' ? 'Gratis' : pr.type === 'price' ? `${getSym(it.moneda || 'USD')} ${pr.val.toFixed(2)} / ${per}` : 'Indefinido',
+    };
+  }
+
+  function imprimirEstructura() {
+    const wrap = document.getElementById('ts-odn-content-wrap');
+    const cols = document.getElementById('ts-odn-cols-wrapper');
+    if (!wrap || !cols || !_activeStack) return;
+    updateSvg();
+    const stages = _activeStack.stages || [];
+    const W = Math.max(cols.scrollWidth, wrap.scrollWidth);
+    const H = Math.max(cols.scrollHeight, 200);
+    const wrapRect = wrap.getBoundingClientRect();
+    const colEls = Array.from(cols.querySelectorAll('.ts-odn-column'));
+    const bordes = colEls.map(c => c.getBoundingClientRect().left - wrapRect.left);
+
+    // Copia del árbol: los selectores pasan a texto y los botones a etiquetas
+    const copia = wrap.cloneNode(true);
+    const selOrig = wrap.querySelectorAll('select');
+    copia.querySelectorAll('select').forEach((s, i) => {
+      const o = selOrig[i];
+      const span = document.createElement('span');
+      span.className = 'ts-print-plan';
+      span.textContent = o && o.selectedIndex >= 0 ? o.options[o.selectedIndex].text.trim() : '';
+      s.replaceWith(span);
+    });
+    copia.querySelectorAll('.ts-odn-btn-targets').forEach(b => {
+      const span = document.createElement('span');
+      span.className = 'ts-print-ramas';
+      span.textContent = b.textContent.replace(/\s+/g, ' ').trim().replace('Ramificar a', 'Ramifica a');
+      b.replaceWith(span);
+    });
+    copia.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+    copia.style.cssText = `position:relative;display:block;width:${W}px;min-width:${W}px;height:${H}px`;
+    const htmlArbol = copia.outerHTML;
+
+    // Hoja A4 horizontal con 10 mm de margen: 277 x 190 mm útiles (96 px/pulgada)
+    const MM = 96 / 25.4;
+    const anchoUtil = 277 * MM, altoUtil = 172 * MM;
+    let escala = Math.min(0.85, altoUtil / H);
+    if (escala < 0.4) escala = 0.4; // solo si es muy alto se reparte también en vertical
+    const ventanaW = anchoUtil / escala, ventanaH = altoUtil / escala;
+
+    // Cortes horizontales en el borde de una columna (no a mitad de una tarjeta)
+    const tramos = [];
+    for (let x = 0; x < W - 2;) {
+      const fin = Math.max(...bordes.filter(b => b > x + 1 && b <= x + ventanaW), 0);
+      const sig = fin > x + 1 && x + ventanaW < W ? fin : Math.min(W, x + ventanaW);
+      tramos.push([x, sig]);
+      x = sig;
+    }
+    const filas = [];
+    for (let y = 0; y < H - 2; y += ventanaH) filas.push([y, Math.min(H, y + ventanaH)]);
+    const total = tramos.length * filas.length;
+    const columnasDe = ([a, b]) => {
+      const idx = bordes.map((x, i) => [x, i]).filter(([x]) => x >= a - 1 && x < b - 1).map(([, i]) => i + 1);
+      return idx.length ? (idx.length > 1 ? `Columnas C${idx[0]}–C${idx[idx.length - 1]}` : `Columna C${idx[0]}`) : '';
+    };
+    const nombre = esc(_activeStack.name || 'Tech Stack');
+    const tipo = esc(_activeStack.project_type || 'Web');
+    const fecha = new Date().toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    let n = 0;
+    const hojasArbol = filas.map(([y0, y1]) => tramos.map(([x0, x1]) => {
+      n++;
+      return `<section class="ts-print-hoja">
+        <div class="ts-print-cab"><b>🌳 ${nombre}</b><span>${tipo} · ${columnasDe([x0, x1])}${filas.length > 1 ? ` · parte ${filas.indexOf(filas.find(f => f[0] === y0)) + 1} de ${filas.length} en vertical` : ''}</span><span>Hoja ${n} de ${total}</span></div>
+        <div class="ts-print-ventana" style="width:${(x1 - x0) * escala}px;height:${(y1 - y0) * escala}px">
+          <div style="position:absolute;left:${-x0 * escala}px;top:${-y0 * escala}px;width:${W}px;transform:scale(${escala});transform-origin:0 0">${htmlArbol}</div>
+        </div>
+      </section>`;
+    }).join('')).join('');
+
+    // Detalle por columna
+    const filasDetalle = stages.map((st, sI) => {
+      const items = st.items || [];
+      const sig = stages[sI + 1];
+      const nombresSig = new Map((sig ? sig.items || [] : []).map(x => [x.id, x.name]));
+      if (!items.length) return `<tr><td class="ts-print-col">C${sI + 1}</td><td colspan="5" style="color:#94a3b8">${esc(st.title || '')} · sin tecnologías</td></tr>`;
+      return items.map((it, i) => {
+        const p = precioDeItem(it);
+        const destinos = !sig || !nombresSig.size ? '— (última columna)'
+          : (Array.isArray(it.targets) && it.targets.filter(t => nombresSig.has(t)).length
+            ? it.targets.filter(t => nombresSig.has(t)).map(t => esc(nombresSig.get(t))).join(', ')
+            : `Todas las de C${sI + 2}`);
+        return `<tr>${i === 0 ? `<td class="ts-print-col" rowspan="${items.length}">C${sI + 1}<small>${esc(st.title || '')}</small></td>` : ''}
+          <td><b>${esc(it.name || '')}</b></td><td>${esc(it.category || '')}</td><td>${esc(p.plan)}</td>
+          <td class="${p.precio === 'Gratis' ? 'ts-gratis' : ''}">${esc(p.precio)}</td><td>${destinos}</td></tr>`;
+      }).join('');
+    }).join('');
+    const pie = document.querySelector('.ts-odn-footer')?.outerHTML || '';
+
+    const estilos = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map(el => el.outerHTML).join('');
+    let frame = document.getElementById('ts-odn-print-frame');
+    if (frame) frame.remove();
+    frame = document.createElement('iframe');
+    frame.id = 'ts-odn-print-frame';
+    frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+    document.body.appendChild(frame);
+    const doc = frame.contentWindow.document;
+    doc.open();
+    doc.write(`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Tech Stack - ${nombre}</title>${estilos}
+      <style>
+        @page { size: A4 landscape; margin: 10mm; }
+        html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; display: block !important; min-height: 0 !important; overflow: visible !important; }
+        * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        /* La app oculta todo al imprimir salvo sus modales: aquí se imprime todo */
+        @media print { body * { visibility: visible !important; } }
+        .ts-print-hoja { break-after: page; page-break-after: always; }
+        .ts-print-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font: 600 11px Inter, Arial, sans-serif; color: #475569; border-bottom: 2px solid #0f766e; padding-bottom: 4px; margin-bottom: 8px; }
+        .ts-print-cab b { font-size: 14px; color: #0f172a; }
+        .ts-print-ventana { position: relative; overflow: hidden; }
+        .ts-print-plan { font-size: 11px; padding: 3px 6px; border: 1px solid #e2e8f0; border-radius: 4px; background: #f8fafc; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ts-print-ramas { color: #0f766e; font-weight: 700; }
+        .ts-odn-column { box-shadow: none !important; }
+        .ts-print-detalle h2 { font: 800 15px Inter, Arial, sans-serif; color: #0f172a; margin: 0 0 4px; }
+        .ts-print-detalle p { font: 11px Inter, Arial, sans-serif; color: #64748b; margin: 0 0 10px; }
+        .ts-print-detalle table { width: 100%; border-collapse: collapse; font: 11px Inter, Arial, sans-serif; }
+        .ts-print-detalle th { background: #0f766e; color: #fff; text-align: left; padding: 6px 8px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .3px; }
+        .ts-print-detalle td { border-bottom: 1px solid #e2e8f0; padding: 5px 8px; vertical-align: top; color: #1e293b; }
+        .ts-print-detalle tr { break-inside: avoid; }
+        .ts-print-col { font-weight: 800; color: #0f766e; background: #f0fdfa; white-space: nowrap; }
+        .ts-print-col small { display: block; font-weight: 600; color: #64748b; font-size: 9.5px; }
+        .ts-gratis { color: #059669; font-weight: 700; }
+        .ts-print-pie { margin-top: 14px; }
+      </style></head><body>
+      ${hojasArbol}
+      <section class="ts-print-detalle">
+        <h2>Detalle de la estructura · ${nombre}</h2>
+        <p>Tipo: ${tipo} · ${stages.length} columnas · Impreso el ${fecha}</p>
+        <table><thead><tr><th>Columna</th><th>Tecnología</th><th>Tipo</th><th>Plan</th><th>Precio máx. propuesta</th><th>Ramifica a</th></tr></thead>
+        <tbody>${filasDetalle}</tbody></table>
+        <div class="ts-print-pie">${pie}</div>
+      </section>
+    </body></html>`);
+    doc.close();
+    const listo = Promise.all([
+      doc.fonts ? doc.fonts.ready : null,
+      ...Array.from(doc.images).map(img => img.complete ? null : new Promise(r => { img.onload = img.onerror = r; })),
+    ]);
+    Promise.race([listo, new Promise(r => setTimeout(r, 3000))]).then(() => setTimeout(() => {
+      try { frame.contentWindow.focus(); frame.contentWindow.print(); } catch (e) { window.print(); }
+      setTimeout(() => frame.remove(), 3000);
+    }, 150));
+  }
+
   function setupEvents() {
+    document.getElementById('ts-odn-btn-print')?.addEventListener('click', imprimirEstructura);
     const sel = document.getElementById('ts-odn-select');
     if (sel) {
       sel.addEventListener('change', e => {
