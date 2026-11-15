@@ -3312,6 +3312,7 @@ const PAGE_META = {
 const COMERCIAL_DATA_PAGES = ['crear-contrato', 'revisar-contrato', 'crear-proforma', 'consultar-proforma', 'editar-clientes', 'configuracion'];
 
 async function navigate(page) {
+  if (window.__seccionPrevia !== page) { window.__seccionPrevia = page; window.scrollTo(0, 0); document.querySelectorAll('main, .main, .content, .main-content').forEach(e => { if (e.scrollTop) e.scrollTop = 0; }); } // nueva sección → arriba
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const targetPage = document.getElementById('page-' + page);
   if (targetPage) targetPage.classList.add('active');
