@@ -6056,7 +6056,7 @@ function responsablePorDefecto() {
   const lista = listaResponsables();
   if (!lista.length) return '';
   const yo = perfilFirmanteQubira().nombre.toLowerCase();
-  const t = (lista[0].cronograma ? null : lista.find(x => x.nombre.toLowerCase() === yo)) || lista.find(x => /\bti\b/i.test(x.area || '')) || lista[0];
+  const t = (lista[0].cronograma ? null : lista.find(x => x.nombre.toLowerCase() === yo)) || lista.find(x => /\bo?ti\b/i.test(x.area || '')) || lista[0];
   return etiquetaTrabajador(t);
 }
 
