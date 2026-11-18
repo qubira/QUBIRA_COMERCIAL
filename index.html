@@ -4292,7 +4292,7 @@ async function renderDashboardAgenda() {
 // prefijado "cal" para no chocar con nombres ya usados en este archivo.
 // ══════════════════════════════════════════════════════
 const CAL_OWN_AREA = 'COMERCIAL';
-const CAL_AREAS = [['COMERCIAL','Comercial'],['ADG','ADG'],['TI','OTI'],['RRHH','RR. HH.'],['SOPORTE','Soporte']];
+const CAL_AREAS = [['COMERCIAL','Comercial'],['ADG','ADG'],['TI','OTI'],['RRHH','ORH'],['SOPORTE','Soporte']];
 const CAL_MEETING_TYPES = ['Reunión con cliente','Negociación','Presentación de producto','Seguimiento','Coordinación con otra área','Otro'];
 const CAL_EXTERNAL_KINDS = [['cliente','Cliente'],['postulante','Postulante'],['proveedor','Proveedor'],['consultor','Consultor'],['otro','Otro']];
 const CAL_STATUS_LABEL = { scheduled:'Programada', confirmed:'Confirmada', in_progress:'En curso', completed:'Finalizada', cancelled:'Cancelada' };
@@ -11437,7 +11437,7 @@ function renderAgendaOti() {
   } else if (!aoti.datos) {
     panelDia = '<div class="aoti-vacio">Consultando la agenda de OTI…</div>';
   } else if (!miembros.length) {
-    panelDia = '<div class="aoti-vacio">No hay integrantes activos del área OTI (TI) registrados en RR.HH., por eso no se puede mostrar su agenda.<br><br>Puedes marcar inicio y entregables igualmente.</div>';
+    panelDia = '<div class="aoti-vacio">No hay integrantes activos del área OTI (TI) registrados en ORH, por eso no se puede mostrar su agenda.<br><br>Puedes marcar inicio y entregables igualmente.</div>';
   } else if (!aoti.vista || !enMes) {
     panelDia = `<div class="aoti-vacio">Marca un día para ver las horas libres de OTI.<br><small>Equipo OTI: ${miembros.map(m => esc(nombrePersona(m))).join(', ')}</small></div>`;
   } else {
