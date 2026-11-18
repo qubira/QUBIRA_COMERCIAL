@@ -1973,7 +1973,7 @@
             
             <div style="padding:14px;background:var(--bg-card2);border-radius:10px;border:1px solid var(--border);margin-bottom:14px">
               <div style="font-size:11px;color:var(--text-muted)">CÓDIGO OFICIAL</div>
-              <div style="font-size:18px;font-weight:800;color:var(--primary);font-family:monospace" id="prev-codigo">CTR-2026-0000</div>
+              <div style="font-size:18px;font-weight:800;color:var(--primary);font-family:monospace" id="prev-codigo">ODN-CTR-[SE ASIGNA AL EMITIR]</div>
               
               <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">CLIENTE / CONTRAPARTE</div>
               <div style="font-size:14px;font-weight:700" id="prev-cliente">—</div>
@@ -2494,7 +2494,7 @@
             
             <div style="padding:14px;background:var(--bg-card2);border-radius:10px;border:1px solid var(--border);margin-bottom:14px">
               <div style="font-size:11px;color:var(--text-muted)">PROFORMA OFICIAL ODN</div>
-              <div style="font-size:18px;font-weight:800;color:var(--primary);font-family:monospace" id="prev-prf-codigo">PRF-2026-0000</div>
+              <div style="font-size:18px;font-weight:800;color:var(--primary);font-family:monospace" id="prev-prf-codigo">ODN-PRF-[SE ASIGNA AL EMITIR]</div>
               
               <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">EMPRESA / PROSPECTO</div>
               <div style="font-size:14px;font-weight:700" id="prev-prf-cliente">—</div>
@@ -2980,7 +2980,7 @@
   <div class="modal" style="max-width:1040px;width:96vw;max-height:94vh;display:flex;flex-direction:column">
     <div class="modal-header" style="flex-wrap:wrap;gap:12px;align-items:center;padding:12px 20px">
       <div style="flex:1;min-width:240px">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px" id="contract-modal-code">CTR-2026-0000</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px" id="contract-modal-code">ODN-CTR-…</div>
         <div style="font-size:16.5px;font-weight:800;color:var(--text)" id="contract-modal-title">Visualización Oficial del Contrato</div>
       </div>
       <!-- Selector de plantilla ODACL directo en el modal -->
@@ -3028,7 +3028,7 @@
   <div class="modal" style="max-width:880px">
     <div class="modal-header">
       <div>
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px" id="proforma-modal-code">PRF-2026-0000</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px" id="proforma-modal-code">ODN-PRF-…</div>
         <div style="font-size:18px;font-weight:700" id="proforma-modal-title">Visualización Oficial de la Proforma</div>
       </div>
       <button class="close-btn" onclick="closeProformaModal()"><svg class="icon"><use href="#icon-x"></use></svg></button>
@@ -5038,20 +5038,8 @@ function getStoredProformas() { return _proformasCache; }
 function getStoredCatalog(tipo) { return _catalogCache[tipo] || []; }
 
 
-function getNextProformaCode() {
-  const prfs = getStoredProformas();
-  const year = new Date().getFullYear();
-  let maxNum = 0;
-  prfs.forEach(p => {
-    const match = String(p.id).match(/PRF-(\d+)-(\d+)/);
-    if (match) {
-      const n = parseInt(match[2], 10);
-      if (n > maxNum) maxNum = n;
-    }
-  });
-  const nextNum = String(maxNum + 1).padStart(3, '0');
-  return `PRF-${year}-${nextNum}`;
-}
+// El código lo asigna el servidor al emitir (CODIFICACION.md); aquí solo se muestra uno provisional
+function getNextProformaCode() { return 'ODN-PRF-[SE ASIGNA AL EMITIR]'; }
 
 let _preselectedClientId = null;
 let _preselectedProformaClientId = null;
@@ -6325,11 +6313,42 @@ const TOKENS_DE_PROFORMA = ['REQUERIMIENTOS_FUNCIONALES', 'REQUERIMIENTOS_NO_FUN
   'TOTAL_DIAS_HABILES', 'FECHA_INICIO', 'FECHA_ENTREGA_FINAL', 'FECHA_LIMITE_INSUMOS', 'DETALLES_SPRINTS', 'CRONOGRAMA_REUNIONES',
   'INCLUYE_O_NO_IGV', 'DIAS_GARANTIA', 'PLAZO_ENTREGA_INFORMACION', 'PLAZO_RESPUESTA_CLIENTE', 'CORREO_CLIENTE', 'NUMERO_WHATSAPP_CLIENTE'];
 
-// Código visible de una proforma con su versión: PRF-2026-001, PRF-2026-001.V2, .V3…
+// Código visible de una proforma con su versión: ODN-PRF-2026-001, ODN-PRF-2026-001 v2, v3… (mismo código)
 function codigoProforma(p, version) {
   if (!p) return '';
   const v = Number(version ?? p.version_actual) || 1;
-  return v > 1 ? `${p.id}.V${v}` : p.id;
+  return v > 1 ? `${p.id} v${v}` : p.id;
+}
+
+/* Estado del documento en el Registro de documentos (ruta de aprobación) */
+const REG_PASO = { REVISA: 'revisa', APRUEBA: 'aprueba' };
+function registroHtml(x) {
+  const r = x && x.registro;
+  if (!r) return '';
+  const color = { 'EN RUTA': '#2563eb', OBSERVADO: '#b45309', ANULADO: '#b91c1c', RECHAZADO: '#b91c1c', ACEPTADA: '#047857', INACTIVO: '#64748b' }[r.estado] || '#047857';
+  const txt = r.estado === 'EN RUTA' && r.pendiente ? `En ruta: ${r.pendiente.area} ${REG_PASO[r.pendiente.accion] || ''}` : r.estado.charAt(0) + r.estado.slice(1).toLowerCase();
+  return `<div style="font-size:10.5px;font-weight:700;color:${color}" title="Estado en el Registro de documentos">● ${esc(txt)}</div>`;
+}
+
+/* Pide el motivo (anular): diálogo con campo de texto */
+function qcPedirMotivo(titulo, mensaje) {
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.className = 'modal-overlay open qc-dlg peligro';
+    ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+    ov.innerHTML = `<div class="modal"><div class="modal-header"><div class="qc-dlg-head"><div class="qc-dlg-icono">${QC_DLG_ICONOS.peligro || ''}</div>
+      <div><div class="qc-dlg-titulo">${esc(titulo)}</div><div class="qc-dlg-sub">QUBIRA · ODN Comercial</div></div></div></div>
+      <div class="modal-body"><div class="qc-dlg-msg">${esc(mensaje)}</div>
+      <textarea rows="3" style="width:100%;margin-top:10px;padding:8px;border:1px solid var(--border);border-radius:8px;font-family:inherit;background:var(--bg-card);color:inherit" placeholder="Motivo de la anulación (obligatorio)"></textarea></div>
+      <div class="modal-footer"><button type="button" class="btn btn-outline" data-r="0">Cancelar</button><button type="button" class="btn btn-peligro" data-r="1">Anular</button></div></div>`;
+    document.body.appendChild(ov);
+    const ta = ov.querySelector('textarea'); setTimeout(() => ta.focus(), 50);
+    ov.addEventListener('click', e => {
+      const b = e.target.closest('[data-r]'); if (!b) return;
+      if (b.dataset.r === '1' && !ta.value.trim()) { ta.focus(); ta.style.borderColor = '#dc2626'; return; }
+      ov.remove(); resolve(b.dataset.r === '1' ? ta.value.trim() : null);
+    });
+  });
 }
 
 function proformaDelContrato() { return _ctrProformaId ? getStoredProformas().find(x => x.id === _ctrProformaId) : null; }
@@ -7551,20 +7570,7 @@ function cargarPlantillaContratoModelo() {
   }
 }
 
-function getNextContractCode() {
-  const ctrs = getStoredContratos();
-  const year = new Date().getFullYear();
-  let maxNum = 0;
-  ctrs.forEach(c => {
-    const match = String(c.id).match(/CTR-(\d+)-(\d+)/);
-    if (match) {
-      const n = parseInt(match[2], 10);
-      if (n > maxNum) maxNum = n;
-    }
-  });
-  const nextNum = String(maxNum + 1).padStart(3, '0');
-  return `CTR-${year}-${nextNum}`;
-}
+function getNextContractCode() { return 'ODN-CTR-[SE ASIGNA AL EMITIR]'; }
 
 // ══════════════════════════════════════════════════════
 // MÓDULO 1: CREAR CONTRATO
@@ -7739,7 +7745,7 @@ function updateContractPreview() {
   const cliId = document.getElementById('ctr-cliente-sel')?.value;
   const cliente = clientes.find(c => c.id === cliId) || {};
 
-  const codigo = document.getElementById('ctr-codigo')?.value || 'CTR-2026-0000';
+  const codigo = document.getElementById('ctr-codigo')?.value || getNextContractCode();
   const tipo = document.getElementById('ctr-tipo')?.value || 'Venta de Licencia';
   const prod = document.getElementById('ctr-producto-sel')?.value || 'Solución de Software';
   const moneda = document.getElementById('ctr-moneda')?.value || 'USD';
@@ -7920,7 +7926,7 @@ function previewCurrentDraft() {
   const compiledHtml = compileContractTemplate(tpl.contenido_html, _templatePlaceholdersValues, true);
 
   const draftContract = {
-    id: document.getElementById('ctr-codigo')?.value || 'CTR-2026-BORRADOR',
+    id: document.getElementById('ctr-codigo')?.value || getNextContractCode(),
     cliente_nombre: cliente.razon_social,
     cliente_ruc: cliente.ruc,
     cliente_contacto: cliente.contacto_nombre || 'Representante Autorizado',
@@ -8004,7 +8010,7 @@ function renderRevisarContratoTable() {
   tbody.innerHTML = filtered.map(c => `
     <tr>
       <td>
-        <strong style="font-family:monospace;color:var(--primary);cursor:pointer" onclick="viewContract('${esc(c.id)}')">${esc(c.id)}</strong>
+        <strong style="font-family:monospace;color:var(--primary);cursor:pointer" onclick="viewContract('${esc(c.id)}')">${esc(c.id)}</strong>${registroHtml(c)}
         <div style="font-size:11px;color:var(--text-muted)">${esc(c.tipo || 'Contrato')}</div>
         ${c.plantilla_titulo ? `<div style="margin-top:3px"><span class="badge" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;font-size:9.5px;padding:2px 6px;border-radius:4px;font-weight:600;display:inline-block" title="Plantilla ODACL: ${esc(c.plantilla_titulo)}">🏛️ ${esc(c.plantilla_titulo.length > 25 ? c.plantilla_titulo.substring(0, 23) + '...' : c.plantilla_titulo)}</span></div>` : ''}
       </td>
@@ -8042,7 +8048,7 @@ function renderRevisarContratoTable() {
           <button class="btn-icon" title="Imprimir contrato" onclick="quickPrintContract('${esc(c.id)}')">
             <svg class="icon"><use href="#icon-printer"></use></svg>
           </button>
-          <button class="btn-icon danger" title="Eliminar contrato" onclick="deleteContract('${esc(c.id)}')">
+          <button class="btn-icon danger" title="Anular contrato (con motivo)" onclick="deleteContract('${esc(c.id)}')">
             <svg class="icon"><use href="#icon-trash-2"></use></svg>
           </button>
         </div>
@@ -8599,15 +8605,17 @@ function printContract() {
     .a4-page-sheet::before { display: none !important; }`);
 }
 
+// Un contrato emitido no se elimina: se anula con motivo (su número no se reutiliza)
 async function deleteContract(id) {
-  if (!(await qcConfirm(`¿Estás seguro de eliminar el contrato ${id}?\nEsta acción no se puede deshacer.`, { titulo: 'Eliminar contrato', tipo: 'peligro', aceptar: 'Eliminar contrato' }))) return;
+  const motivo = await qcPedirMotivo('Anular contrato', `El contrato ${id} quedará ANULADO (no se borra y su número no se reutiliza). Para corregirlo, emite uno nuevo.`);
+  if (!motivo) return;
   try {
-    await qcApiFetch(`/api/comercial/contracts/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    await qcApiFetch(`/api/comercial/contracts/${encodeURIComponent(id)}/anular`, { method: 'POST', body: JSON.stringify({ motivo }) });
     await reloadContratos();
-    toast('success', 'Contrato Eliminado', `El contrato ${id} fue borrado.`);
+    toast('success', 'Contrato anulado', `El contrato ${id} quedó anulado.`);
     renderRevisarContrato();
   } catch (err) {
-    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo eliminar', err.message);
+    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo anular', err.message);
   }
 }
 
@@ -11684,7 +11692,7 @@ function updateProformaPreview(subVal, descVal, igvVal, totalVal) {
   const cliId = document.getElementById('prf-cliente-sel')?.value;
   const cliente = clientes.find(c => c.id === cliId) || {};
 
-  const codigo = document.getElementById('prf-codigo')?.value || 'PRF-2026-0000';
+  const codigo = document.getElementById('prf-codigo')?.value || getNextProformaCode();
   const prod = document.getElementById('prf-producto-sel')?.value || document.getElementById('prf-producto-search')?.value.trim() || '—';
   const moneda = document.getElementById('prf-moneda')?.value || 'USD';
   const modalidad = document.getElementById('prf-modalidad-pago')?.value || '—';
@@ -11968,7 +11976,7 @@ function previewCurrentProformaDraft() {
   const total = subNeto + igvMonto;
 
   const draft = {
-    id: document.getElementById('prf-codigo')?.value || 'PRF-2026-0001',
+    id: document.getElementById('prf-codigo')?.value || getNextProformaCode(),
     isDraft: true,
     cliente_id: cliente.id || '',
     cliente_nombre: document.getElementById('prf-cliente-search')?.value.trim() || cliente.razon_social || '',
@@ -12088,7 +12096,7 @@ function renderConsultarProformaTable() {
     return `
       <tr>
         <td>
-          <strong style="font-family:monospace;color:var(--primary);cursor:pointer" onclick="viewProforma('${esc(p.id)}')">${esc(codigoProforma(p))}</strong>
+          <strong style="font-family:monospace;color:var(--primary);cursor:pointer" onclick="viewProforma('${esc(p.id)}')">${esc(codigoProforma(p))}</strong>${registroHtml(p)}
           <div style="font-size:11px;color:var(--text-muted)">${esc(p.tipo || 'Proforma')}</div>
         </td>
         <td>
@@ -12118,7 +12126,7 @@ function renderConsultarProformaTable() {
             <option value="aprobada" ${p.estado==='aprobada'?'selected':''}>Aprobada</option>
             <option value="convertida" ${p.estado==='convertida'?'selected':''}>Convertida</option>
             <option value="rechazada" ${p.estado==='rechazada'?'selected':''}>Rechazada</option>
-            <option value="vencida" ${p.estado==='vencida'?'selected':''}>Vencida</option>
+            <option value="vencida" ${p.estado==='vencida'?'selected':''}>Vencida</option>${p.estado==='anulada'?'<option value="anulada" selected disabled>Anulada</option>':''}
           </select>
         </td>
         <td style="text-align:right">
@@ -12138,7 +12146,7 @@ function renderConsultarProformaTable() {
             <button class="btn-icon" style="color:var(--primary)" title="Generar Contrato desde esta Proforma" onclick="convertProformaToContract('${esc(p.id)}')">
               <svg class="icon"><use href="#icon-file-plus"></use></svg>
             </button>
-            <button class="btn-icon danger" title="Eliminar proforma" onclick="deleteProforma('${esc(p.id)}')">
+            <button class="btn-icon danger" title="Anular proforma (con motivo)" onclick="deleteProforma('${esc(p.id)}')">
               <svg class="icon"><use href="#icon-trash-2"></use></svg>
             </button>
           </div>
@@ -12148,13 +12156,15 @@ function renderConsultarProformaTable() {
   }).join('');
 }
 
-function quickUpdateProformaStatus(id, newStatus) {
-  const proformas = getStoredProformas();
-  const prf = proformas.find(p => p.id === id);
-  if (!prf) return;
-  prf.estado = newStatus;
-  setStoredProformas(proformas);
-  toast('success', 'Estado Actualizado', `Proforma ${id} marcada como ${newStatus}.`);
+async function quickUpdateProformaStatus(id, newStatus) {
+  try {
+    await qcApiFetch(`/api/comercial/proformas/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ estado: newStatus }) });
+    await reloadProformas();
+    toast('success', 'Estado Actualizado', `Proforma ${id} marcada como ${newStatus}.`);
+  } catch (err) {
+    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo cambiar el estado', err.message);
+    await reloadProformas().catch(() => {});
+  }
   renderConsultarProforma();
 }
 
@@ -12169,7 +12179,7 @@ function viewProforma(id) {
 function renderProformaOfficialModal(p) {
   const codeEl = document.getElementById('proforma-modal-code');
   _codigoEnVisor = codigoProforma(p);
-  if (codeEl) codeEl.textContent = `${codigoProforma(p) || 'PRF-2026-0001'} · Qubira ODN Cotización`;
+  if (codeEl) codeEl.textContent = `${codigoProforma(p) || getNextProformaCode()} · Qubira ODN Cotización`;
 
   const titleEl = document.getElementById('proforma-modal-title');
   if (titleEl) titleEl.textContent = p.cliente_nombre ? `Proforma Comercial: ${p.cliente_nombre}` : 'Proforma Comercial';
@@ -12415,15 +12425,17 @@ async function convertProformaToContract(proformaId) {
   }
 }
 
+// Una proforma emitida no se elimina: se anula con motivo
 async function deleteProforma(id) {
-  if (!(await qcConfirm(`¿Estás seguro de eliminar la proforma ${id}?\nEsta acción no se puede deshacer.`, { titulo: 'Eliminar proforma', tipo: 'peligro', aceptar: 'Eliminar proforma' }))) return;
+  const motivo = await qcPedirMotivo('Anular proforma', `La proforma ${id} quedará ANULADA (no se borra y su número no se reutiliza).`);
+  if (!motivo) return;
   try {
-    await qcApiFetch(`/api/comercial/proformas/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    await qcApiFetch(`/api/comercial/proformas/${encodeURIComponent(id)}/anular`, { method: 'POST', body: JSON.stringify({ motivo }) });
     await reloadProformas();
-    toast('success', 'Proforma Eliminada', `La proforma ${id} ha sido borrada.`);
+    toast('success', 'Proforma anulada', `La proforma ${id} quedó anulada.`);
     renderConsultarProforma();
   } catch (err) {
-    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo eliminar', err.message);
+    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo anular', err.message);
   }
 }
 
@@ -12945,7 +12957,7 @@ function renderEditarClientesTable() {
             <button class="btn-icon" title="Crear contrato para este cliente" onclick="startContractForClient('${esc(c.id)}')">
               <svg class="icon" style="color:var(--primary)"><use href="#icon-file-plus"></use></svg>
             </button>
-            <button class="btn-icon danger" title="Eliminar cliente" onclick="deleteClient('${esc(c.id)}')">
+            <button class="btn-icon danger" title="Desactivar cliente (no se elimina)" onclick="deleteClient('${esc(c.id)}')">
               <svg class="icon"><use href="#icon-trash-2"></use></svg>
             </button>
           </div>
@@ -12977,21 +12989,16 @@ async function deleteClient(id) {
   const client = getStoredClientes().find(c => c.id === id);
   if (!client) return;
 
-  const contratos = getStoredContratos();
-  const hasContracts = contratos.some(ctr => ctr.cliente_id === id || ctr.cliente_ruc === client.ruc);
-  if (hasContracts) {
-    if (!(await qcConfirm(`El cliente ${client.razon_social} tiene contratos asociados.\n¿Deseas eliminarlo de todas formas? Sus contratos y proformas se conservan con los datos que ya tenían.`, { titulo: 'Eliminar cliente', tipo: 'peligro', aceptar: 'Eliminar cliente' }))) return;
-  } else {
-    if (!(await qcConfirm(`¿Eliminar al cliente ${client.razon_social}?`, { titulo: 'Eliminar cliente', tipo: 'peligro', aceptar: 'Eliminar cliente' }))) return;
-  }
-
+  // Un cliente no se elimina: se desactiva y conserva su código (se puede reactivar)
+  if (client.estado !== 'activo') { toast('info', 'Ya está inactivo', `${client.razon_social} ya está desactivado. Usa el botón de estado para reactivarlo.`); return; }
+  if (!(await qcConfirm(`¿Desactivar al cliente ${client.razon_social}?\nNo se elimina: conserva su código ${id}, sus contratos y proformas, y se puede reactivar.`, { titulo: 'Desactivar cliente', tipo: 'pregunta', aceptar: 'Desactivar' }))) return;
   try {
-    await qcApiFetch(`/api/comercial/clients/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    await qcApiFetch(`/api/comercial/clients/${encodeURIComponent(id)}/toggle-status`, { method: 'PATCH' });
     await reloadClientes();
-    toast('success', 'Cliente eliminado', `${client.razon_social} ha sido removido.`);
+    toast('success', 'Cliente desactivado', `${client.razon_social} quedó inactivo.`);
     renderEditarClientes();
   } catch (err) {
-    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo eliminar', err.message);
+    if (err.message !== 'SESSION_EXPIRED') toast('error', 'No se pudo desactivar', err.message);
   }
 }
 
