@@ -1412,6 +1412,7 @@
       }
     }
   </style>
+  <script src="https://api-qubira.onrender.com/api/public/areas.js" defer></script>
 </head>
 <body>
 
@@ -4293,6 +4294,8 @@ async function renderDashboardAgenda() {
 // ══════════════════════════════════════════════════════
 const CAL_OWN_AREA = 'COMERCIAL';
 const CAL_AREAS = [['COMERCIAL','Comercial'],['ADG','ADG'],['TI','OTI'],['RRHH','ORH'],['SOPORTE','Soporte']];
+// Áreas desde el catálogo de ORH (fuente única); esta lista queda solo como respaldo
+(window.__qbListasAreas ||= []).push([CAL_AREAS, 'COMERCIAL']);
 const CAL_MEETING_TYPES = ['Reunión con cliente','Negociación','Presentación de producto','Seguimiento','Coordinación con otra área','Otro'];
 const CAL_EXTERNAL_KINDS = [['cliente','Cliente'],['postulante','Postulante'],['proveedor','Proveedor'],['consultor','Consultor'],['otro','Otro']];
 const CAL_STATUS_LABEL = { scheduled:'Programada', confirmed:'Confirmada', in_progress:'En curso', completed:'Finalizada', cancelled:'Cancelada' };
