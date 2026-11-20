@@ -1484,6 +1484,9 @@
     <div class="nav-item" data-page="pendientes" onclick="navigate('pendientes')" title="Pendientes de revisar o aprobar">
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg> <span class="nav-txt">Pendientes</span>
     </div>
+    <div class="nav-item" data-page="renovaciones" onclick="navigate('renovaciones')" title="Contratos por vencer (Customer Success)">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> <span class="nav-txt">Renovaciones</span>
+    </div>
     <div class="nav-item" data-page="catalogo" onclick="navigate('catalogo')" title="Catálogo de Productos">
       <svg class="icon"><use href="#icon-package"></use></svg> <span class="nav-txt">Catálogo de Productos</span>
     </div>
@@ -1617,6 +1620,7 @@
     </div>
 
     <!-- ═══ CATÁLOGO ═══ -->
+    <div class="page" id="page-renovaciones"><div class="card" style="padding:20px"><div id="renov-lista">Cargando…</div></div></div>
     <div class="page" id="page-pendientes"><div class="card" style="padding:20px"><div id="bandeja-docs"></div></div></div>
 
     <div class="page" id="page-catalogo">
@@ -3268,6 +3272,34 @@ async function qcApiFetch(path, opts = {}) {
   return data;
 }
 
+/* Renovaciones (Customer Success): la tarea diaria avisa a ODN 60 días antes del fin del contrato */
+const QC_RENOV = { pendiente: 'Pendiente', contactado: 'Contactado', renovado: 'Renovado', no_renueva: 'No renueva' };
+async function qcRenovaciones() {
+  const el = document.getElementById('renov-lista');
+  try {
+    const { data } = await qcApiFetch('/api/comercial/renovaciones');
+    if (!data.length) { el.innerHTML = '<p style="color:var(--text-muted,#888)">No hay contratos por vencer en los próximos 90 días.</p>'; return; }
+    el.innerHTML = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13.5px"><thead><tr>' +
+      ['Contrato', 'Cliente', 'Vence', 'Monto', 'Seguimiento', 'Nota', ''].map(t => '<th style="text-align:left;padding:8px;border-bottom:1px solid rgba(127,127,140,.3)">' + t + '</th>').join('') + '</tr></thead><tbody>' +
+      data.map(c => {
+        const r = c.renovacion || {}; const d = Number(c.dias);
+        const color = d < 0 ? '#c0392b' : d <= 30 ? '#b7791f' : 'inherit';
+        return '<tr data-ctr="' + esc(c.id) + '"><td style="padding:8px"><b>' + esc(c.id) + '</b><br><small>' + esc(c.producto_nombre || '') + '</small></td><td style="padding:8px">' + esc(c.cliente_nombre || '') + '</td>' +
+          '<td style="padding:8px;color:' + color + '">' + esc(c.fecha_fin) + '<br><small>' + (d < 0 ? 'venció hace ' + (-d) + ' días' : 'en ' + d + ' días') + '</small></td><td style="padding:8px">' + esc(c.moneda) + ' ' + esc(c.monto) + '</td>' +
+          '<td style="padding:8px"><select data-c="estado">' + Object.entries(QC_RENOV).map(([k, v]) => '<option value="' + k + '"' + ((r.estado || 'pendiente') === k ? ' selected' : '') + '>' + v + '</option>').join('') + '</select>' + (r.por ? '<br><small>' + esc(r.por) + ' · ' + esc(String(r.en || '').slice(0, 10)) + '</small>' : '') + '</td>' +
+          '<td style="padding:8px"><input data-c="nota" value="' + esc(r.nota || '') + '" placeholder="Qué se habló" style="width:100%;min-width:180px"></td>' +
+          '<td style="padding:8px"><button class="btn btn-primary btn-sm" onclick="qcGuardarRenov(this)">Guardar</button></td></tr>';
+      }).join('') + '</tbody></table></div>';
+  } catch (e) { if (e.message !== 'SESSION_EXPIRED') el.innerHTML = '<p style="color:#c0392b">' + esc(e.message) + '</p>'; }
+}
+async function qcGuardarRenov(b) {
+  const tr = b.closest('tr'); b.disabled = true;
+  try {
+    await qcApiFetch('/api/comercial/renovaciones/' + encodeURIComponent(tr.dataset.ctr), { method: 'POST', body: JSON.stringify({ estado: tr.querySelector('[data-c="estado"]').value, nota: tr.querySelector('[data-c="nota"]').value }) });
+    toast('success', 'Renovación', 'Seguimiento guardado.'); qcRenovaciones();
+  } catch (e) { b.disabled = false; if (e.message !== 'SESSION_EXPIRED') toast('error', 'Renovación', e.message); }
+}
+
 /* Justificación de un precio bajo el mínimo de OPP (la ve GG al aprobar la proforma) */
 function qcPedirJustificacion(mensaje) {
   return new Promise(resolve => {
@@ -3328,6 +3360,7 @@ const PAGE_META = {
   dashboard: { title:'Dashboard', sub:'Resumen de los productos disponibles para venta o alquiler' },
   calendario: { title:'Calendario', sub:'Reuniones de ODN e interconexión con otras áreas' },
   catalogo:  { title:'Catálogo de Productos', sub:'Productos que ADG habilitó para que ODN los ofrezca' },
+  renovaciones: { title:'Renovaciones', sub:'Contratos vigentes que vencen en 90 días o vencieron hace poco: contacta al cliente y registra el seguimiento' },
   pendientes: { title:'Pendientes', sub:'Tus proformas y contratos observados, y lo que te toca revisar o aprobar' },
   'costo-herramientas': { title:'Herramientas & Tech Stack', sub:'Ramificaciones de tecnologías (Tech Stack), cotizaciones para clientes y matriz de costos OPP' },
   'info-tecnico': { title:'Info Técnico', sub:'Consultas rápidas de especificaciones técnicas, herramientas, lenguajes y límites por plan y producto' },
@@ -3366,6 +3399,7 @@ async function navigate(page) {
   if (page === 'dashboard') renderDashboard();
   if (page === 'calendario') calRender();
   if (page === 'catalogo')  renderCatalogo();
+  if (page === 'renovaciones') qcRenovaciones();
   if (page === 'pendientes') { const c = document.getElementById('bandeja-docs'); const dib = () => window.qbBandeja.render(c, { token: () => localStorage.getItem('qc_token') }); if (window.qbBandeja) dib(); else { c.textContent = 'Cargando tus pendientes…'; document.addEventListener('qb-bandeja-lista', dib, { once: true }); } }
   if (page === 'costo-herramientas') renderCostoHerramientas();
   if (page === 'info-tecnico') renderInfoTecnico();
